@@ -1,9 +1,9 @@
 Updated as I work through the awesome **NAND to Tetris** series.
 
-See their main website,  
+See main website,  
 http://www.nand2tetris.org
 
-And their Coursera classes,  
+And Coursera classes,  
 https://www.coursera.org/course/nand2tetris1
 
 From the Coursera page,
