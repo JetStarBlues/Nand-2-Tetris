@@ -155,6 +155,9 @@ def muxN8to1_( N, a, b, c, d, e, f, g, h, s1, s2, s3 ):
 
 ''''''''''''''''''''''''' multi-way variants '''''''''''''''''''''''''
 
+def or3_( a, b, c ):
+	return( or_( a, or_( b, c ) ) )
+
 def orNto1_( x ):
 	# technically, could break once reach a one ...
 	#   but is break doable with logic gates???
@@ -175,12 +178,13 @@ def orNto1_( x ):
 	    t7 = or ( t5, t6 )
 	    return t7  '''
 
-def or8to1_( x ):
-	t1 = or_( x[0], x[1] )
-	t2 = or_( x[2], x[3] )
-	t3 = or_( x[4], x[5] )
-	t4 = or_( x[6], x[7] )
-	t5 = or_( t1, t2 )
-	t6 = or_( t3, t4 )
-	t7 = or_( t5, t6 )
-	return t7
+def and3_( a, b, c ):
+	return( and_( a, and_( b, c ) ) )
+
+def andNto1_( x ):
+	# technically, could break once reach a zero ...
+	#   but is break doable with logic gates???
+	out = x[0]
+	for i in range( 1, len( x ) ):
+		out = and_( out, x[i] )
+	return out

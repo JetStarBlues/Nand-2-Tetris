@@ -58,7 +58,6 @@ def toDecimal(bitSeq):
 	muxN4to1_( N, a, b, c, d, s1, s2 )
 	muxN8to1_( N, a, b, c, d, e, f, g, h, s1, s2, s3 )
 	orNto1_( x )
-	or8to1_( x )
 '''
 
 '''
@@ -184,12 +183,6 @@ class Test_ElementaryGates( unittest.TestCase ):
 		''' orNto1 '''
 		for g in k_or8to1:
 			result = orNto1_( g[0] )
-			self.assertEqual( int( result ), g[1] )
-
-	def test_or8to1_( self ):
-		''' or8to1 '''
-		for g in k_or8to1:
-			result = or8to1_( g[0] )
 			self.assertEqual( int( result ), g[1] )
 
 

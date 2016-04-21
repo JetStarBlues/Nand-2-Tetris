@@ -35,22 +35,62 @@ When updating period values, consider:
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
 
-jk1 = JKFlipFlop()
-jk2 = JKFlipFlop()
-jk3 = JKFlipFlop()
-jk4 = JKFlipFlop()
+# turn leds on in following sequence 1,2,3,4,3,2,1...
 
-def C1(clk):
+dA = DFlipFlop()
+dB = DFlipFlop()
+dC = DFlipFlop()
 
-	jk1.doTheThing( clk, 1, 1 )
-	jk2.doTheThing( clk, jk1._q1, jk1._q1 )
-	jk3.doTheThing( clk, and_(jk2._q1, jk1._q1), and_(jk2._q1, jk1._q1) )
-	jk4.doTheThing( clk, and3_(jk3._q1, jk2._q1, jk1._q1), and3_(jk3._q1, jk2._q1, jk1._q1) )
+# start with all gates reset
+dA.clear()
+dB.clear()
+
+def logState(a, b):
+	state = str(a) + str(b)
+	if state == '00': print('waiting for button to be pressed')
+	elif state == '01': print('recording press')
+	elif state == '10': print('waiting for button to be released')
+
+score = 0
+dataIn = [1,1,1,0,1] # button activity (1 isPressed)
+dataIdx = len(dataIn) - 1  # load RtoL
+
+def FSM(clk):
+
+	global dataIn
+	global dataIdx
+
+	global score
+
+	if dataIdx >= 0 :
+		print(dataIn[dataIdx]) #
+
+		dA.doTheThing( 
+			clk, 
+			and_( dataIn[dataIdx], or_( dA.q1, dB.q1 ) )
+		)
+
+		dB.doTheThing(
+			clk,
+			and3_( dataIn[dataIdx], dA._q1, dB._q1 )
+		)
+
+		dataIdx -= 1
+	else:
+		# treat no input as 0
+		
+		print(0) #
+
+		dA.doTheThing( clk, 0 )
+		dB.doTheThing( clk, 0 )
+
 
 	global delayRecording
 	time.sleep(delayRecording)
-	bitSeq = toString( [jk4.q1, jk3.q1, jk2.q1, jk1.q1] )
-	print( toString( [bitSeq, "    ", toDecimal(bitSeq)] ) )
+	logState( dA.q1, dB.q1 )
+
+	score += and_( dA._q1, dB.q1 )  # could do this with counter circuit
+	print("score ", score)
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
@@ -60,7 +100,7 @@ def main():
 	clock.halfTick()
 
 	if clock.isRising:
-		C1(clock.value)
+		FSM(clock.value)
 
 	clock.keepTicking(1, main)  # seconds
 

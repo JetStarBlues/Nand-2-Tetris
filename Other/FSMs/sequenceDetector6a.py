@@ -35,22 +35,58 @@ When updating period values, consider:
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
 
-jk1 = JKFlipFlop()
-jk2 = JKFlipFlop()
-jk3 = JKFlipFlop()
-jk4 = JKFlipFlop()
+nStages = 3
+dff = []
+for i in range(nStages): dff.append( DFlipFlop() )
 
-def C1(clk):
+# start with all gates reset
+for i in range(nStages): dff[i].clear()
 
-	jk1.doTheThing( clk, 1, 1 )
-	jk2.doTheThing( clk, jk1._q1, jk1._q1 )
-	jk3.doTheThing( clk, and_(jk2._q1, jk1._q1), and_(jk2._q1, jk1._q1) )
-	jk4.doTheThing( clk, and3_(jk3._q1, jk2._q1, jk1._q1), and3_(jk3._q1, jk2._q1, jk1._q1) )
+sequence = [1,1,0,1,0,1,1,0,1,1,0,1,0,0,1,1,0]
+sequence.reverse()
+dataIn = sequence
+# dataIn = [0,1,1,1,0,1,1,0,1,0,0,1,1,0]
+dataIdx = len(dataIn) - 1  # load RtoL
 
-	global delayRecording
-	time.sleep(delayRecording)
-	bitSeq = toString( [jk4.q1, jk3.q1, jk2.q1, jk1.q1] )
-	print( toString( [bitSeq, "    ", toDecimal(bitSeq)] ) )
+
+def SD(clk):
+	'''outputs a 1 when detect 101 or 110 or 011'''
+
+	# notes and using mux'es
+
+	global dataIn
+	global dataIdx
+
+	data = dataIn[dataIdx]
+
+	n_data = not_( data )
+
+	dff[0].doTheThing( 
+		clk, 
+		mux8to1_( 0, data, 1, data, 1, data, 1, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+	)
+	dff[1].doTheThing( 
+		clk, 
+		mux8to1_( data, n_data, data, n_data, data, n_data, data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+	)
+	dff[2].doTheThing( 
+		clk, 
+		mux8to1_( n_data, n_data, n_data, n_data, n_data, n_data, n_data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+	)
+	out = mux8to1_( 0, 0, 0, 0, data, data, n_data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+
+	#
+	if dataIdx >= 0 : 
+
+		dataIdx -= 1
+
+		# Record output
+		global delayRecording
+		time.sleep(delayRecording)
+		print( data, " ", out )
+
+	else:
+		print(".")
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
@@ -60,7 +96,7 @@ def main():
 	clock.halfTick()
 
 	if clock.isRising:
-		C1(clock.value)
+		SD(clock.value)
 
 	clock.keepTicking(1, main)  # seconds
 

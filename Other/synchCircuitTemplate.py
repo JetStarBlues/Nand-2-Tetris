@@ -19,9 +19,6 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-def and3_(a, b, c):
-	return (a & b & c)
-
 clock = Clock()
 delayRecording = clock.halfPeriod * 0.9
 
