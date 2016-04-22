@@ -21,13 +21,9 @@ from _2__arithmeticGates import *
 	MSB doubles as sign... maybe could use to make a workaround ? =/
 '''
 
-def andNto1_ ( x ):
-	out = x[0]
-	for i in range( 1, len( x ) ):
-		out = and_( out, x[i] )
-	return out
 
-# using logic gates ---
+# -- using logic gates ---
+# 1Bit
 def comp_( a, b ):
 	eq = xnor_( a, b ) 		# a == b
 	lt = and_( not_(a), b ) # a < b
@@ -64,13 +60,15 @@ def compN_( N, a, b ):
 	return( eq, lt, gt )	
 
 
-# using mux ---
+# --- using mux ---
+# 1Bit
 def comp2_( a, b ):
 	eq = mux4to1_( 1, 0, 0, 1, a, b )	# a == b
 	lt = mux4to1_( 0, 1, 0, 0, a, b )	# a < b
 	gt = mux4to1_( 0, 0, 1, 0, a, b )	# a > b
 	return( eq, lt, gt ) 
 
+# nBit
 def compN2_( N, a, b ):
 	''' Exact same as compN_(),
 		 just swap comp_() with comp2_() '''

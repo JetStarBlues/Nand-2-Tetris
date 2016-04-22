@@ -45,6 +45,15 @@ def toDecimal(bitSeq):
 	nand_( a, b )
 	nor_( a, b )
 	xnor_( a, b )
+
+	decoder1to2_( a )
+	decoder2to4_( d1, d0 )
+	decoder3to8_( d2, d1, d0 )
+	encoder2to1_( d1, d0 )
+	encoder4to2_( d3, d2, d1, d0 )
+	encoder8to3_( d7, d6, d5, d4, d3, d2, d1, d0 )
+
+
 	mux_( a, b, sel )
 	mux4to1_( a, b, c, d, s1, s2 )
 	mux8to1_( a, b, c, d, e, f, g, h, s1, s2, s3 )
@@ -57,7 +66,12 @@ def toDecimal(bitSeq):
 	muxN_( N, a, b, sel )
 	muxN4to1_( N, a, b, c, d, s1, s2 )
 	muxN8to1_( N, a, b, c, d, e, f, g, h, s1, s2, s3 )
+
+
+	or3_( a, b, c )
 	orNto1_( x )
+	and3_( a, b, c )
+	andNto1_( x )
 '''
 
 '''
@@ -68,6 +82,12 @@ def toDecimal(bitSeq):
 	k_or
 	k_or16
 	k_xor
+	k_decoder1to2
+	k_decoder2to4
+	k_decoder3to8
+	k_encoder2to1
+	k_encoder4to2
+	k_encoder8to3
 	k_dMux
 	k_dMux1to4
 	k_dMux1to8
@@ -112,6 +132,43 @@ class Test_ElementaryGates( unittest.TestCase ):
 
 	def test_xnor( self ):
 		pass
+
+	def test_decoder1to2_( self ):
+		''' decoder1to2 '''
+		for g in k_decoder1to2:
+			result = decoder1to2_( g[0] )
+			self.assertEqual( toString( result ), g[1] )
+
+	def test_decoder2to4_( self ):
+		''' decoder2to4 '''
+		for g in k_decoder2to4:
+			result = decoder2to4_( g[0], g[1] )
+			self.assertEqual( toString( result ), g[2] )
+
+	def test_decoder3to8_( self ):
+		''' decoder3to8 '''
+		for g in k_decoder3to8:
+			result = decoder3to8_( g[0], g[1], g[2] )
+			self.assertEqual( toString( result ), g[3] )
+
+	def test_encoder2to1_( self ):
+		''' encoder2to1 '''
+		for g in k_encoder2to1:
+			result = encoder2to1_( g[0], g[1] )
+			self.assertEqual( result, g[2] )
+
+	def test_encoder4to2_( self ):
+		''' encoder4to2 '''
+		for g in k_encoder4to2:
+			result = encoder4to2_( g[0], g[1], g[2], g[3] )
+			self.assertEqual( toString( result ), g[4] )
+
+	def test_encoder8to3_( self ):
+		''' encoder8to3 '''
+		for g in k_encoder8to3:
+			result = encoder8to3_( g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7] )
+			self.assertEqual( toString( result ), g[8] )
+
 
 	def test_mux( self ):
 		''' mux '''
@@ -179,11 +236,20 @@ class Test_ElementaryGates( unittest.TestCase ):
 			result = muxN8to1_( 16, g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7], g[8], g[9], g[10] )
 			self.assertEqual( toString( result ), g[11] )
 
+	def test_or3_( self ):
+		pass
+
 	def test_orNto1_( self ):
 		''' orNto1 '''
 		for g in k_or8to1:
 			result = orNto1_( g[0] )
 			self.assertEqual( int( result ), g[1] )
+
+	def test_and3_( self ):
+		pass
+
+	def test_andNto1_( self ):
+		pass
 
 
 

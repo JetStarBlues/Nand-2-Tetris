@@ -25,11 +25,56 @@ def xnor_( a, b ):
 	return not_( xor_( a, b ) )
 
 
+
+''''''''''''''''''''''''' Encoders & Decoders '''''''''''''''''''''''''	
+
+# MSB to LSB
+
+def decoder1to2_( a ):
+	q1 = a
+	q0 = not_( a )
+	return ( q1, q0 )
+
+
+def decoder2to4_( d1, d0 ):
+	a, b = d1, d0
+	q3 = and_(       a  ,       b   )
+	q2 = and_(       a  , not_( b ) )
+	q1 = and_( not_( a ),       b   )
+	q0 = and_( not_( a ), not_( b ) )
+	return ( q3, q2, q1, q0 )
+
+
+def decoder3to8_( d2, d1, d0 ):
+	a, b, c = d2, d1, d0
+	q7 = and3_(       a  ,       b  ,       c   )
+	q6 = and3_(       a  ,       b  , not_( c ) )
+	q5 = and3_(       a  , not_( b ),       c   )
+	q4 = and3_(       a  , not_( b ), not_( c ) )
+	q3 = and3_( not_( a ),       b  ,       c   ) 
+	q2 = and3_( not_( a ),       b  , not_( c ) )
+	q1 = and3_( not_( a ), not_( b ),       c   )
+	q0 = and3_( not_( a ), not_( b ), not_( c ) )
+	return ( q7, q6, q5, q4, q3, q2, q1, q0 )
+
+
+def encoder2to1_( d1, d0 ):
+	return d1
+
+def encoder4to2_( d3, d2, d1, d0 ):
+	q1 = or_( d3, d2 )
+	q0 = or_( d3, d1 )
+	return ( q1, q0 )
+
+def encoder8to3_( d7, d6, d5, d4, d3, d2, d1, d0 ):
+	q2 = or_( d7, or3_( d6, d5, d4 ) )
+	q1 = or_( d7, or3_( d6, d3, d2 ) )
+	q0 = or_( d7, or3_( d5, d3, d1 ) )
+	return( q2, q1, q0 )
+
+
+
 ''''''''''''''''''''''''''''' Multiplexers '''''''''''''''''''''''''''''
-
-# def 1to2Decoder_( a ):
-# 	return ( a, not_( a ) )
-
 
 def mux_( a, b, sel ):
 	''' 2to1 multiplexor is equivalent to an if/else statement of form,
@@ -118,7 +163,7 @@ def dMux1to4_( x, s1, s2 ):
 	p1 = dMux_( x, s1 )
 	p2 = dMux_( p1[0], s2 )
 	p3 = dMux_( p1[1], s2 )
-	return ( p2[0],  p2[1],  p3[0],  p3[1] )
+	return ( p2[0], p2[1], p3[0], p3[1] )
 
 
 def dMux1to8_( x, s1, s2, s3 ):
@@ -153,6 +198,7 @@ def muxN8to1_( N, a, b, c, d, e, f, g, h, s1, s2, s3 ):
 	return tuple( mux8to1_( a[i], b[i], c[i], d[i], e[i], f[i], g[i], h[i], s1, s2, s3 ) for i in range( N ) )
 
 
+
 ''''''''''''''''''''''''' multi-way variants '''''''''''''''''''''''''
 
 def or3_( a, b, c ):
@@ -177,6 +223,7 @@ def orNto1_( x ):
 	    t6 = or ( t3, t4 )
 	    t7 = or ( t5, t6 )
 	    return t7  '''
+
 
 def and3_( a, b, c ):
 	return( and_( a, and_( b, c ) ) )
