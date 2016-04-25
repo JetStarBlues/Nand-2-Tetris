@@ -7,6 +7,7 @@ import threading, time
 ''''''''''''''''''''''''''''''' clock '''''''''''''''''''''''''''''''
 
 class Clock():
+	
 	''' Uses Python logic and modules ...
 		 In mechanical and/or FPGA implementation, this would be
 		 handled by an external clock (crsytal oscillator) '''

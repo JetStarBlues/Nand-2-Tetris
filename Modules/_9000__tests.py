@@ -53,20 +53,20 @@ def toDecimal(bitSeq):
 	encoder4to2_( d3, d2, d1, d0 )
 	encoder8to3_( d7, d6, d5, d4, d3, d2, d1, d0 )
 
-
-	mux_( a, b, sel )
-	mux4to1_( a, b, c, d, s1, s2 )
-	mux8to1_( a, b, c, d, e, f, g, h, s1, s2, s3 )
+	mux_( d1, d0, sel )
+	mux4to1_( d3, d2, d1, d0, s1, s0 )
+	mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 )
 	dMux_( x, sel )
-	dMux1to4_( x, s1, s2 )
-	dMux1to8_( x, s1, s2, s3 )
+	dMux1to4_( x, s1, s0 )
+	dMux1to8_( x, s2, s1, s0 )
+
 	notN_( N, x )
 	andN_( N, a, b )
 	orN_( N, a, b )
-	muxN_( N, a, b, sel )
-	muxN4to1_( N, a, b, c, d, s1, s2 )
-	muxN8to1_( N, a, b, c, d, e, f, g, h, s1, s2, s3 )
 
+	muxN_( N, d1, d0, sel )
+	muxN4to1_( N, d3, d2, d1, d0, s1, s0 )
+	muxN8to1_( N, d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 )
 
 	or3_( a, b, c )
 	orNto1_( x )
@@ -169,7 +169,6 @@ class Test_ElementaryGates( unittest.TestCase ):
 			result = encoder8to3_( g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7] )
 			self.assertEqual( toString( result ), g[8] )
 
-
 	def test_mux( self ):
 		''' mux '''
 		for g in k_mux:
@@ -256,15 +255,19 @@ class Test_ElementaryGates( unittest.TestCase ):
 ''''''''''''''''''''''''' arithmetic gates '''''''''''''''''''''''''''
 
 '''
+	zeroN_( N )
+	oneN_( N )
+	isZero_( x )
+
 	halfAdder_( a, b )
 	fullAdder_( a, b, c )
 	addN_( N, a, b )
-	zeroN_( N )
-	oneN_( N )
 	increment_( x )
-	addOne_( x )
+	fastIncrement_( x )
+
 	negate_( x )
-	isZero_( x )
+	isNegative_( x )
+
 	ALU_( x, y, zx, nx, zy, ny, f, no )
 '''
 
@@ -277,6 +280,15 @@ class Test_ElementaryGates( unittest.TestCase ):
 '''
 
 class Test_ArithmeticGates( unittest.TestCase ):
+	
+	def test_zeroN_( self ):
+		pass
+
+	def test_oneN_( self ):
+		pass
+
+	def test_isZero_( self ):
+		pass
 
 	def test_halfAdder( self ):
 		''' halfAdder '''
@@ -296,28 +308,22 @@ class Test_ArithmeticGates( unittest.TestCase ):
 			result = addN_( 16, g[0], g[1] )
 			self.assertEqual( toString( result ), g[2] )
 
-	def test_zeroN_( self ):
-		pass
-
-	def test_oneN_( self ):
-		pass
-
 	def test_increment_( self ):
 		''' increment '''
 		for g in k_increment16:
 			result = increment_( g[0] )
 			self.assertEqual( toString( result ), g[1] )
 
-	def test_addOne_( self ):  # temp unless can make it all with gates
-		''' addOne '''
+	def test_fastIncrement_( self ):  # temp unless can make it all with gates
+		''' fast increment '''
 		for g in k_increment16:
-			result = addOne_( g[0] )
+			result = fastIncrement_( g[0] )
 			self.assertEqual( toString( result ), g[1] )
 
-	def test_negate_( self ):
+	def test_negate_( self ): 
 		pass
 
-	def test_isZero_( self ):
+	def test_isNegative_( self ): 
 		pass
 
 	def test_ALU_( self ):
@@ -331,7 +337,6 @@ class Test_ArithmeticGates( unittest.TestCase ):
 
 
 ''''''''''''''''''''''''''' flip flops '''''''''''''''''''''''''''''
-
 
 
 
