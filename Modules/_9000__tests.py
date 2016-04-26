@@ -34,6 +34,9 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
+def toBinary(N, x):
+	return bin(x)[2:].zfill(N)
+	
 
 ''''''''''''''''''''''''' elementary gates '''''''''''''''''''''''''''
 
@@ -265,6 +268,11 @@ class Test_ElementaryGates( unittest.TestCase ):
 	increment_( x )
 	fastIncrement_( x )
 
+	halfSubtractor_( a, b )
+	fullSubtractor_( a, b, c )
+	subtractN_( N, a, b )
+	subtractN_v2_( N, a, b )
+
 	negate_( x )
 	isNegative_( x )
 
@@ -275,6 +283,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 	k_halfAdder
 	k_fullAdder
 	k_add16
+	k_subract16
 	k_increment16
 	k_ALU16
 '''
@@ -306,6 +315,18 @@ class Test_ArithmeticGates( unittest.TestCase ):
 		''' addN '''
 		for g in k_add16:
 			result = addN_( 16, g[0], g[1] )
+			self.assertEqual( toString( result ), g[2] )
+
+	def test_subtractN_( self ):
+		''' subtractN '''
+		for g in k_subtract16:
+			result = subtractN_( 16, g[0], g[1] )
+			self.assertEqual( toString( result ), g[2] )
+
+	def test_subtractN_v2_( self ):
+		''' subtractN_v2 '''
+		for g in k_subtract16:
+			result = subtractN_v2_( 16, g[0], g[1] )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_increment_( self ):

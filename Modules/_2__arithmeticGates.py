@@ -30,19 +30,21 @@ def halfAdder_( a, b ):
 
 def fullAdder_( a, b, c ):
 
-	sumTemp, carryTemp1 = halfAdder_( a, b )
-	summ, carryTemp2 = halfAdder_( c, sumTemp )
-	carry = or_( carryTemp1, carryTemp2 )
-	return ( summ, carry )
+	# c is the carry bit from the previous circuit
+	summ1, carry1 = halfAdder_( a, b )
+	summ2, carry2 = halfAdder_( summ1, c )
+	carry = or_( carry1, carry2 )
+	return ( summ2, carry )
 
 
 def addN_( N, a, b ):
 
 	''' N bit adder, takes and outputs Nbit numbers '''
 	summ = [None] * N
-	c = 0
+	carry = 0
+
 	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
-		summ[i], c = fullAdder_( a[i], b[i], c )
+		summ[i], carry = fullAdder_( a[i], b[i], carry )
 	return summ
 
 
@@ -75,10 +77,44 @@ def fastIncrement_( x ):
 
 ''''''''''''''''''''''''''''' subtractors '''''''''''''''''''''''''''''
 
-# To do: http://www.electronics-tutorials.ws/combination/binary-subtractor.html
-def halfSubtractor_( a, b ): pass
-def fullSubtractor_( a, b, c ): pass
-def subtractN_( N, a, b ): pass
+# MSB to LSB
+
+def halfSubtractor_( a, b ):
+	# a - b
+	diff = xor_( a, b )
+	borrow = and_( not_( a ), b )
+	return ( diff, borrow )
+
+
+def fullSubtractor_( a, b, c ):
+
+	# c is the borrow bit from the previous circuit
+	diff1, borrow1 = halfSubtractor_( a, b )
+	diff2, borrow2 = halfSubtractor_( diff1, c )
+	borrow = or_( borrow1, borrow2 )
+	return ( diff2, borrow )
+
+
+def subtractN_( N, a, b ):
+
+	''' N bit subractor, takes and outputs Nbit numbers
+		 if a < b, answer returned is in 2s complement
+	'''
+	diff = [None] * N
+	borrow = 0
+
+	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
+		diff[i], borrow = fullSubtractor_( a[i], b[i], borrow )
+	return diff
+
+
+def subtractN_v2_( N, a, b ):
+
+	''' 2s complement addition
+	     ex. 7 - 5 = 7 + (-5) = 7 + (2**n - 5) 
+	'''
+	b_2s = negate_( b )  # 2s complement
+	return addN_( N, a, b_2s )
 
 
 
