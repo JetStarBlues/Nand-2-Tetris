@@ -4,7 +4,7 @@
 import sys
 
 # Computer files
-sys.path.append('Modules')
+sys.path.append('../Modules')
 from _1__elementaryGates import *
 from _2__arithmeticGates import *
 from _3__clock import *
@@ -40,18 +40,18 @@ When updating period values, consider:
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
-def main():
-	global clock 
-	clock.halfTick()
+# Things to execute on clock edges
+def callOnRising():
+	pass
 
-	if clock.isRising:
-		# FSM(clock.value)
-
-	clock.keepTicking(1, main)  # seconds
+def callOnFalling():
+	pass
 
 
-# Run
-if __name__ == '__main__':
-	main()
+clock.callbackRising = callOnRising
+clock.callbackFalling = callOnFalling
 
-# python latchTest.py > output.txt
+
+# Start program
+clock.duration = 1 # seconds
+clock.run()

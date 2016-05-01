@@ -12,19 +12,26 @@ class Clock():
 		 In mechanical and/or FPGA implementation, this would be
 		 handled by an external clock (crsytal oscillator) '''
 
-	def __init__(self):
+	def __init__( self ):
 
+		# time stuff
+		self.duration = None  	  # seconds
+		self.currentCycle = -1    # start at 0
+
+		# wave shape
 		self.value = 0
 		self.halfPeriod = 1e-4   # seconds
-
-		self.currentCycle = -1   # start at 0
 
 		# psuedo edges
 		self.isRising = False
 		self.isFalling = False
 
+		# functions to call on edges
+		self.callbackRising = None
+		self.callbackFalling = None
 
-	def halfTick(self):
+
+	def halfTick( self ):
 
 		self.value = 1 - self.value  # flip
 
@@ -39,7 +46,15 @@ class Clock():
 			self.isFalling = True
 
 
-	def keepTicking(self, duration, callback):
+	def run( self ):
 
-		if time.clock() < duration: # seconds
-			threading.Timer( self.halfPeriod, callback ).start()
+		self.halfTick()
+
+		if self.isRising and self.callbackRising:
+			self.callbackRising()
+
+		elif self.isFalling and self.callbackFalling:
+			self.callbackFalling()
+
+		if time.clock() < self.duration:
+			threading.Timer( self.halfPeriod, self.run ).start()

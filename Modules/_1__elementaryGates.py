@@ -69,7 +69,7 @@ def encoder8to3_( d7, d6, d5, d4, d3, d2, d1, d0 ):
 	q2 = or_( d7, or3_( d6, d5, d4 ) )
 	q1 = or_( d7, or3_( d6, d3, d2 ) )
 	q0 = or_( d7, or3_( d5, d3, d1 ) )
-	return( q2, q1, q0 )
+	return ( q2, q1, q0 )
 
 
 
@@ -240,7 +240,7 @@ def muxN8to1_( N, d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 ''''''''''''''''''''''''' multi-way variants '''''''''''''''''''''''''
 
 def or3_( a, b, c ):
-	return( or_( a, or_( b, c ) ) )
+	return ( or_( a, or_( b, c ) ) )
 
 def orNto1_( x ):
 	# technically, could break once reach a one ...
@@ -264,7 +264,7 @@ def orNto1_( x ):
 
 
 def and3_( a, b, c ):
-	return( and_( a, and_( b, c ) ) )
+	return ( and_( a, and_( b, c ) ) )
 
 def andNto1_( x ):
 	# technically, could break once reach a zero ...

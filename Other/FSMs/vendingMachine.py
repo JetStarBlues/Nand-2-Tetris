@@ -188,18 +188,19 @@ def VM(clk):
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
-def main():
-	global clock 
-	clock.halfTick()
 
-	if clock.isRising:
-		VM(clock.value)
+# Things to execute on clock edges
+def callOnRising():
+	VM(clock.value)
 
-	clock.keepTicking(1, main)  # seconds
+def callOnFalling():
+	pass
 
 
-# Run
-if __name__ == '__main__':
-	main()
+clock.callbackRising = callOnRising
+clock.callbackFalling = callOnFalling
 
-# python latchTest.py > output.txt
+
+# Start program
+clock.duration = 1 # seconds
+clock.run()

@@ -89,18 +89,18 @@ def SD(clk):
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
-def main():
-	global clock 
-	clock.halfTick()
+# Things to execute on clock edges
+def callOnRising():
+	SD(clock.value)
 
-	if clock.isRising:
-		SD(clock.value)
-
-	clock.keepTicking(1, main)  # seconds
+def callOnFalling():
+	pass
 
 
-# Run
-if __name__ == '__main__':
-	main()
+clock.callbackRising = callOnRising
+clock.callbackFalling = callOnFalling
 
-# python latchTest.py > output.txt
+
+# Start program
+clock.duration = 1 # seconds
+clock.run()
