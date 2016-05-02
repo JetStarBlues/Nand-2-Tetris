@@ -70,11 +70,12 @@ k_idx = 0
 
 
 ''' =========================================================
-                   Register_( clk, x, write )
+                   RegisterN_( N, clk, x, write )
 	========================================================= '''
 
-k = k_register
-register = Register_()
+k = k_register16
+N = 16
+register = RegisterN_( N )
 
 def test(clk):
 
@@ -85,18 +86,18 @@ def test(clk):
 	if k_idx <= len(k) - 1: 
 
 		# execute ---
-		x = k[k_idx][1]
+		x = toBinary( N, k[k_idx][1] )
 		write = k[k_idx][2]
-		expected = k[k_idx][3]
+		expected = toBinary( N, k[k_idx][3] )
 
 		register.doTheThing( clk, x, write )
 
 
 		# record result ---
-		time.sleep(delayRecording)
+		time.sleep(delayRecording * 2 * N)
 		
-		result = register.out()
-		
+		result = toString( register.out() )
+
 		if expected != result:
 			fails.append( [ expected, result, k_idx ] ) # log the fail
 

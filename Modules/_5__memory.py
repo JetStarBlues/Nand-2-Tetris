@@ -12,24 +12,50 @@ class Register_():
 
 	''' 1 bit register '''
 
-	def __init__(self):
+	def __init__( self ):
 
 		self.ff = DFlipFlop()
 		self.ff.clear()         # start with out = 0
-		self.out = self.ff.q1   # user friendly name
 
 
-	def doTheThing(self, clk, x, write):
+	def doTheThing( self, clk, x, write ):
 
 		d = mux_( x, self.ff.q1, write ) # read or write
 
 		self.ff.doTheThing( clk, d )
 		
-		self.out = self.ff.q1  # update
+
+	def out( self ):
+		# as fx cause have to wait for values to 'settle'
+		return self.ff.q1
 
 
 
-def registerN_( N ): pass
+class RegisterN_():
+
+	''' n bit register '''
+
+	def __init__( self, N ):
+
+		self.N = N
+
+		self.registers = []
+		for i in range( self.N ):
+			self.registers.append( Register_() )
+
+
+	def doTheThing( self, clk, x, write ):
+
+		for i in range( self.N ):
+
+			self.registers[i].doTheThing( clk, x[i], write )  # read or write
+
+
+	def out( self ):
+
+		return tuple( register.out() for register in self.registers )
+
+
 
 
 '''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
