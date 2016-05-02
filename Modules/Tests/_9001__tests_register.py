@@ -82,7 +82,7 @@ def test(clk):
 	global k_idx
 	
 
-	if k_idx < len(k) - 1: 
+	if k_idx <= len(k) - 1: 
 
 		# execute ---
 		x = k[k_idx][1]
@@ -91,12 +91,14 @@ def test(clk):
 
 		register.doTheThing( clk, x, write )
 
+
 		# record result ---
 		time.sleep(delayRecording)
+		
 		result = register.out
-
 		if expected != result:
 			fails.append( [ expected, result, k_idx ] ) # log the fail
+
 
 		# increment ---
 		k_idx += 1
