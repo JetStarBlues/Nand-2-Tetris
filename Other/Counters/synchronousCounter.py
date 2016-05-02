@@ -40,6 +40,12 @@ jk2 = JKFlipFlop()
 jk3 = JKFlipFlop()
 jk4 = JKFlipFlop()
 
+# start with all gates reset
+jk1.clear()
+jk2.clear()
+jk3.clear()
+jk4.clear()
+
 def C1(clk):
 
 	jk1.doTheThing( clk, 1, 1 )

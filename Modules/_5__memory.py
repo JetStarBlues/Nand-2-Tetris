@@ -8,27 +8,31 @@ from _4__flipFlops import *
 
 ''''''''''''''''''''''''''' registers '''''''''''''''''''''''''''''
 
-class register_():
+class Register_():
 
 	''' 1 bit register '''
 
 	def __init__(self):
 
 		self.ff = DFlipFlop()
+		self.ff.clear()         # start with out = 0
+		self.out = self.ff.q1   # user friendly name
 
 
 	def doTheThing(self, clk, x, write):
 
-		d = mux_( x, self.ff.q1, write )
+		d = mux_( x, self.ff.q1, write ) # read or write
 
 		self.ff.doTheThing( clk, d )
+		
+		self.out = self.ff.q1  # update
 
 
 
 def registerN_( N ): pass
 
 
-''''''''''''''''''''''''''''''' RAM ''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
 
 def RAM8_( x, addr, write ): pass
 def RAMN8_(): pass

@@ -8,9 +8,12 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
 # Built ins
+import sys
 import unittest
 
+
 # Computer files
+sys.path.append('../')
 from _1__elementaryGates import *
 from _2__arithmeticGates import *
 from _3__clock import *
@@ -18,8 +21,7 @@ from _4__flipFlops import *
 
 
 # Testing files
-import sys
-sys.path.append('Tests/KnownValues')
+sys.path.append('KnownValues')
 from kv_1__elementaryGates import *
 from kv_2__arithmeticGates import *
 
@@ -35,8 +37,10 @@ def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
 def toBinary(N, x):
+	if x < 0: x = 2**N + x  # 2s complement
 	return bin(x)[2:].zfill(N)
 	
+
 
 ''''''''''''''''''''''''' elementary gates '''''''''''''''''''''''''''
 
@@ -355,9 +359,6 @@ class Test_ArithmeticGates( unittest.TestCase ):
 			self.assertEqual( toDecimal( toString( result[1] ) ), g[9] )
 			self.assertEqual( toDecimal( toString( result[2] ) ), g[10] )
 
-
-
-''''''''''''''''''''''''''' flip flops '''''''''''''''''''''''''''''
 
 
 

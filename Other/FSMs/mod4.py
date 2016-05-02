@@ -60,9 +60,9 @@ def FSM(clk):
 	#
 	dA.doTheThing( 
 		clk, 
-		or_( 
-			and3_( not_(reset[idx]), dA.q1, dB._q1 ),
-			and3_( not_(reset[idx]), dA._q1, dB.q1 )
+		and_( 
+			not_(reset[idx]),
+			xor_(dA.q1, dB.q1 )
 		)
 	)
 

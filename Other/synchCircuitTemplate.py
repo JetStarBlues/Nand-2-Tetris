@@ -9,6 +9,7 @@ from _1__elementaryGates import *
 from _2__arithmeticGates import *
 from _3__clock import *
 from _4__flipFlops import *
+from _5__memory import *
 
 
 ''''''''''''''''''''''''' helpers '''''''''''''''''''''''''
