@@ -1,5 +1,8 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
+# Built ins
+import multiprocessing
+
 # Computer files
 from _1__elementaryGates import *
 from _2__arithmeticGates import *
@@ -39,14 +42,12 @@ class RegisterN_():
 
 		self.N = N
 
-		self.registers = []
-		for i in range( self.N ):
-			self.registers.append( Register_() )
+		self.registers = [ Register_() for i in range( self.N ) ]
 
 
 	def doTheThing( self, clk, x, write ):
 
-		for i in range( self.N ):
+		for i in range( self.N ): # fix me
 
 			self.registers[i].doTheThing( clk, x[i], write )  # read or write
 

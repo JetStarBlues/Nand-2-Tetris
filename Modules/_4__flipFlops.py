@@ -4,7 +4,9 @@
 from random import random
 import threading, time
 
+
 # Computer files
+from _0__globalConstants import *
 from _1__elementaryGates import *
 
 
@@ -25,7 +27,7 @@ class JKFlipFlop():
 		self._q1 = not_( self.q1 )
 
 		# Faux mechanical delay
-		self.propogationDelay = 0.01  #seconds
+		self.propogationDelay = CLOCK_HALF_PERIOD * 0.2 #seconds
 
 
 	def doTheThing( self, e, j, k ):
@@ -33,7 +35,8 @@ class JKFlipFlop():
 		# https://pymotw.com/2/threading/
 		threading.Thread(
 			target = self.doTheThing_, 
-			args = ( e, j, k ) 
+			args = ( e, j, k ),
+			name = 'ff_thread' 
 		).start()
 
 
@@ -96,7 +99,7 @@ class DFlipFlop():
 		self._q1 = not_( self.q1 )
 
 		# Faux mechanical delay
-		self.propogationDelay = 0.01  #seconds
+		self.propogationDelay = CLOCK_HALF_PERIOD * 0.2 #seconds
 
 
 	def doTheThing( self, e, d ):
@@ -104,18 +107,17 @@ class DFlipFlop():
 		# https://pymotw.com/2/threading/
 		threading.Thread(
 			target = self.doTheThing_, 
-			args = ( e, d ) 
+			args = ( e, d ),
+			name = 'ff_thread'
 		).start()
 
 
 	def doTheThing_( self, e, d ):
 
-		# print( "called ", threading.currentThread().getName() )
-
 		# execute only after delay...
+		# print("> ff delay started at", round(time.time(),8))
 		time.sleep( self.propogationDelay )
-
-		# print( "executing ", threading.currentThread().getName() )
+		# print(">> ff delay complete at", round(time.time(),8))
 
 		#
 		r = and_( e, not_( d ) )

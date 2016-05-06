@@ -4,6 +4,10 @@
 import threading, time
 
 
+# Computer files
+from _0__globalConstants import *
+
+
 ''''''''''''''''''''''''''''''' clock '''''''''''''''''''''''''''''''
 
 class Clock():
@@ -15,12 +19,12 @@ class Clock():
 	def __init__( self ):
 
 		# time stuff
-		self.duration = None  	  # seconds
+		self.duration = 1e99  	  # seconds
 		self.currentCycle = -1    # start at 0
 
 		# wave shape
 		self.value = 0
-		self.halfPeriod = 1e-4   # seconds
+		self.halfPeriod = CLOCK_HALF_PERIOD   # seconds
 
 		# psuedo edges
 		self.isRising = False
@@ -38,15 +42,30 @@ class Clock():
 		self.currentCycle += self.value  # count clock cycles
 
 		# pseudo edges
-		if self.value: 			 	 # 0 to 1
+		if self.value == 1:		 	 # 0 to 1
 			self.isRising = True
 			self.isFalling = False
 		else: 					  	 # 1 to 0
 			self.isRising = False
 			self.isFalling = True
 
+		# print("clock half tick at", round(time.time(),8), self.isRising)
+
+
+	def stop( self ):
+
+		self.duration = time.clock()
+
 
 	def run( self ):
+
+		threading.Thread(
+			target = self.run_,
+			name = 'clock_thread'
+		).start()
+
+
+	def run_( self ):	
 
 		self.halfTick()
 
@@ -57,4 +76,5 @@ class Clock():
 			self.callbackFalling()
 
 		if time.clock() < self.duration:
-			threading.Timer( self.halfPeriod, self.run ).start()
+			time.sleep( self.halfPeriod )
+			self.run_()

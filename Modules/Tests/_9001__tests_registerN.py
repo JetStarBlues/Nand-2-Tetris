@@ -10,7 +10,6 @@
 # Built ins
 import sys
 # import unittest  ... Not sure how to use for clocked circuits. Revisit!!
-import threading
 
 
 # Computer files
@@ -63,68 +62,71 @@ def logFails():
 
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
-# Setup ---
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-k_idx = 0
-
-
 ''' =========================================================
                    RegisterN_( N, clk, x, write )
 	========================================================= '''
+
+# Setup ---
+
+clock = Clock()
+k_idx = -2
 
 k = k_register16
 N = 16
 register = RegisterN_( N )
 
-def test(clk):
 
-	global fails
+def update(clk):
+
 	global k_idx
 	
+	# increment
+	k_idx += 2
 
-	if k_idx <= len(k) - 1: 
 
-		# execute ---
+	# execute
+	if k_idx <= len(k) - 2: 
+		
 		x = toBinary( N, k[k_idx][1] )
 		write = k[k_idx][2]
-		expected = toBinary( N, k[k_idx][3] )
 
 		register.doTheThing( clk, x, write )
 
 
-		# record result ---
-		time.sleep(delayRecording * 2 * N)
-		
-		result = toString( register.out() )
-
-		if expected != result:
-			fails.append( [ expected, result, k_idx ] ) # log the fail
-
-
-		# increment ---
-		k_idx += 1
-
-
+	# exhausted test values
 	else:
-		# exhausted test values, show results ---
-		clock.duration = clock.duration - 1e5 # stop the clock
-		logFails()
+		clock.stop() # stop the clock
+		logFails()   # show results
+
+
+def record():
+
+	global fails
+
+	result = toString( register.out() )
+
+	expected = toBinary( N, k[k_idx + 1][3] )
+
+	if expected != result:
+		fails.append( [ expected, result, k_idx ] ) # log the fail
+
 
 
 ''''''''''''''''''''''''''' run '''''''''''''''''''''''''''''
 
 # Things to execute on clock edges
 def callOnRising():
-	test( clock.value )
+	update( clock.value )
 
 def callOnFalling():
-	pass
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 60 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()
+
