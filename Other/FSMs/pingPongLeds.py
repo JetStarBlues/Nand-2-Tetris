@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 nStages = 3
 dff = []
@@ -41,6 +30,8 @@ for i in range(nStages): dff.append( DFlipFlop() )
 
 # start with all gates reset
 for i in range(nStages): dff[i].clear()
+
+n_iterations = 0
 
 #
 def logState(data):
@@ -75,9 +66,14 @@ def FSM(clk):
 	dff[2].doTheThing( clk, dff[2]._q1 )
 
 
+	global n_iterations
+	n_iterations += 1
+	if n_iterations >= 100: clock.stop() # stop the clock
+
+
+def record():
+
 	# Record output
-	global delayRecording
-	time.sleep(delayRecording)	
 	logState([ dff[0].q1, dff[1].q1, dff[2].q1 ])
 
 
@@ -89,13 +85,13 @@ def callOnRising():
 	FSM(clock.value)
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

@@ -76,5 +76,15 @@ class Clock():
 			self.callbackFalling()
 
 		if time.clock() < self.duration:
-			time.sleep( self.halfPeriod )
-			self.run_()
+
+			# gives a 'maximum recursion depth exceeded' error
+			# time.sleep( self.halfPeriod )
+			# self.run_()
+
+
+			# possible problem in future, each time timer is called new thread created
+			# print( threading.currentThread().getName() )
+			threading.Timer( 
+				self.halfPeriod, 
+				self.run_ 
+			).start()

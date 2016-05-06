@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 nStages = 3
 dff = []
@@ -86,33 +75,32 @@ def RC(clk):
 	)
 
 	#
-	if dataIdx >= 0 : 
+	if dataIdx >= 0 : dataIdx -= 1
 
-		dataIdx -= 1
+	else : clock.stop() # stop the clock
 
-		# Record output
-		global delayRecording
-		time.sleep(delayRecording)
-		logState( data, [ dff[2].q1, dff[1].q1, dff[0].q1 ] )
 
-	else:
-		print(".")
+def record():
+
+	data = dataIn[dataIdx]
+
+	logState( data, [ dff[2].q1, dff[1].q1, dff[0].q1 ] )
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
 # Things to execute on clock edges
 def callOnRising():
-	RC(clock.value)
+	RC( clock.value )
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

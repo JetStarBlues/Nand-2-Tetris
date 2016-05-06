@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 nStages = 3
 dff = []
@@ -45,6 +34,7 @@ for i in range(nStages): dff[i].clear()
 user_input = [0,1,1,1,0,1,1,0,1,0,0,1,1,0,0,0,0,0,1,1,1,1,0,1,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1]
 user_input_idx = 0
 x = [0] * 5
+out = None
 
 def logState( thing, state ):
 	state = toString( state )
@@ -155,6 +145,7 @@ def VM(clk):
 	global user_input
 	global user_input_idx
 	global x
+	global out
 	
 	x[1] = user_input[user_input_idx]
 	x[0] = user_input[user_input_idx + 1]
@@ -168,39 +159,36 @@ def VM(clk):
 	dff[1].doTheThing( clk, out[1] )
 	dff[2].doTheThing( clk, out[2] )
 
+
 	#
-	if user_input_idx < len( user_input ) - 2: 
+	if user_input_idx < len( user_input ) - 2: user_input_idx += 2
 
-		user_input_idx += 2
+	else: clock.stop() # stop the clock
 
-		# Record output
-		global delayRecording
-		time.sleep(delayRecording)
-		logState( 'input', [ x[1], x[0] ] )
-		# logState( 'state', [ out[0], out[1], out[2] ] )
-		logState( 'dispense', [ out[3] ] )
-		logState( 'change', [ out[4], out[5], out[6] ] )
-		print('---')
 
-	else:
-		print(".")
+def record():
+
+	logState( 'input', [ x[1], x[0] ] )
+	# logState( 'state', [ out[0], out[1], out[2] ] )
+	logState( 'dispense', [ out[3] ] )
+	logState( 'change', [ out[4], out[5], out[6] ] )
+	print('---')
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
-
 # Things to execute on clock edges
 def callOnRising():
-	VM(clock.value)
+	VM( clock.value )
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

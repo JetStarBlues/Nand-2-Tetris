@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 nStages = 4
 dff = []
@@ -47,6 +36,7 @@ sequence.reverse()
 dataIn = sequence
 # dataIn = [0,1,1,1,0,1,1,0,1,0,0,1,1,0]
 dataIdx = len(dataIn) - 1  # load RtoL
+out = None
 
 
 def SD(clk):
@@ -56,6 +46,7 @@ def SD(clk):
 
 	global dataIn
 	global dataIdx
+	global out
 
 	data = dataIn[dataIdx]
 
@@ -121,34 +112,34 @@ def SD(clk):
 		)
 	)
 
+
 	#
-	if dataIdx >= 0 : 
+	if dataIdx >= 0 : dataIdx -= 1		
 
-		dataIdx -= 1
+	else: clock.stop() # stop the clock
 
-		# Record output
-		global delayRecording
-		time.sleep(delayRecording)
-		print( data, " ", out )
 
-	else:
-		print(".")
+def record():
+
+	data = dataIn[dataIdx + 1]
+
+	print( data, " ", out )
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
 # Things to execute on clock edges
 def callOnRising():
-	SD(clock.value)
+	SD( clock.value )
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

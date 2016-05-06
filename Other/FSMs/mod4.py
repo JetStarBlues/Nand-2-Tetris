@@ -19,23 +19,12 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
 
-# http://www.csee.umbc.edu/courses/undergraduate/313/Fall03/cpatel2/slides/slides20.pdf
+# Mod4 FSM diagram -> www.csee.umbc.edu/courses/undergraduate/313/Fall03/cpatel2/slides/slides20.pdf
+
+clock = Clock()
 
 dA = DFlipFlop()
 dB = DFlipFlop()
@@ -49,8 +38,9 @@ def logState(a, b):
 	# return( toDecimal(state) )
 	return( state + "   " + str( toDecimal(state) ) )
 
-reset = [0,0,1,1,1,0,0,0,0,0,0] # active high
+reset = [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0] # active high
 idx = len(reset) - 1  # load RtoL
+
 
 def FSM(clk):
 
@@ -74,10 +64,12 @@ def FSM(clk):
 	#
 	if idx >= 0 : idx -= 1
 
-	
+	else: clock.stop() # stop the clock
+
+
+def record():
+
 	# Record output
-	global delayRecording
-	time.sleep(delayRecording)
 	print( logState( dA.q1, dB.q1 ) )
 
 
@@ -88,13 +80,13 @@ def callOnRising():
 	FSM(clock.value)
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

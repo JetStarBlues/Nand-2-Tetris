@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 nStages = 3
 dff = []
@@ -47,15 +36,17 @@ sequence.reverse()
 dataIn = sequence
 # dataIn = [0,1,1,1,0,1,1,0,1,0,0,1,1,0]
 dataIdx = len(dataIn) - 1  # load RtoL
+out = None
 
 
 def SD(clk):
 	'''outputs a 1 when detect 101 or 110 or 011'''
 
-	# notes and using mux'es
+	# using mux'es ( www.csee.umbc.edu/courses/undergraduate/313/Fall03/cpatel2/slides/slides20.pdf )
 
 	global dataIn
 	global dataIdx
+	global out
 
 	data = dataIn[dataIdx]
 
@@ -63,46 +54,46 @@ def SD(clk):
 
 	dff[0].doTheThing( 
 		clk, 
-		mux8to1_( 0, data, 1, data, 1, data, 1, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+		mux8to1_( 0, 1, data, 1, data, 1, data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
 	)
 	dff[1].doTheThing( 
 		clk, 
-		mux8to1_( data, n_data, data, n_data, data, n_data, data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+		mux8to1_( 0, data, n_data, data, n_data, data, n_data, data, dff[0].q1, dff[1].q1, dff[2].q1 )
 	)
 	dff[2].doTheThing( 
 		clk, 
-		mux8to1_( n_data, n_data, n_data, n_data, n_data, n_data, n_data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+		mux8to1_( 0, n_data, n_data, n_data, n_data, n_data, n_data, n_data, dff[0].q1, dff[1].q1, dff[2].q1 )
 	)
-	out = mux8to1_( 0, 0, 0, 0, data, data, n_data, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+	out = mux8to1_( 0, n_data, data, data, 0, 0, 0, 0, dff[0].q1, dff[1].q1, dff[2].q1 )
+
 
 	#
-	if dataIdx >= 0 : 
+	if dataIdx >= 0 : dataIdx -= 1		
 
-		dataIdx -= 1
+	else: clock.stop() # stop the clock
 
-		# Record output
-		global delayRecording
-		time.sleep(delayRecording)
-		print( data, " ", out )
 
-	else:
-		print(".")
+def record():
+
+	data = dataIn[dataIdx + 1]
+
+	print( data, " ", out )
 
 
 ''''''''''''''''''''''''' run '''''''''''''''''''''''''
 
 # Things to execute on clock edges
 def callOnRising():
-	SD(clock.value)
+	SD( clock.value )
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()

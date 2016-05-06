@@ -19,21 +19,10 @@ def toString(array):
 def toDecimal(bitSeq):
 	return int(bitSeq, 2)
 
-clock = Clock()
-delayRecording = clock.halfPeriod * 0.9
-
-'''
-When updating period values, consider:
-	1) clock's half period
-	2) FF propogation delay
-		> faux/simulated
-		> how long take for Q to update to new inputs
-	3) record delay 
-		> wait till Q/output values settled before recording/reading them.
-		> Selection range -> immediately after FF Propogation delay .. before end of second halfTick
-'''
 
 ''''''''''''''''''''''''' main '''''''''''''''''''''''''
+
+clock = Clock()
 
 jk1 = JKFlipFlop()
 jk2 = JKFlipFlop()
@@ -46,6 +35,9 @@ jk2.clear()
 jk3.clear()
 jk4.clear()
 
+n_iterations = 0
+
+
 def C1(clk):
 
 	jk1.doTheThing( clk, 1, 1 )
@@ -53,8 +45,12 @@ def C1(clk):
 	jk3.doTheThing( clk, and_(jk2._q1, jk1._q1), and_(jk2._q1, jk1._q1) )
 	jk4.doTheThing( clk, and3_(jk3._q1, jk2._q1, jk1._q1), and3_(jk3._q1, jk2._q1, jk1._q1) )
 
-	global delayRecording
-	time.sleep(delayRecording)
+	global n_iterations
+	n_iterations += 1
+	if n_iterations >= 1000: clock.stop() # stop the clock
+
+
+def record():
 	bitSeq = toString( [jk4.q1, jk3.q1, jk2.q1, jk1.q1] )
 	print( toString( [bitSeq, "    ", toDecimal(bitSeq)] ) )
 
@@ -66,13 +62,13 @@ def callOnRising():
 	C1(clock.value)
 
 def callOnFalling():
-	pass
-
+	record()
 
 clock.callbackRising = callOnRising
 clock.callbackFalling = callOnFalling
 
 
-# Start program
-clock.duration = 1 # seconds
-clock.run()
+if __name__ == '__main__': 
+
+	# Start program
+	clock.run()
