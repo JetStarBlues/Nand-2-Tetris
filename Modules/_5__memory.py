@@ -137,9 +137,55 @@ class RAMXN_():
 
 ''''''''''''''''''''''''' program counter '''''''''''''''''''''''''''
 
+# class ProgramCounterN_():
+
+# 	''' N bit program counter _ v1 
+# 		 - Shortfalls: can't handle cases where more than one of the control values is 1 
+# 		                (since uses decoder to assign states e.g. 1000 > 11 > write )
+# 	'''
+
+# 	def __init__( self, N ):
+
+# 		self.N = N
+		
+# 		self.register = RegisterN_( N )
+
+
+# 	def doTheThing( self, clk, x, write, inc, rst ):
+		
+# 		change = or3_( write, inc, rst )
+
+# 		action = encoder4to2_( write, inc, rst, not_( change ) )
+
+# 		d = muxN4to1_(
+
+# 			self.N,
+
+# 			x,
+# 			incrementN_( self.N, self.register.out() ),
+# 			zeroN_( self.N ),
+# 			self.register.out(),
+
+# 			action[0], action[1]
+# 		)
+
+# 		self.register.doTheThing( clk, d, change )
+
+
+# 	def out( self ):
+		
+# 		return self.register.out()
+
+
 class ProgramCounterN_():
 
-	''' fdf '''
+	''' N bit program counter _ v2 
+
+			if    rst(t-1)   : out(t) = 0
+			elif  write(t-1) : out(t) = in(t-1)
+			elif  inc(t-1)   : out(t) = out(t-1) + 1
+			else             : out(t) = out(t-1)
+	'''
 
 	def __init__( self, N ):
 
@@ -152,19 +198,28 @@ class ProgramCounterN_():
 		
 		change = or3_( write, inc, rst )
 
-		action = encoder4to2_( write, inc, rst, not_( change ) )
+		d = muxN_(
 
-		d = muxN4to1_(
+				self.N,
+				zeroN_( self.N ),
+				muxN_(
 
-			self.N,
+					self.N,
+					x,
+					muxN_(
 
-			x,
-			incrementN_( self.N, self.register.out() ),
-			zeroN_( self.N ),
-			self.register.out(),
+						self.N,
+						incrementN_( self.N, self.register.out() ),
+						self.register.out(),
 
-			action[0], action[1]
-		)
+						inc 
+					),
+
+					write
+				),
+
+				rst
+			)
 
 		self.register.doTheThing( clk, d, change )
 
