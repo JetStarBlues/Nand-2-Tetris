@@ -269,7 +269,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 	halfAdder_( a, b )
 	fullAdder_( a, b, c )
 	addN_( N, a, b )
-	increment_( x )
+	incrementN_( N, x )
 	fastIncrement_( x )
 
 	halfSubtractor_( a, b )
@@ -333,10 +333,10 @@ class Test_ArithmeticGates( unittest.TestCase ):
 			result = subtractN_v2_( 16, g[0], g[1] )
 			self.assertEqual( toString( result ), g[2] )
 
-	def test_increment_( self ):
-		''' increment '''
+	def test_incrementN_( self ):
+		''' incrementN '''
 		for g in k_increment16:
-			result = increment_( g[0] )
+			result = incrementN_( 16, g[0] )
 			self.assertEqual( toString( result ), g[1] )
 
 	def test_fastIncrement_( self ):  # temp unless can make it all with gates

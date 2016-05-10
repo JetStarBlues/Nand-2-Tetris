@@ -137,13 +137,38 @@ class RAMXN_():
 
 ''''''''''''''''''''''''' program counter '''''''''''''''''''''''''''
 
-def programCounter_( x, inc, write, rst ): pass
+class ProgramCounterN_():
+
+	''' fdf '''
+
+	def __init__( self, N ):
+
+		self.N = N
+		
+		self.register = RegisterN_( N )
 
 
+	def doTheThing( self, clk, x, write, inc, rst ):
+		
+		change = or3_( write, inc, rst )
+
+		action = encoder4to2_( write, inc, rst, not_( change ) )
+
+		d = muxN4to1_(
+
+			self.N,
+
+			x,
+			incrementN_( self.N, self.register.out() ),
+			zeroN_( self.N ),
+			self.register.out(),
+
+			action[0], action[1]
+		)
+
+		self.register.doTheThing( clk, d, change )
 
 
-''''''''''''''''''''''''' Other '''''''''''''''''''''''''
-
-# def tristateBuffer_( c, x ):
-# 	# www.cs.umd.edu/class/sum2003/cmsc311/Notes/CompOrg/tristate.html
-# 	return ( and_( c, x ) )
+	def out( self ):
+		
+		return self.register.out()

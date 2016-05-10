@@ -63,7 +63,7 @@ def logFails():
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
 ''' =========================================================
-                RAM8N_( N, clk, x, write, address )
+           ProgramCounterN_( N, clk, x, write, inc, rst )
 	========================================================= '''
 
 # Setup ---
@@ -71,9 +71,9 @@ def logFails():
 clock = Clock()
 k_idx = -2
 
-k = k_ram8_16
+k = k_programCounter_16
 N = 16
-ram = RAM8N_( N )
+pc = ProgramCounterN_( N )
 
 
 def update(clk):
@@ -89,9 +89,10 @@ def update(clk):
 		
 		x = toBinary( N, k[k_idx][1] )
 		write = k[k_idx][2]
-		address = k[k_idx][3]
+		inc = k[k_idx][3]
+		rst = k[k_idx][4]
 
-		ram.doTheThing( clk, x, write, address )
+		pc.doTheThing( clk, x, write, inc, rst )
 
 
 	# exhausted test values
@@ -104,9 +105,11 @@ def record():
 
 	global fails
 
-	result = toString( ram.out() )
+	result = toString( pc.out() )
 
-	expected = toBinary( N, k[k_idx + 1][4] )
+	# print( toDecimal( result ) )
+
+	expected = toBinary( N, k[k_idx + 1][5] )
 
 	if expected != result:
 		fails.append( [ expected, result, k_idx + 1 ] ) # log the fail

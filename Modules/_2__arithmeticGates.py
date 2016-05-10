@@ -48,10 +48,9 @@ def addN_( N, a, b ):
 	return summ
 
 
-def increment_( x ):
+def incrementN_( N, x ):
 
 	''' add one '''
-	N = len( x )
 	b = oneN_( N )
 	return addN_( N, x, b )
 
@@ -113,7 +112,7 @@ def subtractN_v2_( N, a, b ):
 	''' 2s complement addition
 	     ex. 7 - 5 = 7 + (-5) = 7 + (2**n - 5) 
 	'''
-	b_2s = negate_( b )  # 2s complement
+	b_2s = negateN_( N, b )  # 2s complement
 	return addN_( N, a, b_2s )
 
 
@@ -122,7 +121,7 @@ def subtractN_v2_( N, a, b ):
 
 # MSB to LSB
 
-def negate_( x ):
+def negateN_( N, x ):
 
 	''' 2s complement ->  -x = 2^n - x = ( 2^n - 1 ) - x + 1 '''
 
@@ -130,8 +129,8 @@ def negate_( x ):
 	temp = tuple( not_( b ) for b in x )
 
 	## Add 1
-	return fastIncrement_( temp ) # uses shortcut
-	# return increment_( temp )   # uses fullAdder_
+	return fastIncrement_( temp )     # uses shortcut
+	# return incrementN_( N, temp )   # uses fullAdder_
 
 
 def isNegative_( x ):
