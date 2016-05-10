@@ -107,7 +107,7 @@ def record():
 	expected = k[k_idx + 1][3]
 
 	if expected != result:
-		fails.append( [ expected, result, k_idx ] ) # log the fail
+		fails.append( [ expected, result, k_idx + 1 ] ) # log the fail
 
 
 

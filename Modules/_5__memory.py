@@ -33,10 +33,9 @@ class Register_():
 		return self.ff.q1
 
 
-
 class RegisterN_():
 
-	''' n bit register '''
+	''' N bit register '''
 
 	def __init__( self, N ):
 
@@ -47,7 +46,7 @@ class RegisterN_():
 
 	def doTheThing( self, clk, x, write ):
 
-		for i in range( self.N ): # fix me
+		for i in range( self.N ):
 
 			self.registers[i].doTheThing( clk, x[i], write )  # read or write
 
@@ -58,14 +57,82 @@ class RegisterN_():
 
 
 
-
 '''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
 
-def RAM8_( x, addr, write ): pass
-def RAMN8_(): pass
+class RAM8_():
 
-def RAMX_(): pass
-def RAMNX_(): pass
+	''' 8 register 1 bit RAM '''
+
+	def __init__( self ):
+
+		self.registers = [ Register_() for i in range( 8 ) ]
+
+		self.address = None
+
+
+	def doTheThing( self, clk, x, write, address ):
+
+		'''
+		 In the physical implementation, choosing which register to enable would be
+		 via combo use of decoder and tristate buffer.
+		 Unable atm to represent z-state of tristate buffer in this emulator.
+		'''
+		
+		self.registers[address].doTheThing( clk, x, write )  # read or write
+		
+		self.address = address
+
+
+	def out( self ):
+
+		return self.registers[self.address].out()
+
+
+class RAM8N_():
+
+	''' 8 register N bit RAM '''
+
+	def __init__( self, N ):
+
+		self.registers = [ RegisterN_( N ) for i in range( 8 ) ]
+
+		self.address = None
+
+
+	def doTheThing( self, clk, x, write, address ):
+		
+		self.registers[address].doTheThing( clk, x, write )  # read or write
+		
+		self.address = address
+
+
+	def out( self ):
+
+		return self.registers[self.address].out()
+
+
+class RAMXN_():
+
+	''' X register N bit RAM '''
+
+	def __init__( self, X, N ):
+
+		self.registers = [ RegisterN_( N ) for i in range( X ) ]
+
+		self.address = None
+
+
+	def doTheThing( self, clk, x, write, address ):
+		
+		self.registers[address].doTheThing( clk, x, write )  # read or write
+		
+		self.address = address
+
+
+	def out( self ):
+
+		return self.registers[self.address].out()
+
 
 
 ''''''''''''''''''''''''' program counter '''''''''''''''''''''''''''

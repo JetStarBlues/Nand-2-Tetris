@@ -63,7 +63,7 @@ def logFails():
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
 ''' =========================================================
-                   RegisterN_( N, clk, x, write )
+                RAM8N_( N, clk, x, write, address )
 	========================================================= '''
 
 # Setup ---
@@ -71,9 +71,9 @@ def logFails():
 clock = Clock()
 k_idx = -2
 
-k = k_register16
+k = k_ram8_16
 N = 16
-register = RegisterN_( N )
+ram = RAM8N_( N )
 
 
 def update(clk):
@@ -89,8 +89,9 @@ def update(clk):
 		
 		x = toBinary( N, k[k_idx][1] )
 		write = k[k_idx][2]
+		address = k[k_idx][3]
 
-		register.doTheThing( clk, x, write )
+		ram.doTheThing( clk, x, write, address )
 
 
 	# exhausted test values
@@ -103,9 +104,11 @@ def record():
 
 	global fails
 
-	result = toString( register.out() )
+	# rewrite me ...
 
-	expected = toBinary( N, k[k_idx + 1][3] )
+	result = toString( ram.out() )
+
+	expected = toBinary( N, k[k_idx + 1][4] )
 
 	if expected != result:
 		fails.append( [ expected, result, k_idx + 1 ] ) # log the fail

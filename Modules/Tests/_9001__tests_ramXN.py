@@ -53,7 +53,7 @@ def logFails():
 	if fails:
 		print( '\n--- {} values failed --- \n'.format( len(fails) ) )
 		for fail in fails:
-			print( 'exp {}  got {}  at {}'.format( fail[0], fail[1], fail[2] ) )
+			print( 'exp {}  got {}  at {}  for RAM{}'.format( fail[0], fail[1], fail[2], X[fail[3]] ) )
 
 	else:
 		print( 'Success! All values match.')	
@@ -63,52 +63,67 @@ def logFails():
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
 ''' =========================================================
-                   RegisterN_( N, clk, x, write )
+              RAMXN_( X, N, clk, x, write, address )
 	========================================================= '''
 
 # Setup ---
 
 clock = Clock()
-k_idx = -2
 
-k = k_register16
+k = [ k_ram8_16, k_ram64_16, k_ram512_16, k_ram4k_16, k_ram16k_16 ]
+X = [ 8, 64, 512, 2**12, 2**14 ]
 N = 16
-register = RegisterN_( N )
+
+k_idx = -2
+r_idx = 0
+ram = RAMXN_( X[r_idx], N )
 
 
 def update(clk):
 
+	global r_idx
 	global k_idx
-	
+	global ram
+
+
 	# increment
 	k_idx += 2
 
+	
+	if k_idx <= len( k[r_idx] ) - 2:
+	
+		# execute		
+		x = toBinary( N, k[r_idx][k_idx][1] )
+		write = k[r_idx][k_idx][2]
+		address = k[r_idx][k_idx][3]
 
-	# execute
-	if k_idx <= len(k) - 2: 
-		
-		x = toBinary( N, k[k_idx][1] )
-		write = k[k_idx][2]
+		ram.doTheThing( clk, x, write, address )
 
-		register.doTheThing( clk, x, write )
-
-
-	# exhausted test values
 	else:
-		clock.stop() # stop the clock
-		logFails()   # show results
+
+		# exhausted test values
+		if r_idx == len(X) - 1:
+			clock.stop() # stop the clock
+			logFails()   # show results
+
+		# test next ram chip
+		else:
+			r_idx += 1
+			ram = RAMXN_( X[r_idx], N )
+			k_idx = -2
+			update(clk)  # oO! Hacky oh well. Avoids having clock cycle where nothing thing executes
 
 
 def record():
 
 	global fails
 
-	result = toString( register.out() )
+	result = toString( ram.out() )
 
-	expected = toBinary( N, k[k_idx + 1][3] )
+	expected = toBinary( N, k[r_idx][k_idx + 1][4] )
 
 	if expected != result:
-		fails.append( [ expected, result, k_idx + 1 ] ) # log the fail
+		fails.append( [ expected, result, k_idx + 1, r_idx ] ) # log the fail
 
 
 
