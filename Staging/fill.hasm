@@ -1,0 +1,63 @@
+// --- Fills screen with black when a key is being pressed,
+//       and white when no key is pressed
+
+
+// Setup ---
+
+@8192
+D = A
+@n
+M = D 	// n = 8192
+@r
+M = 0 	// r = 0
+
+
+// Main loop ---
+
+@KBD
+D = M
+@BLACK
+D ; JNE // if kbd != 0, go to BLACK
+
+(WHITE)
+	@r
+	D = M
+	@n
+	D = D - M
+	@END
+	D ; JEQ 	// if r == n, go to END
+
+	@r
+	A = M 		// select RAM[ RAM[r] ]
+	M = 0 		// and set its value
+
+	@r
+	M = M + 1 	// RAM[r] += 1
+
+	@WHITE
+	0 ; JMP
+
+(BLACK)
+	@r
+	D = M
+	@n
+	D = D - M
+	@END
+	D ; JEQ 	// if r == n, go to END
+
+	@r
+	A = M 		// select RAM[ RAM[r] ]
+	M = -1 		// and set its value
+
+	@r
+	M = M + 1 	// RAM[r] += 1
+
+	@BLACK
+	0 ; JMP
+	
+
+// End loop ---
+
+(END)
+	@END
+	0 ; JMP
