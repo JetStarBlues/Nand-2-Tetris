@@ -5,3 +5,9 @@
 N_BITS = 16
 
 CLOCK_HALF_PERIOD = 0.02 # seconds   ( clock rate = 1 / (2 * halfperiod) )
+
+
+
+# RAM Allocation
+SCREEN_MEMORY_MAP = 16384
+KBD_MEMORY_MAP    = 24576

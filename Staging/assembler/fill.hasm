@@ -17,7 +17,7 @@ M = 0 	// r = 0
 @KBD
 D = M
 @BLACK
-D ; JNE // if kbd != 0, go to BLACK
+D ; JNE // if keyPressed != 0, go to BLACK
 
 (WHITE)
 	@r
@@ -25,7 +25,7 @@ D ; JNE // if kbd != 0, go to BLACK
 	@n
 	D = D - M
 	@END
-	D ; JEQ 	// if r == n, go to END
+	D ; JEQ 	// if RAM[r] == n, go to END
 
 	@r
 	A = M 		// select RAM[ RAM[r] ]
@@ -43,7 +43,7 @@ D ; JNE // if kbd != 0, go to BLACK
 	@n
 	D = D - M
 	@END
-	D ; JEQ 	// if r == n, go to END
+	D ; JEQ 	// if RAM[r] == n, go to END
 
 	@r
 	A = M 		// select RAM[ RAM[r] ]
