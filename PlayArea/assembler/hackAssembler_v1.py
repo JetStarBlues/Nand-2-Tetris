@@ -125,7 +125,7 @@ def extractCmd( line ):
 
 	line = line.replace(' ', '')   # remove whitespaces
 	line = line.replace('\t', '')  # remove tabs
-	line = line.upper()			   # upper case everything
+	line = line.upper()            # upper case everything
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
@@ -171,15 +171,15 @@ def handle_Labels( cmdList ):
 
 		if cmdList[i][0] == '(':
 
-			label = cmdList[i][1:-1] 	# get the label
+			label = cmdList[i][1:-1]    # get the label
 
-			ROM_addr = i + 1   		 	# and the corresponding ROM address
+			ROM_addr = i + 1            # and the corresponding ROM address
 
 			knownAddresses_ROM[ '@' + label ] = '@' + str( ROM_addr )   # add it to dict of knownAddresses_ROM
 
 		else:
 
-			trimmedCmdList.append( cmdList[i] ) # not a label so include it
+			trimmedCmdList.append( cmdList[i] )   # not a label so include it
 
 
 	return( trimmedCmdList, knownAddresses_ROM )
@@ -212,21 +212,26 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 				# Check known variables ---
 
 				try:
-					cmdList[i] = knownAddresses_RAM[ cmdList[i] ]
+					cmdList[i] = knownAddresses_ROM[ cmdList[i] ]
+
+				except KeyError:
+
+					try:
+						cmdList[i] = knownAddresses_RAM[ cmdList[i] ]
 
 
-				# Otherwise, create a new address ---	
-				
-				except KeyError:					
-				
+					# Otherwise, create a new address ---	
+					
+					except KeyError:					
+					
 
-					newAddr = '@' + str( freeAddress )			# create new address
+						newAddr = '@' + str( freeAddress )          # create new address
 
-					knownAddresses_RAM[ cmdList[i] ] = newAddr  # add it to dict of knownAddresses_RAM
+						knownAddresses_RAM[ cmdList[i] ] = newAddr  # add it to dict of knownAddresses_RAM
 
-					cmdList[i] = newAddr		 		 		# and set it
+						cmdList[i] = newAddr                        # and set it
 
-					freeAddress += 1 	# register is no longer unallocated
+						freeAddress += 1 	# register is no longer unallocated
 
 
 	return cmdList
@@ -332,7 +337,6 @@ def asm_to_bin( inputFile, outputFile ):
 
 
 files = [
-
 	'test1',
 	'test2',
 	'test3',

@@ -1,6 +1,8 @@
 __pycache__/
 
-PlayArea
+PlayArea/test.py
+PlayArea/user_input/
+
 Other/output.txt
 Modules/Tests/output.txt
 Other/Notes/multiprocessing_.py
