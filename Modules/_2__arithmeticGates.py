@@ -143,23 +143,24 @@ def isNegative_( x ):
 
 # MSB to LSB
 
-def ALU_( x, y, zx, nx, zy, ny, f, no ):
+def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
 
-	N = 16 # 16 bit ALU
+	''' N bit ALU '''
 
 	'''
-	out, zr, ng = [ None, 0, 0 ]
-	if zx == 1 : x = zeroN_( N )
-	if nx == 1 : x = notN_( N, x )
-	if zy == 1 : y = zeroN_( N )
-	if ny == 1 : y = notN_( N, y )
-	if  f == 1 : out = addN_( N, x, y )  # out = x + y
-	if  f == 0 : out = andN_( N, x, y )  # out = x & y
-	if no == 1 : out = notN_( N, out )   # out = !out
-	if out == 0: zr = 1
-	if out < 0 : ng = 1
+	 out, zr, ng = [ None, 0, 0 ]
+ 	 if zx == 1 : x = zeroN_( N )
+ 	 if nx == 1 : x = notN_( N, x )
+ 	 if zy == 1 : y = zeroN_( N )
+ 	 if ny == 1 : y = notN_( N, y )
+ 	 if  f == 1 : out = addN_( N, x, y )  # out = x + y
+ 	 if  f == 0 : out = andN_( N, x, y )  # out = x & y
+ 	 if no == 1 : out = notN_( N, out )   # out = !out
+ 	 if out == 0: zr = 1
+ 	 if out < 0 : ng = 1
 
-	return ( out, zr, ng ) '''
+	 return ( out, zr, ng ) 
+	'''
 
 	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
 

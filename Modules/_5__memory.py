@@ -1,8 +1,5 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
-# Built ins
-import multiprocessing
-
 # Computer files
 from _1__elementaryGates import *
 from _2__arithmeticGates import *
@@ -21,14 +18,14 @@ class Register_():
 		self.ff.clear()         # start with out = 0
 
 
-	def doTheThing( self, clk, x, write ):
+	def write( self, clk, x, write ):
 
-		d = mux_( x, self.ff.q1, write ) # read or write
+		d = mux_( x, self.ff.q1, write )
 
 		self.ff.doTheThing( clk, d )
 		
 
-	def out( self ):
+	def read( self ):
 		# as fx cause have to wait for values to 'settle'
 		return self.ff.q1
 
@@ -44,16 +41,16 @@ class RegisterN_():
 		self.registers = [ Register_() for i in range( self.N ) ]
 
 
-	def doTheThing( self, clk, x, write ):
+	def write( self, clk, x, write ):
 
 		for i in range( self.N ):
 
-			self.registers[i].doTheThing( clk, x[i], write )  # read or write
+			self.registers[i].write( clk, x[i], write )
 
 
-	def out( self ):
+	def read( self ):
 
-		return tuple( register.out() for register in self.registers )
+		return tuple( register.read() for register in self.registers )
 
 
 
@@ -67,10 +64,8 @@ class RAM8_():
 
 		self.registers = [ Register_() for i in range( 8 ) ]
 
-		self.address = None
 
-
-	def doTheThing( self, clk, x, write, address ):
+	def write( self, clk, x, write, address ):
 
 		'''
 		 In the physical implementation, choosing which register to enable would be
@@ -78,14 +73,12 @@ class RAM8_():
 		 Unable atm to represent z-state of tristate buffer in this emulator.
 		'''
 		
-		self.registers[address].doTheThing( clk, x, write )  # read or write
-		
-		self.address = address
+		self.registers[address].write( clk, x, write )
 
 
-	def out( self ):
+	def read( self, address ):
 
-		return self.registers[self.address].out()
+		return self.registers[address].read()
 
 
 class RAM8N_():
@@ -96,19 +89,15 @@ class RAM8N_():
 
 		self.registers = [ RegisterN_( N ) for i in range( 8 ) ]
 
-		self.address = None
 
-
-	def doTheThing( self, clk, x, write, address ):
+	def write( self, clk, x, write, address ):
 		
-		self.registers[address].doTheThing( clk, x, write )  # read or write
-		
-		self.address = address
+		self.registers[address].write( clk, x, write )
 
 
-	def out( self ):
+	def read( self, address ):
 
-		return self.registers[self.address].out()
+		return self.registers[address].read()
 
 
 class RAMXN_():
@@ -119,19 +108,15 @@ class RAMXN_():
 
 		self.registers = [ RegisterN_( N ) for i in range( X ) ]
 
-		self.address = None
 
-
-	def doTheThing( self, clk, x, write, address ):
+	def write( self, clk, x, write, address ):
 		
-		self.registers[address].doTheThing( clk, x, write )  # read or write
-		
-		self.address = address
+		self.registers[address].write( clk, x, write )
 
 
-	def out( self ):
+	def read( self, address ):
 
-		return self.registers[self.address].out()
+		return self.registers[address].read()
 
 
 
@@ -154,7 +139,7 @@ class ProgramCounterN_():
 		self.register = RegisterN_( N )
 
 
-	def doTheThing( self, clk, x, write, inc, rst ):
+	def doTheThing( self, clk, x, rst, write, inc ):
 		
 		change = or3_( write, inc, rst )
 
@@ -169,8 +154,8 @@ class ProgramCounterN_():
 					muxN_(
 
 						self.N,
-						incrementN_( self.N, self.register.out() ),
-						self.register.out(),
+						incrementN_( self.N, self.register.read() ),
+						self.register.read(),
 
 						inc 
 					),
@@ -181,9 +166,9 @@ class ProgramCounterN_():
 				rst
 			)
 
-		self.register.doTheThing( clk, d, change )
+		self.register.write( clk, d, change )
 
 
 	def out( self ):
 		
-		return self.register.out()
+		return self.register.read()

@@ -88,11 +88,11 @@ def update(clk):
 	if k_idx <= len(k) - 2: 
 		
 		x = toBinary( N, k[k_idx][1] )
-		write = k[k_idx][2]
-		inc = k[k_idx][3]
-		rst = k[k_idx][4]
+		rst = k[k_idx][2]
+		write = k[k_idx][3]
+		inc = k[k_idx][4]
 
-		pc.doTheThing( clk, x, write, inc, rst )
+		pc.doTheThing( clk, x, rst, write, inc )
 
 
 	# exhausted test values

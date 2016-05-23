@@ -89,7 +89,7 @@ def update(clk):
 		x = k[k_idx][1]
 		write = k[k_idx][2]
 
-		register.doTheThing( clk, x, write )
+		register.write( clk, x, write )
 
 
 	# exhausted test values
@@ -102,7 +102,7 @@ def record():
 
 	global fails
 
-	result = register.out()
+	result = register.read()
 
 	expected = k[k_idx + 1][3]
 

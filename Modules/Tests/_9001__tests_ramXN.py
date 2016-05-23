@@ -97,7 +97,7 @@ def update(clk):
 		write = k[r_idx][k_idx][2]
 		address = k[r_idx][k_idx][3]
 
-		ram.doTheThing( clk, x, write, address )
+		ram.write( clk, x, write, address )
 
 	else:
 
@@ -118,7 +118,9 @@ def record():
 
 	global fails
 
-	result = toString( ram.out() )
+	address = k[r_idx][k_idx + 1][3]
+
+	result = toString( ram.read( address ) )
 
 	expected = toBinary( N, k[r_idx][k_idx + 1][4] )
 
