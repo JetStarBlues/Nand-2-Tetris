@@ -1,13 +1,11 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
 # Built ins
-from random import random
 import threading, time
+from random import random
 
-
-# Computer files
-from _0__globalConstants import *
-from _1__elementaryGates import *
+# Hack computer
+from ._x__components import *
 
 
 ''''''''''''''''''''''''''''''' flip flops '''''''''''''''''''''''''''''''

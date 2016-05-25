@@ -1,9 +1,7 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
-# Computer files
-from _1__elementaryGates import *
-from _2__arithmeticGates import *
-from _4__flipFlops import *
+# Hack computer
+from ._x__components import *
 
 
 ''''''''''''''''''''''''''' registers '''''''''''''''''''''''''''''

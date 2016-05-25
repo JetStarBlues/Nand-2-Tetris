@@ -8,38 +8,11 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
 # Built ins
-import sys
 import unittest
 
 
-# Computer files
-sys.path.append('../')
-from _1__elementaryGates import *
-from _2__arithmeticGates import *
-from _3__clock import *
-from _4__flipFlops import *
-
-
-# Testing files
-sys.path.append('KnownValues')
-from kv_1__elementaryGates import *
-from kv_2__arithmeticGates import *
-
-
-''''''''''''''''''''''''' testing helpers '''''''''''''''''''''''''
-
-# Formatting ---
-
-def toString(array):
-	return ''.join( map(str, array) )
-
-def toDecimal(bitSeq):
-	return int(bitSeq, 2)
-
-def toBinary(N, x):
-	if x < 0: x = 2**N + x  # 2s complement
-	return bin(x)[2:].zfill(N)
-	
+# Tesing files
+from Tests import *
 
 
 ''''''''''''''''''''''''' elementary gates '''''''''''''''''''''''''''

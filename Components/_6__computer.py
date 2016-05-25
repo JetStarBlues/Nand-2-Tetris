@@ -1,14 +1,10 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
 # Built ins
-import time
-from math import log
+import time, math
 
-# Computer files
-from _0__globalConstants import *
-from _1__elementaryGates import *
-from _2__arithmeticGates import *
-from _5__memory import *
+# Hack computer
+from ._x__components import *
 
 
 ''''''''''''''''''''''''' MemoryROM '''''''''''''''''''''''''''
@@ -204,7 +200,7 @@ class ComputerN_():
 
 	def __init__( self, N, RAM_size, ROM_size ):
 
-		programCounter_addrSize = int( log( ROM_size, 2 ) )  # hmmm....
+		programCounter_addrSize = int( math.log( ROM_size, 2 ) )  # hmmm....
 		self.CPU = CPU_( N, programCounter_addrSize )
 
 		self.main_memory = MemoryRAMXN_( RAM_size, N )
@@ -236,25 +232,3 @@ class ComputerN_():
 # a bit of a hack. Would require drivers in physical implmentation.
 ''''''''''''''''''''''''''' Keyboard '''''''''''''''''''''''''''''
 # a bit of a hack. Would require drivers in physical implmentation.
-
-
-
-
-
-def toString(array):
-	return ''.join( map(str, array) )
-
-def toDecimal(bitSeq):
-	return int(bitSeq, 2)
-
-def toBinary(N, x):
-	if x < 0: x = 2**N + x  # 2s complement
-	return bin(x)[2:].zfill(N)
-
-
-# potato = MemoryROM_( 2**16, 16 )
-# potato.flash( '../PlayArea/assembler/bin/mult.bin' )
-# print( 'the value stored at register {} is {}'.format( 17, ''.join( map(str, potato.read( 17 ) ) ) ) )
-
-potato = ComputerN_( 16, 2**16, 2**15 )
-potato.main_memory.write( )

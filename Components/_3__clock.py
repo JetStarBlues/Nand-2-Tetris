@@ -3,9 +3,8 @@
 # Built ins
 import threading, time
 
-
-# Computer files
-from _0__globalConstants import *
+# Hack computer
+from ._x__components import *
 
 
 ''''''''''''''''''''''''''''''' clock '''''''''''''''''''''''''''''''

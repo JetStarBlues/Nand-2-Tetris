@@ -1,7 +1,7 @@
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
-# Computer files
-from _1__elementaryGates import *
+# Hack computer
+from ._x__components import *
 
 
 ''''''''''''''''''''''''''''''' helpers '''''''''''''''''''''''''''''''
