@@ -30,6 +30,10 @@ class MemoryROMXN_():
 		
 		print( 'Starting ROM flash' )
 
+		self.isReady = False
+		
+		self.ROM = RAMXN_( X, N ) # cheap way to clear all registers
+
 		address = 0
 
 		with open( binary_file, encoding='utf-8' ) as input_file:

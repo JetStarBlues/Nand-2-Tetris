@@ -17,13 +17,7 @@ testName = fileName( __name__ )
 clock = Clock()
 fails = FailLogger()
 
-k = [ 
-	k_ram8_16, 
-	k_ram64_16, 
-	# k_ram512_16,
-	# k_ram4k_16,
-	# k_ram16k_16 
-]
+k = [ k_ram8_16, k_ram64_16, k_ram512_16,k_ram4k_16,k_ram16k_16 ]
 X = [ 8, 64, 512, 2**12, 2**14 ]
 N = 16
 
@@ -55,7 +49,7 @@ def update(clk):
 	else:
 
 		# exhausted test values
-		if r_idx == len(X) - 1:
+		if r_idx == len(k) - 1:
 			clock.stop() # stop the clock
 			fails.report( testName )   # show results
 
@@ -76,7 +70,7 @@ def record():
 	expected = toBinary( N, k[r_idx][k_idx + 1][4] )
 
 	if expected != result:
-		fails.record( expected, result, toString( [k_idx + 1, 'for RAM', r_idx] ) ) # log the fail
+		fails.record( expected, result, toString( [k_idx + 1, '  for RAM', r_idx] ) ) # log the fail
 
 
 

@@ -11,13 +11,13 @@
 files = [
 
 	# Memory
-	# '_1__register',
-	# '_2__registerN',
-	# '_3__ram8N',
+	'_1__register',
+	'_2__registerN',
+	'_3__ram8N',
 	'_4__ramXN',
 
 	# Program counter
-	# '_5__programCounterN',
+	'_5__programCounterN',
 
 	# Computer
 
