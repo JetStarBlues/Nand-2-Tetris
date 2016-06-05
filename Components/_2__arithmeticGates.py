@@ -164,13 +164,13 @@ def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
 
 	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
 
-	x =   muxN_( N,  zeroN_( N ),       x,                 zx                 )
-	x =   muxN_( N,  notN_( N, x ),     x,                 nx                 )
-	y =   muxN_( N,  zeroN_( N ),       y,                 zy                 )
-	y =   muxN_( N,  notN_( N, y ),     y,                 ny                 )
+	x =   muxN_( N,  zeroN_( N )     ,  x               ,  zx                 )
+	x =   muxN_( N,  notN_( N, x )   ,  x               ,  nx                 )
+	y =   muxN_( N,  zeroN_( N )     ,  y               ,  zy                 )
+	y =   muxN_( N,  notN_( N, y )   ,  y               ,  ny                 )
 	out = muxN_( N,  addN_( N, x, y ),  andN_( N, x, y ),  f                  )
-	out = muxN_( N,  notN_( N, out ),   out,               no                 )
-	zr =  muxN_( N,  oneN_( N ),        zeroN_( N ),       isZero_( out )     )
-	ng =  muxN_( N,  oneN_( N ),        zeroN_( N ),       isNegative_( out ) )
+	out = muxN_( N,  notN_( N, out ) ,  out             ,  no                 )
+	zr =  mux_(      1               ,  0               ,  isZero_( out )     )
+	ng =  mux_(      1               ,  0               ,  isNegative_( out ) )
 
 	return ( out, zr, ng )

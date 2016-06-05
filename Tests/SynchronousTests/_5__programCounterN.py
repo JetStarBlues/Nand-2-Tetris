@@ -1,6 +1,6 @@
 ''' =========================================================
            ProgramCounterN_( N, clk, x, write, inc, rst )
-	========================================================= '''
+    ========================================================= '''
 
 
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
@@ -13,7 +13,6 @@ from Tests import *
 # Setup ---
 
 testName = fileName( __name__ )
-
 clock = Clock()
 fails = FailLogger()
 
@@ -51,11 +50,10 @@ def update(clk):
 
 def record():
 
-	result = toString( pc.out() )
+	result = pc.read()
 
-	# print( toDecimal( result ) )
-
-	expected = toBinary( N, k[k_idx + 1][5] )
+	expected = k[k_idx + 1][5]
+	if expected < 0: expected = 2 ** N + expected  # change to 2s complement notation
 
 	if expected != result:
 		fails.record( expected, result, k_idx + 1 ) # log the fail

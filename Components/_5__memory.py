@@ -51,6 +51,18 @@ class RegisterN_():
 		return tuple( register.read() for register in self.registers )
 
 
+	def readDecimal( self ):
+
+		# used by A_register and program_counter, as haven't implemented binary indexing
+
+		out = tuple( register.read() for register in self.registers )  # index in binary
+
+		out = int( ''.join( map( str, out ) ), 2 )  # index in decimal
+
+		return out
+
+
+
 
 '''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
 
@@ -148,7 +160,7 @@ class ProgramCounterN_():
 				muxN_(
 
 					self.N,
-					x,
+					x[ -self.N : ],  # turn x to N bit by trimming signifcant bits
 					muxN_(
 
 						self.N,
@@ -167,6 +179,12 @@ class ProgramCounterN_():
 		self.register.write( clk, d, change )
 
 
-	def out( self ):
+	def read( self ):
 		
-		return self.register.read()
+		# return self.register.readDecimal()
+
+		out = self.register.readDecimal()
+
+		# print( out )
+
+		return( out )

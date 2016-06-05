@@ -1,8 +1,8 @@
 '''
-	In the spirit of
-	  http://www.diveintopython3.net/unit-testing.html
-	  http://www.diveintopython3.net/refactoring.html
-	The tutorials show how maintainable and refactorable code becomes when use tests
+    In the spirit of
+      http://www.diveintopython3.net/unit-testing.html
+      http://www.diveintopython3.net/refactoring.html
+    The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
 ''''''''''''''''''''''''' shared libraries '''''''''''''''''''''''''

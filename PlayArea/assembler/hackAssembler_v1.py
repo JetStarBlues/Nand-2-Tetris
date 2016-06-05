@@ -5,7 +5,7 @@ import sys
 import re
 
 # Computer files
-sys.path.append('../../Modules')
+sys.path.append('../../Components')
 from _0__globalConstants import *
 
 
@@ -256,7 +256,7 @@ def translate_Instructions( cmdList ):
 
 		# C instruction
 		else:
-			header = '011'
+			header = '111'
 			
 			dest, comp, jmp = [None] * 3
 

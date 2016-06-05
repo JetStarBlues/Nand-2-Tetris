@@ -18,6 +18,9 @@ class MemoryROMXN_():
 		self.ROM = RAMXN_( X, N )
 		self.isReady = False
 
+		self.X = X
+		self.N = N
+
 	
 	def flash( self, binary_file ):
 
@@ -28,11 +31,11 @@ class MemoryROMXN_():
 
 		time.clock() # start timer
 		
-		print( 'Starting ROM flash' )
+		print( '\nStarting ROM flash' )
 
 		self.isReady = False
 		
-		self.ROM = RAMXN_( X, N ) # cheap way to clear all registers
+		self.ROM = RAMXN_( self.X, self.N ) # cheap way to clear all registers
 
 		address = 0
 
@@ -91,15 +94,15 @@ class CPU_():
 
 	''' Fetches and executes program instructions '''
 
-	def __init__( self, N, pC_addressSize ):
+	def __init__( self, N, pC_size ):
 		
 		self.N = N
 		self.A_register = RegisterN_( N )
 		self.D_register = RegisterN_( N )
-		self.programCounter = ProgramCounterN_( pC_addressSize )
+		self.programCounter = ProgramCounterN_( pC_size )
 
 
-	def doTheThing( self, clk, rst, main_memory, program_memory ):
+	def doTheThing( self, clk, RESET, main_memory, program_memory ):
 
 		# --- Fetch instruction ---
 		instruction_address = self.programCounter.read()
@@ -119,6 +122,10 @@ class CPU_():
 			self.A_register.write( clk, instruction, 1 ) # write
 
 
+			jump, increment = 0, 1
+			self.programCounter.doTheThing( clk, zeroN_( self.N ), RESET, jump, increment ) # increment
+
+
 		else:
 
 			# --- Execute C instruction ---
@@ -129,12 +136,12 @@ class CPU_():
 
 			y = muxN_(
 				self.N,
-				main_memory.read( self.A_register.read() ),
+				main_memory.read( self.A_register.readDecimal() ),
 				self.A_register.read(),
 				instruction[3]
 			) 
 
-			ALU_out = ALU_( x, y, instruction[4], instruction[5], instruction[6], instruction[7], instruction[8], instruction[9] )
+			ALU_out = ALU_( self.N, x, y, instruction[4], instruction[5], instruction[6], instruction[7], instruction[8], instruction[9] )
 
 
 			# - Jump -
@@ -166,7 +173,7 @@ class CPU_():
 			)
 
 			increment = 1 # hold high, pC design ensures priority of control bits preserved
-			self.programCounter.doTheThing( clk, ALU_out[0], RESET, jump, increment ) # write
+			self.programCounter.doTheThing( clk, self.A_register.read(), RESET, jump, increment ) # write
 
 
 			# - Destination -
@@ -182,13 +189,13 @@ class CPU_():
 				'NULL' : '000',
 			'''
 
-			writeA = mux8to1_( 1, 1, 1, 1, 0, 0, 0, 0, instruction[13], instruction[14], instruction[15] )
-			writeD = mux8to1_( 1, 1, 0, 0, 1, 1, 0, 0, instruction[13], instruction[14], instruction[15] )
-			writeM = mux8to1_( 1, 0, 1, 0, 1, 0, 1, 0, instruction[13], instruction[14], instruction[15] )
+			writeA = mux8to1_( 1, 1, 1, 1, 0, 0, 0, 0, instruction[10], instruction[11], instruction[12] )
+			writeD = mux8to1_( 1, 1, 0, 0, 1, 1, 0, 0, instruction[10], instruction[11], instruction[12] )
+			writeM = mux8to1_( 1, 0, 1, 0, 1, 0, 1, 0, instruction[10], instruction[11], instruction[12] )
 
 			self.A_register.write( clk, ALU_out[0], writeA ) # write
 			self.D_register.write( clk, ALU_out[0], writeD ) # write
-			main_memory.write(     clk, ALU_out[0], writeM ) # write
+			main_memory.write(     clk, ALU_out[0], writeM, self.A_register.readDecimal() ) # write
 
 
 	def out( self ):
@@ -204,8 +211,8 @@ class ComputerN_():
 
 	def __init__( self, N, RAM_size, ROM_size ):
 
-		programCounter_addrSize = int( math.log( ROM_size, 2 ) )  # hmmm....
-		self.CPU = CPU_( N, programCounter_addrSize )
+		programCounter_size = int( math.log( ROM_size, 2 ) )  # hmmm....
+		self.CPU = CPU_( N, programCounter_size )
 
 		self.main_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
@@ -213,12 +220,12 @@ class ComputerN_():
 		self.reset = 0
 
 
-	def __load__( self, binary_file ):
+	def load( self, binary_file ):
 
 		self.program_memory.flash( binary_file )
 
 
-	def __run__( self, clk ):
+	def run( self, clk ):
 
 		self.CPU.doTheThing( clk, self.reset, self.main_memory, self.program_memory )
 
@@ -226,7 +233,7 @@ class ComputerN_():
 		if self.reset == 1: self.reset = 0
 
 	
-	def __reset__( self ):
+	def reset( self ):
 
 		self.reset = 1
 

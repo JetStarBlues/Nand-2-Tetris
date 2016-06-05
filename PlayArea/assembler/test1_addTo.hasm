@@ -12,7 +12,7 @@ M = 0		// RAM[17] = 0 // represents sum
 D = M
 @0
 D = D - M   
-@20
+@18
 D ; JGT		// if i > RAM[0], exit main loop, enter return loop
 
 // Main loop - calculations
