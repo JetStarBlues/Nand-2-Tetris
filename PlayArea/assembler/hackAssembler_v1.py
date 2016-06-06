@@ -173,7 +173,7 @@ def handle_Labels( cmdList ):
 
 			label = cmdList[i][1:-1]    # get the label
 
-			ROM_addr = i + 1            # and the corresponding ROM address
+			ROM_addr = i - len( knownAddresses_ROM)    # and the corresponding ROM address
 
 			knownAddresses_ROM[ '@' + label ] = '@' + str( ROM_addr )   # add it to dict of knownAddresses_ROM
 
@@ -337,15 +337,17 @@ def asm_to_bin( inputFile, outputFile ):
 
 
 files = [
-	'test1',
-	'test2',
-	'test3',
-	'test4',
-	'test5',
-	'test6',
-	'fill',
-	'mult'
+	'test1_addTo',
+	'test2_flip',
+	'test3_add',
+	'test4_gt0',
+	'test5_array',
+	'test5a_array',
+	'test6_mult',
+	'test8_fill',
+	'test9_rect',
 ]
+
 for file in files:
 	print(file)
 	in_ = file + '.hasm'

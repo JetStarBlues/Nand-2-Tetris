@@ -33,9 +33,10 @@ class MemoryROMXN_():
 		
 		print( '\nStarting ROM flash' )
 
-		self.isReady = False
+		if self.isReady:                        # if previously written to,
+			self.ROM = RAMXN_( self.X, self.N ) #  cheap way to clear all registers
 		
-		self.ROM = RAMXN_( self.X, self.N ) # cheap way to clear all registers
+		self.isReady = False		
 
 		address = 0
 

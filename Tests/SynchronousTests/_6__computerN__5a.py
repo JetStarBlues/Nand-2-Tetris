@@ -19,9 +19,7 @@ fails = FailLogger()
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
-computer.load( './PlayArea/assembler/bin/test1.bin' )
-x = 6
-expected = sum(range(x+1))  # 1 + 2 + ... x
+computer.load( './PlayArea/assembler/bin/test5a_array.bin' )
 
 
 count = 0
@@ -37,9 +35,9 @@ def update(clk):
 	#
 	if count == 1:
 		# setup
-		computer.main_memory.write( clk, toBinary( N, 6 ), 1, 0 ) # clk, x, write, address
+		pass
 
-	elif count <= 110:
+	elif count <= 170:
 		# main
 		computer.run( clk )
 
@@ -47,23 +45,28 @@ def update(clk):
 	# done test
 	else:
 		clock.stop() # stop the clock
-		
-		result = computer.main_memory.read( 1 )
-		result_d = toDecimal( toString( result ) )
-		# print( result_d, result )
+
 
 		print( '\n-- Finished test ' + testName )
-		if result_d == expected :
+
+		no_fails = True
+
+		for i in range(10):
+
+			result = computer.main_memory.read( 100 + i )
+
+			if toDecimal( toString( result ) ) != 2**N - 1: # -1
+				print( 'Fail! Something somewhere is not working' )
+				print( 100 + i, result )
+				no_fails = False
+
+		if no_fails:
 			print( 'Success! Program executes as expected' )
-		else:
-			print( 'Fail! Something somewhere is not working' )
+			
 
 
 def record():
 	pass
-
-	# print(   'i', toDecimal( toString( computer.main_memory.read( 16 ) ) ) )
-	# print( 'sum', toDecimal( toString( computer.main_memory.read( 17 ) ) ) )
 
 
 

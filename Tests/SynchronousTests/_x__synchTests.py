@@ -20,7 +20,12 @@ files = [
 	# '_5__programCounterN',
 
 	# Computer
-	'_6__computerN'
+	# '_6__computerN__1',
+	# '_6__computerN__2',
+	# '_6__computerN__3',
+	# '_6__computerN__4',
+	'_6__computerN__5',
+	# '_6__computerN__5a',
 
 ]
 
