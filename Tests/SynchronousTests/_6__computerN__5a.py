@@ -15,14 +15,13 @@ from Tests import *
 testName = fileName( __name__ )
 clock = Clock()
 fails = FailLogger()
+count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
 computer.load( './PlayArea/assembler/bin/test5a_array.bin' )
 
-
-count = 0
 
 def update(clk):
 

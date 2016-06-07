@@ -15,14 +15,16 @@ from Tests import *
 testName = fileName( __name__ )
 clock = Clock()
 fails = FailLogger()
+count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
 computer.load( './PlayArea/assembler/bin/test2_flip.bin' )
 
+a = 50
+b = 33
 
-count = 0
 
 def update(clk):
 
@@ -35,8 +37,8 @@ def update(clk):
 	#
 	if count == 1:
 		# setup
-		computer.main_memory.write( clk, toBinary( N, 50 ), 1, 0 ) # clk, x, write, address
-		computer.main_memory.write( clk, toBinary( N, 33 ), 1, 1 )
+		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
+		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 )
 
 	elif count <= 20:
 		# main
@@ -53,8 +55,8 @@ def update(clk):
 
 		print( '\n-- Finished test ' + testName )
 
-		if toString( result0 ) == toBinary( N, 33 ) and \
-		   toString( result1 ) == toBinary( N, 50 ):
+		if toString( result0 ) == toBinary( N, b ) and \
+		   toString( result1 ) == toBinary( N, a ):
 			print( 'Success! Program executes as expected' )
 		else:
 			print( 'Fail! Something somewhere is not working' )

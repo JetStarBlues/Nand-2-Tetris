@@ -5,6 +5,8 @@
     The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
+import multiprocessing ###
+
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
 
@@ -20,12 +22,13 @@ files = [
 	# '_5__programCounterN',
 
 	# Computer
-	# '_6__computerN__1',
-	# '_6__computerN__2',
-	# '_6__computerN__3',
-	# '_6__computerN__4',
+	'_6__computerN__1',
+	'_6__computerN__2',
+	'_6__computerN__3',
+	'_6__computerN__4',
 	'_6__computerN__5',
-	# '_6__computerN__5a',
+	'_6__computerN__5a',
+	'_6__computerN__6',
 
 ]
 
@@ -36,6 +39,14 @@ def runTests():
 
 	for file in files:
 
-		cmd = 'from .' + file + ' import start'
+		# cmd = 'from .' + file + ' import start'
+		# exec( cmd )
+		# exec( 'start()' )
+
+		startTest = None
+		cmd = 'from .' + file + ' import start as startTest'
 		exec( cmd )
-		exec( 'start()' )
+
+		multiprocessing.Process( 
+			target = startTest 
+		).start()

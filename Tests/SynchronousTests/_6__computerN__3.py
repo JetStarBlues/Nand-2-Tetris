@@ -15,14 +15,17 @@ from Tests import *
 testName = fileName( __name__ )
 clock = Clock()
 fails = FailLogger()
+count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
 computer.load( './PlayArea/assembler/bin/test3_add.bin' )
 
+a = 2**14
+b = 356
+expected = a + b
 
-count = 0
 
 def update(clk):
 
@@ -35,8 +38,8 @@ def update(clk):
 	#
 	if count == 1:
 		# setup
-		computer.main_memory.write( clk, toBinary( N, 2**14 ), 1, 0 ) # clk, x, write, address
-		computer.main_memory.write( clk, toBinary( N, 356 ), 1, 1 )
+		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
+		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 )
 
 	elif count <= 20:
 		# main
@@ -47,15 +50,18 @@ def update(clk):
 	else:
 		clock.stop() # stop the clock
 		
+
 		result = computer.main_memory.read( 2 )
+		result_dec = toDecimal( toString( result ) )
 
 
 		print( '\n-- Finished test ' + testName )
 
-		if toDecimal( toString( result ) ) == 2**14 + 356:
+		if result_dec == expected:
 			print( 'Success! Program executes as expected' )
 		else:
 			print( 'Fail! Something somewhere is not working' )
+			print( result_dec, result )
 
 
 def record():

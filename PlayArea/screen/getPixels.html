@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>get pixels</title>
+</head>
+<body>
+
+	<canvas id="canvas"></canvas>
+	<a id="downloadLink">download</a>
+
+<script>
+
+	var img = new Image();
+	img.src = 'hl.png'
+
+	var canvas = document.getElementById('canvas');
+	canvas.width = 512;
+	canvas.height = 256;
+
+	var ctx = canvas.getContext('2d');
+
+	// Get pixels ---
+	img.onload = function(){
+
+		ctx.drawImage( img, 0, 0 );
+		// img.style.display = 'none'
+
+
+		var pixels = ctx.getImageData( 0, 0, canvas.width, canvas.height ).data;
+		console.log( pixels );
+
+
+		// Format the pixels ---
+		var pixels2 = [];
+		for (var r = 0; r < canvas.height; r++ ){	
+
+			row = '{';
+			for (var c = 0; c < canvas.width; c++ ){
+
+				var pixel = pixels[ r * 4 * canvas.width + c * 4 ];
+				pixel = pixel == 255 ? 0 : 1;
+				row += pixel;
+			}
+
+			row += '} ';
+			pixels2.push( row );
+		}
+		// console.log( pixels2 );
+		pixels2 = pixels2.join('\n')
+
+
+		//
+		var link = document.getElementById('downloadLink');
+		link.href = makeTextFile( pixels2 );
+
+	}
+
+
+	// Save to text file ---
+	//  stackoverflow.com/a/21016088
+	var textFile = null;
+
+	var makeTextFile = function( string ){
+
+		var data = new Blob( [string], { type: 'text/plain' } );
+
+		if (textFile !== null){ window.URL.revokeObjectURL(textFile); }
+
+		textFile = window.URL.createObjectURL(data);
+
+		return textFile;
+	};
+
+</script>
+
+</body>
+</html>

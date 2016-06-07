@@ -15,14 +15,15 @@ from Tests import *
 testName = fileName( __name__ )
 clock = Clock()
 fails = FailLogger()
+count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
 computer.load( './PlayArea/assembler/bin/test5_array.bin' )
 
+a = 9000
 
-count = 0
 
 def update(clk):
 
@@ -35,7 +36,7 @@ def update(clk):
 	#
 	if count == 1:
 		# setup
-		computer.main_memory.write( clk, toBinary( N, 9000 ), 1, 0 ) # clk, x, write, address
+		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
 
 	elif count <= 230:
 		# main
@@ -55,7 +56,7 @@ def update(clk):
 
 			result = computer.main_memory.read( 100 + i )
 
-			if toDecimal( toString( result ) ) != 9000:
+			if toDecimal( toString( result ) ) != a:
 				print( 'Fail! Something somewhere is not working' )
 				print( 100 + i, result )
 				no_fails = False

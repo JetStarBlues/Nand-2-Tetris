@@ -117,9 +117,9 @@ def mux4to1_( d3, d2, d1, d0, s1, s0 ):
 	# return or_( or_( p0, p1 ), or_( p2, p3 ) )
 
 	''' using other mux chips '''
-	p1 = mux_( d3, d2, s0 )
-	p2 = mux_( d1, d0, s0 )
-	return mux_( p1, p2, s1 )
+	# p1 = mux_( d3, d2, s0 )
+	# p2 = mux_( d1, d0, s0 )
+	# return mux_( p1, p2, s1 )
 
 
 def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):

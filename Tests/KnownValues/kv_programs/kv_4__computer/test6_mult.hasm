@@ -3,7 +3,7 @@
 
 
 // Setup ---
-@sum
+@R2 	// sum
 M = 0
 @i
 M = 0
@@ -21,15 +21,18 @@ M = 0
 
 	@R1
 	D = M
-	@sum
+	@R2
 	M = D + M 	// sum += R1
 
 	@i
 	M = M + 1 	// i += 1
 
+	@LOOP
+	0 ; JMP 	// iterate
 
 
 // End loop ---
 (END)
+
 	@END
 	0 ; JMP

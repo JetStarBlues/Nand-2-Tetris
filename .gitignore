@@ -2,6 +2,7 @@ __pycache__/
 
 PlayArea/test.py
 PlayArea/user_input/
+PlayArea/assembler/
 
 Other/output.txt
 Other/Notes/

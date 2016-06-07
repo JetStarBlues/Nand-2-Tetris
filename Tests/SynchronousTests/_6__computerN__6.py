@@ -20,10 +20,11 @@ count = 0
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
-computer.load( './PlayArea/assembler/bin/test1_addTo.bin' )
+computer.load( './PlayArea/assembler/bin/test6_mult.bin' )
 
-a = 6
-expected = sum( range( a + 1 ) )  # 1 + 2 + ... a
+a = 3
+b = 9000
+expected = a * b
 
 
 def update(clk):
@@ -38,8 +39,9 @@ def update(clk):
 	if count == 1:
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
+		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 ) 
 
-	elif count <= 110:
+	elif count <= 60:
 		# main
 		computer.run( clk )
 
@@ -48,25 +50,23 @@ def update(clk):
 	else:
 		clock.stop() # stop the clock
 
-		
-		result = computer.main_memory.read( 1 )
+
+		result = computer.main_memory.read( 2 )
 		result_dec = toDecimal( toString( result ) )
 
 
 		print( '\n-- Finished test ' + testName )
-		
-		if result_dec == expected :
+
+		if result_dec == expected:
 			print( 'Success! Program executes as expected' )
 		else:
 			print( 'Fail! Something somewhere is not working' )
 			print( result_dec, result )
+			
 
 
 def record():
 	pass
-
-	# print(   'i', toDecimal( toString( computer.main_memory.read( 16 ) ) ) )
-	# print( 'sum', toDecimal( toString( computer.main_memory.read( 17 ) ) ) )
 
 
 
