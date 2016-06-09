@@ -28,8 +28,7 @@ class Screen():
 
 
 		# Pixel array ---
-		row = [0] * self.width
-		self.pixels = [row] * self.height
+		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
 
 
 		# Initialize tkinter ---
@@ -101,11 +100,9 @@ class Screen():
 
 screen = Screen()
 
-print('I reached here')
-
 v = '1' * 16
 screen.write( v, 0 * 32 + 10 )
 screen.write( v, 1 * 32 + 10 )
-# screen.write( v, 2 * 32 + 10 )
-# screen.write( v, 3 * 32 + 10 )
-# screen.write( v, 4 * 32 + 10 )
+screen.write( v, 2 * 32 + 10 )
+screen.write( v, 3 * 32 + 10 )
+screen.write( v, 4 * 32 + 10 )
