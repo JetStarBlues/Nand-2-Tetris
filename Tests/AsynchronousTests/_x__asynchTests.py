@@ -5,10 +5,13 @@
     The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
-''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
+''''''''''''''''''''''''' imports '''''''''''''''''''''''''''
 
+# Built ins
 import unittest
 
+
+''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
 
 # stackoverflow.com/a/13533236/2354735
 pattern = '_1__elementary_arithmetic.py'

@@ -1,22 +1,26 @@
 // --- Draw a rectangle at (0,0) that has
-//		width 16px height RAM[0]px
+//		width 16px and height RAM[0]px
 // --- Usage: load non-negative number into RAM[0]
 
 
 // Setup ---
+
 @SCREEN	// @16384
 D = A
 @addr
 M = D 	// RAM[addr] = 16384   // @addr is a pointer
+
 @0
 D = M
 @n
 M = D 	// @n = RAM[0]
+
 @r
 M = 0 	// @r = 0
 
 
 // Main loop ---
+
 (LOOP)
 	@r
 	D = M
@@ -42,6 +46,7 @@ M = 0 	// @r = 0
 
 
 // End loop ---
+
 (END)
 	@END
 	0 ; JMP

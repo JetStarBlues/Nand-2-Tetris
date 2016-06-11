@@ -5,14 +5,6 @@
     The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
-''''''''''''''''''''''''' shared libraries '''''''''''''''''''''''''
-
-from .KnownValues.kv_1__elementaryGates import *
-from .KnownValues.kv_2__arithmeticGates import *
-from .KnownValues.kv_3__memory import *
-
-
-
 ''''''''''''''''''''''''' shared functions '''''''''''''''''''''''''
 
 # Formatting ---

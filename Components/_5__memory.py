@@ -55,7 +55,7 @@ class RegisterN_():
 
 		# used by A_register and program_counter, as haven't implemented binary indexing
 
-		out = tuple( register.read() for register in self.registers )  # index in binary
+		out = self.read()  # index in binary
 
 		out = int( ''.join( map( str, out ) ), 2 )  # index in decimal
 
@@ -184,5 +184,5 @@ class ProgramCounterN_():
 		# return self.register.readDecimal()
 
 		out = self.register.readDecimal()
-		# print( out )
+		print( out )
 		return( out )

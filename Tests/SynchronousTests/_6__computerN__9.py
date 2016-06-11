@@ -20,11 +20,10 @@ count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
+screen = Screen( computer.main_memory )
 
-computer.load( KnownValues.pathTo_kv_4 + 'test2_flip.bin' )
-
-a = 50
-b = 33
+computer.load( KnownValues.pathTo_kv_4 + 'test9_rect.bin' )
+a = 60
 
 
 def update(clk):
@@ -39,28 +38,15 @@ def update(clk):
 	if count == 1:
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
-		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 )
 
-	elif count <= 20:
+	elif count <= 20 + 17*a:
 		# main
 		computer.run( clk )
 
 
 	# done test
 	else:
-		clock.stop() # stop the clock
-		
-		result0 = computer.main_memory.read( 0 )
-		result1 = computer.main_memory.read( 1 )
-
-
-		print( '\n-- Finished test ' + testName )
-
-		if toString( result0 ) == toBinary( N, b ) and \
-		   toString( result1 ) == toBinary( N, a ):
-			print( 'Success! Program executes as expected' )
-		else:
-			print( 'Fail! Something somewhere is not working' )
+		clock.stop() # stop the clock			
 
 
 def record():

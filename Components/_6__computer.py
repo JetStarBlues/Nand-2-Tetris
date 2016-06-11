@@ -29,7 +29,7 @@ class MemoryROMXN_():
 		  (uses Python logic)
 		'''
 
-		time.clock() # start timer
+		startTime = time.time()
 		
 		print( '\nStarting ROM flash' )
 
@@ -50,7 +50,7 @@ class MemoryROMXN_():
 
 				time.sleep( CLOCK_HALF_PERIOD ) # wait until write complete
 
-		print( 'Completed ROM flash. Took {} seconds for {} lines'.format( time.clock(), address ) )
+		print( 'Completed ROM flash. Took {} seconds for {} lines'.format( time.time() - startTime, address ) )
 
 		self.isReady = True
 
@@ -67,11 +67,7 @@ class MemoryROMXN_():
 
 class MemoryRAMXN_():
 
-	''' Contains,
-			data memory map     16k ? |                 0 .. SCREEN_MEMORY_MAP - 1
-			screen memory map    8k ? | SCREEN_MEMORY_MAP .. KBD_MEMORY_MAP - 1
-			keyboard memory map   1 ? | KBD_MEMORY_MAP
-	'''
+	''' Holds generated data '''
 
 	def __init__( self, X, N ):
 

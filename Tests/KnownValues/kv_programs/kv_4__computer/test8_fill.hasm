@@ -8,8 +8,11 @@
 D = A
 @n
 M = D 	// n = 8192
+
+@SCREEN
+D = A
 @r
-M = 0 	// r = 0
+M = D 	// r = @SCREEN
 
 
 // Main loop ---

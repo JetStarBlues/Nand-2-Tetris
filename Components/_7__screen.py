@@ -1,11 +1,11 @@
 ''''''''''''''''''''''''' imports '''''''''''''''''''''''''''
 
 # Built ins
-import tkinter
-import threading
+import tkinter, threading
 
+# Hack computer
+from ._x__components import *
 
-SCREEN_MEMORY_MAP = 16384
 
 ''''''''''''''''''''''''' screen '''''''''''''''''''''''''''
 
@@ -38,7 +38,7 @@ class Screen():
 
 
 		# Initialize tkinter ---
-		self.refreshRate = 100  # ms
+		self.refreshRate = SCREEN_REFRESH_RATE  # ms
 		self.root = None
 		self.img = None
 
@@ -94,7 +94,7 @@ class Screen():
 
 		self.root = tkinter.Tk()
 		self.root.wm_title('Hack')
-		self.root.iconbitmap('favicon.ico')
+		# self.root.iconbitmap('favicon.ico')
 		
 		self.root.bind( '<Escape>', self._quitTkinter )
 
@@ -119,13 +119,3 @@ class Screen():
 	def _quitTkinter( self, ev = None ):
 
 		self.root.quit()
-
-
-screen = Screen()
-
-v = '1' * 16
-screen.write( v, 0 * 32 + 10 )
-screen.write( v, 1 * 32 + 10 )
-screen.write( v, 2 * 32 + 10 )
-screen.write( v, 3 * 32 + 10 )
-screen.write( v, 4 * 32 + 10 )

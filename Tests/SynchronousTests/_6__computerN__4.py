@@ -5,6 +5,7 @@
 
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
+# Hack computer tests
 from Tests import *
 
 
@@ -20,7 +21,7 @@ count = 0
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
-computer.load( './PlayArea/assembler/bin/test4_gt0.bin' )
+computer.load( KnownValues.pathTo_kv_4 + 'test4_gt0.bin' )
 
 a = -2
 expected = int( a > 0 )

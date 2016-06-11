@@ -5,6 +5,7 @@
 
 ''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
 
+# Hack computer tests
 from Tests import *
 
 
@@ -20,7 +21,7 @@ count = 0
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 
-computer.load( './PlayArea/assembler/bin/test1_addTo.bin' )
+computer.load( KnownValues.pathTo_kv_4 + 'test1_addTo.bin' )
 
 a = 6
 expected = sum( range( a + 1 ) )  # 1 + 2 + ... a

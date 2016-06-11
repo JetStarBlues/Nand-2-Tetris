@@ -1,6 +1,11 @@
 ''''''''''''''''''''''''' imports '''''''''''''''''''''''''''
 
-# import Assembler...
+# Built ins
+import sys
+
+# Hack computer
+sys.path.append('../../../')
+import Assembler
 
 
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
@@ -20,8 +25,10 @@ files = [
 	'test9_rect',
 ]
 
+subdir = 'kv_4__computer/'
+
 for file in files:
-	print(file)
-	in_ = file + '.hasm'
-	out_ = 'bin/' + file + '.bin'
-	asm_to_bin( in_, out_ )
+	# print(file)
+	input = subdir + file + '.hasm'
+	output = subdir + 'bin/' + file + '.bin'
+	Assembler.asm_to_bin( input, output )

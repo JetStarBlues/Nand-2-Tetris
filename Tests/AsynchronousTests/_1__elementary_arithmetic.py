@@ -10,8 +10,7 @@
 # Built ins
 import unittest
 
-
-# Tesing files
+# Hack computer tests
 from Tests import *
 
 
