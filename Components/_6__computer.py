@@ -234,9 +234,3 @@ class ComputerN_():
 
 		self.reset = 1
 
-
-
-''''''''''''''''''''''''''' Screen '''''''''''''''''''''''''''''
-# a bit of a hack. Would require drivers in physical implmentation.
-''''''''''''''''''''''''''' Keyboard '''''''''''''''''''''''''''''
-# a bit of a hack. Would require drivers in physical implmentation.

@@ -184,5 +184,5 @@ class ProgramCounterN_():
 		# return self.register.readDecimal()
 
 		out = self.register.readDecimal()
-		print( out )
+		# print( out )
 		return( out )
