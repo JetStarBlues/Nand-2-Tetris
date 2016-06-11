@@ -20,17 +20,24 @@ class Screen():
 	'''
 
 	def __init__( self, main_memory ):
-
-		self.main_memory = main_memory
 		
+		# General ---
 		self.N = 16
 		self.nRegisters = 8192
+		self.main_memory = main_memory		
 
 
-		# Screen dimensions ---
+		# Dimensions ---
 		self.width = 512
 		self.height = 256		
 		self.registersPerRow = self.width // self.N
+
+
+		# Colors ---
+		backgroundColor = '#FFFFFF'
+		foregroundColor = '#000000'
+		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
+		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
 
 
 		# Pixel array ---
@@ -58,7 +65,8 @@ class Screen():
 		data = [ '{' + ''.join( map( str, row ) ) + '} ' for row in self.pixels ]
 		data = ''.join( data )
 
-		data = data.replace( '0', 'white ' ).replace( '1', 'black ' )
+		data = data.replace( '0', self.bgColor ).replace( '1', self.fgColor )
+		# data = data.replace( '0', 'white ' ).replace( '1', 'black ' )
 
 
 		# Update tkinter ---
