@@ -2,6 +2,9 @@ __pycache__/
 
 PlayArea/test.py
 PlayArea/assembler/
+PlayArea/kbd/
+PlayArea/logo/
+
 
 Other/output.txt
 Other/Notes/

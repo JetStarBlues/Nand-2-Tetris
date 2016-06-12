@@ -24,21 +24,25 @@ class Screen():
 		# General ---
 		self.N = 16
 		self.nRegisters = 8192
-		self.main_memory = main_memory		
+		self.main_memory = main_memory
 
 
-		# Dimensions ---
+		# Keyboard ---
+		self.keyboard = KeyboardN( self.N, main_memory )
+
+
+		# Screen ---
+
+		# dimensions
 		self.width = 512
 		self.height = 256		
 		self.registersPerRow = self.width // self.N
 
-
-		# Colors ---
+		# colors
 		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
 		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
 
-
-		# Pixel array ---
+		# pixel array
 		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
 
 
@@ -99,7 +103,7 @@ class Screen():
 
 		self.root = tkinter.Tk()
 		self.root.wm_title('Hack')
-		# self.root.iconbitmap('favicon.ico')
+		self.root.iconbitmap('Components/favicon.ico')
 		
 		self.root.bind( '<KeyPress>', self._handleKeyPress )
 
@@ -120,8 +124,7 @@ class Screen():
 			self._quitTkinter()
 
 		else:
-			# print( ev.keysym )
-			keyboard.key = ev.keysym
+			self.keyboard.handleKeyPress( ev.keysym )
 
 
 	def _updateTkinterImg( self, data ):
@@ -140,28 +143,44 @@ class Screen():
 ''''''''''''''''''''''''' keyboard '''''''''''''''''''''''''''
 
 
-class Keyboard():
+class KeyboardN():
 
-	def __init__( self, main_memory ):
+	def __init__( self, N, main_memory ):
 
 		self.main_memory = main_memory
 
-		self.N = main_memory.N
+		self.N = N
 
-		self.key = None
+		self.keySym = None
 
 
-	def write( self, clk ):   
+	def handleKeyPress( self, keySym ):
 
-		# RAM write priority... how to? ( 1.CPU 2.Keyboard )
+		print( keySym )
 
-		print( ev.keysym )  # hmmm
+		self.keySym = keySym
 
-		keyCode = lookup_keyboard[ keySym ][0]   # decimal
+		self.write()
+
+
+	def write( self ):
+
+		'''
+			Bypasses I/O interrupt handling by CPU as the keyboard
+			 writes directly to main_memory. In the physical implementation,
+			 only the CPU would have access to main_memory requiring the use
+			 of interrupt handling logic.
+
+			See, www.cs.umd.edu/class/sum2003/cmsc311/Notes/IO/extInt.html
+		'''
+
+		keyCode = lookup_keyboard[ self.keySym ][0]   # decimal
 
 		keyCode = bin( keyCode )[2:].zfill( self.N )  # binary
 
-		self.main_memory.write( clk, keyCode, 1, KBD_MEMORY_MAP )  # clk, x, write, address
+		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )  # clk, x, write, address
+
+		# print( self.main_memory.read( KBD_MEMORY_MAP ) )
 
 
 '''
@@ -181,15 +200,16 @@ Shift_R
 '''
 
 
+
+
+'''
+	Tkinter keysyms retrieved from, 
+	  www.tcl.tk/man/tcl8.5/TkCmd/keysyms.htm
+'''
+
 lookup_keyboard = {
 
-	'''
-		Tkinter keysyms retrieved from, 
-		  www.tcl.tk/man/tcl8.5/TkCmd/keysyms.htm
-	'''
-
-	# Tkinter_keySym : [ Hack_keyCode, character ]
-	
+	# Tkinter_keySym : [ Hack_keyCode, character ],
 	        'space' : [  32 ,          ' ' ],
 	       'exclam' : [  33 ,          '!' ],
 	     'quotedbl' : [  34 ,          '"' ],
@@ -311,4 +331,6 @@ lookup_keyboard = {
 	          'F10' : [ 150 ,         None ],
 	          'F11' : [ 151 ,         None ],
 	          'F12' : [ 152 ,         None ],
+	      'Shift_L' : [ 153 ,         None ],
+	      'Shift_R' : [ 154 ,         None ],
 }

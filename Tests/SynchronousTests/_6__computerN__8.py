@@ -38,7 +38,7 @@ def update(clk):
 		# setup
 		pass
 
-	elif count <= 100:
+	elif count <= 12+13*8192+6+2:
 		# main
 		computer.run( clk )
 
