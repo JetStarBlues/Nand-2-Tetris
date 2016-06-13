@@ -6,7 +6,7 @@
 
 N_BITS = 16
 
-CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
+CLOCK_HALF_PERIOD = 0.005 # 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
 SCREEN_REFRESH_RATE = 100  # ms
 

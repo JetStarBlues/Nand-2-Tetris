@@ -22,8 +22,8 @@ N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
 io = IO( N, computer.main_memory )
 
-computer.load( KnownValues.pathTo_kv_4 + 'test9_rect.bin' )
-a = 60
+computer.load( KnownValues.pathTo_kv_4 + 'test8a_fill.bin' )
+a = 32 * 100
 
 
 def update(clk):
@@ -39,7 +39,7 @@ def update(clk):
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
 
-	elif count <= 20 + 17*a:
+	elif count <= 1+16+17*32+6+ 8:
 		# main
 		computer.run( clk )
 

@@ -35,7 +35,8 @@ files = [
 	# '_6__computerN__6',
 
 	# Computer > Screen ... have to run individually?
-	'_6__computerN__8',
+	# '_6__computerN__8',  # currently unpractical, find max speed can operate reliably
+	'_6__computerN__8a',
 	# '_6__computerN__9',
 
 ]

@@ -1,5 +1,5 @@
-// --- Fills screen with black when a key is being pressed,
-//       and white when no key is pressed
+// --- Draws a horizontal line at y = RAM[0] when a key is being pressed,
+//       else draws nothing
 
 
 // Setup ---
@@ -9,10 +9,15 @@ D = A
 @r
 M = D		// r = @SCREEN
 
-@8192
+@R0
+D = M
+@r
+M = D + M 	// r += RAM[0]
+
+@32
 D = A
 @n
-M = D 		// n = 8192
+M = D 		// n = 32
 
 @r
 D = M

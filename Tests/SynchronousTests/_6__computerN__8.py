@@ -20,7 +20,7 @@ count = 0
 
 N = 16
 computer = ComputerN_( N, 2**16, 2**15 )
-screen = Screen( computer.main_memory )
+io = IO( N, computer.main_memory )
 
 computer.load( KnownValues.pathTo_kv_4 + 'test8_fill.bin' )
 
@@ -38,7 +38,7 @@ def update(clk):
 		# setup
 		pass
 
-	elif count <= 12+13*8192+6+2:
+	elif count <= 1+12+17*8192+6+ 4:
 		# main
 		computer.run( clk )
 

@@ -22,6 +22,7 @@ files = [
 	'test5a_array',
 	'test6_mult',
 	'test8_fill',
+	'test8a_fill',
 	'test9_rect',
 ]
 

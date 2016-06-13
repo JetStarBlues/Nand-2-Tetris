@@ -7,43 +7,25 @@ import tkinter, threading
 from ._x__components import *
 
 
-''''''''''''''''''''''''' screen '''''''''''''''''''''''''''
 
+''''''''''''''''''''''''' I/O '''''''''''''''''''''''''''
 
-class Screen():
-	'''
-		16 bit screen with a 512 x 256 pixels display.
-		Specifications hardcoded for simplicity.
+class IO():
 
-		Data stored using a 256 x 512 array to help with tkinter draw speed
-		(In lieu of using a 1 x 8192 array which more closely resembles RAM).
+	''' Input and output devices.
+		 Currently consists of screen and keyboard.
 	'''
 
-	def __init__( self, main_memory ):
-		
+	def __init__( self, N, main_memory ):
+
 		# General ---
-		self.N = 16
-		self.nRegisters = 8192
+		self.N = N
 		self.main_memory = main_memory
 
 
-		# Keyboard ---
-		self.keyboard = KeyboardN( self.N, main_memory )
-
-
-		# Screen ---
-
-		# dimensions
-		self.width = 512
-		self.height = 256		
-		self.registersPerRow = self.width // self.N
-
-		# colors
-		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
-		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
-
-		# pixel array
-		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
+		# Initialize IO devices ---
+		self.screen = Screen( self.main_memory )
+		self.keyboard = Keyboard( self.N, self.main_memory )
 
 
 		# Initialize tkinter ---
@@ -59,22 +41,108 @@ class Screen():
 
 	def update( self ):
 
+		self.screen.update()
+
+		self._updateTkinterImg( self.screen.data )
+
+
+	def _initTkinter( self ):
+
+		self.root = tkinter.Tk()
+		self.root.wm_title('Hack')
+		self.root.iconbitmap('Components/favicon.ico')
+		
+		self.root.bind( '<KeyPress>', self._handleKeyPress )
+		self.root.bind( '<KeyRelease>', self._handleKeyRelease )
+
+		self.img = tkinter.PhotoImage( width = self.screen.width, height = self.screen.height )
+
+		label = tkinter.Label(self.root)
+		label.pack()
+		label.config( image = self.img )
+
+		self.update()
+
+		self.root.mainloop()
+
+
+	def _handleKeyPress( self, ev = None ):
+
+		if ev.keysym == 'Escape':
+			self._quitTkinter()
+
+		else:
+			self.keyboard.handleKeyPress( ev.keysym )
+
+
+	def _handleKeyRelease( self, ev = None ):
+
+		self.keyboard.handleKeyRelease()
+
+
+	def _updateTkinterImg( self, data ):
+
+		self.img.put( data, to = (0, 0, self.screen.width, self.screen.height) )
+
+		self.root.after( self.refreshRate, self.update )  # set timer
+
+
+	def _quitTkinter( self, ev = None ):
+
+		self.root.quit()
+
+
+
+''''''''''''''''''''''''' screen '''''''''''''''''''''''''''
+
+
+class Screen():
+
+	'''
+		16 bit screen with a 512 x 256 pixels display.
+		Specifications hardcoded for simplicity.
+
+		Data stored using a 256 x 512 array to help with tkinter draw speed
+		(In lieu of using a 1 x 8192 array which more closely resembles RAM).
+	'''
+
+	def __init__( self, main_memory ):
+		
+		# General
+		self.N = 16
+		self.nRegisters = 8192
+		self.main_memory = main_memory
+
+		# Dimensions
+		self.width = 512
+		self.height = 256		
+		self.registersPerRow = self.width // self.N
+
+		# Colors
+		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
+		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
+
+		# Pixel array
+		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
+
+		# Tkinter string
+		self.data = None
+
+
+	def update( self ):
+
 		# Get screen data from Hack's main memory ---
-		self.readRAM()
+		self.readMainMemory()
 
 
 		# Format pixel array to tkinter string ---
 		data = [ '{' + ''.join( map( str, row ) ) + '} ' for row in self.pixels ]
 		data = ''.join( data )
 
-		data = data.replace( '0', self.bgColor ).replace( '1', self.fgColor )
+		self.data = data.replace( '0', self.bgColor ).replace( '1', self.fgColor )
 
 
-		# Update tkinter ---
-		self._updateTkinterImg( data )
-
-
-	def readRAM( self ):
+	def readMainMemory( self ):
 
 		# Get screen data from Hack's main memory
 
@@ -97,53 +165,13 @@ class Screen():
 			self.pixels[row][col] = x[bit]
 
 
-	# Tkinter ---
-
-	def _initTkinter( self ):
-
-		self.root = tkinter.Tk()
-		self.root.wm_title('Hack')
-		self.root.iconbitmap('Components/favicon.ico')
-		
-		self.root.bind( '<KeyPress>', self._handleKeyPress )
-
-		self.img = tkinter.PhotoImage( width = self.width, height = self.height )
-
-		label = tkinter.Label(self.root)
-		label.pack()
-		label.config( image = self.img )
-
-		self.update()
-
-		self.root.mainloop()
-
-
-	def _handleKeyPress( self, ev = None ):
-
-		if ev.keysym == 'Escape':
-			self._quitTkinter()
-
-		else:
-			self.keyboard.handleKeyPress( ev.keysym )
-
-
-	def _updateTkinterImg( self, data ):
-
-		self.img.put( data, to = (0, 0, self.width, self.height) )
-
-		self.root.after( self.refreshRate, self.update )  # set timer
-
-
-	def _quitTkinter( self, ev = None ):
-
-		self.root.quit()
-
-
 
 ''''''''''''''''''''''''' keyboard '''''''''''''''''''''''''''
 
 
-class KeyboardN():
+class Keyboard():
+
+	''' N bit keyboard '''
 
 	def __init__( self, N, main_memory ):
 
@@ -156,9 +184,16 @@ class KeyboardN():
 
 	def handleKeyPress( self, keySym ):
 
-		print( keySym )
+		# print( keySym )
 
 		self.keySym = keySym
+
+		self.write()
+
+
+	def handleKeyRelease( self ):
+
+		self.keySym = 'null_key'
 
 		self.write()
 
@@ -184,25 +219,6 @@ class KeyboardN():
 
 
 '''
-d
-o
-r
-i
-t
-o
-Shift_R
-parenleft
-Shift_R
-parenright
-Shift_R
-percent
-Shift_R
-'''
-
-
-
-
-'''
 	Tkinter keysyms retrieved from, 
 	  www.tcl.tk/man/tcl8.5/TkCmd/keysyms.htm
 '''
@@ -210,6 +226,7 @@ Shift_R
 lookup_keyboard = {
 
 	# Tkinter_keySym : [ Hack_keyCode, character ],
+	     'null_key' : [   0 ,         None ],
 	        'space' : [  32 ,          ' ' ],
 	       'exclam' : [  33 ,          '!' ],
 	     'quotedbl' : [  34 ,          '"' ],
@@ -333,4 +350,8 @@ lookup_keyboard = {
 	          'F12' : [ 152 ,         None ],
 	      'Shift_L' : [ 153 ,         None ],
 	      'Shift_R' : [ 154 ,         None ],
+	    'Control_L' : [ 155 ,         None ],
+	    'Control_R' : [ 156 ,         None ],
+	        'Alt_L' : [ 157 ,         None ],
+	        'Alt_R' : [ 158 ,         None ],	      	      
 }

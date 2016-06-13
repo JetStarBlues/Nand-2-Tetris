@@ -15,9 +15,13 @@ def toString( array ):
 def toDecimal( bitSeq ):
 	return int(bitSeq, 2)
 
+def toDecimal_( iter ):
+	return toDecimal( toString( iter ) )	
+
 def toBinary( N, x ):
 	if x < 0: x = 2**N + x  # 2s complement
 	return bin(x)[2:].zfill(N)
+
 
 
 # Logging ---
