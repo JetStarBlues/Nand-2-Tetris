@@ -12,16 +12,34 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
+testName, clock, fails, k_idx, k, N, register = [ None ] * 7
 
-k_idx = -2
+def setup():
 
-k = k_register16
-N = 16
-register = RegisterN_( N )
+	global testName
+	global clock
+	global fails
+	global k_idx
+	global k
+	global N
+	global register
 
+	testName = fileName( __name__ )
+
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+
+	k_idx = -2
+
+	k = KnownValues.k_register16
+	N = 16
+	register = RegisterN_( N )
+
+
+# Update ---
 
 def update(clk):
 
@@ -66,10 +84,8 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()

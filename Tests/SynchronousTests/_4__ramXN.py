@@ -12,18 +12,44 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
+testName, clock, fails, k_idx, r_idx, k, X, N, ram = [ None ] * 9
 
-k = [ k_ram8_16, k_ram64_16, k_ram512_16,k_ram4k_16,k_ram16k_16 ]
-X = [ 8, 64, 512, 2**12, 2**14 ]
-N = 16
+def setup():
 
-k_idx = -2
-r_idx = 0
-ram = RAMXN_( X[r_idx], N )
+	global testName
+	global clock
+	global fails
+	global k_idx
+	global r_idx
+	global k
+	global X
+	global N
+	global ram
 
+	testName = fileName( __name__ )
+
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+
+	k = [ 
+		KnownValues.k_ram8_16, 
+		KnownValues.k_ram64_16, 
+		KnownValues.k_ram512_16, 
+		KnownValues.k_ram4k_16, 
+		KnownValues.k_ram16k_16 
+	]
+	X = [ 8, 64, 512, 2**12, 2**14 ]
+	N = 16
+
+	k_idx = -2
+	r_idx = 0
+	ram = RAMXN_( X[r_idx], N )
+
+
+# Update ---
 
 def update(clk):
 
@@ -82,11 +108,9 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()
 

@@ -24,6 +24,8 @@ files = [
 	'test8_fill',
 	'test8a_fill',
 	'test9_rect',
+	'test9a_rect',
+	'test10_pong',
 ]
 
 subdir = 'kv_4__computer/'

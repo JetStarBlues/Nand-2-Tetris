@@ -13,19 +13,39 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
-count = 0
+testName, clock, fails, count, N, computer, a, b, expected = [ None ] * 9
 
-N = 16
-computer = ComputerN_( N, 2**16, 2**15 )
+def setup():
 
-computer.load( KnownValues.pathTo_kv_4 + 'test1_addTo.bin' )
+	global testName
+	global clock
+	global fails
+	global count
+	global N
+	global computer
+	global a
+	global b
+	global expected
 
-a = 6
-expected = sum( range( a + 1 ) )  # 1 + 2 + ... a
+	testName = fileName( __name__ )
 
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+	count = 0
+
+	N = 16
+	computer = ComputerN_( N, 2**16, 2**15 )
+
+	computer.load( KnownValues.pathTo_kv_4 + 'test1_addTo.bin' )
+
+	a = 6
+	expected = sum( range( a + 1 ) )  # 1 + 2 + ... a
+
+
+# Update ---
 
 def update(clk):
 
@@ -51,7 +71,7 @@ def update(clk):
 
 		
 		result = computer.main_memory.read( 1 )
-		result_dec = toDecimal( toString( result ) )
+		result_dec = toDecimal_( result )
 
 
 		print( '\n-- Finished test ' + testName )
@@ -66,8 +86,8 @@ def update(clk):
 def record():
 	pass
 
-	# print(   'i', toDecimal( toString( computer.main_memory.read( 16 ) ) ) )
-	# print( 'sum', toDecimal( toString( computer.main_memory.read( 17 ) ) ) )
+	# print(   'i', toDecimal_( computer.main_memory.read( 16 ) ) )
+	# print( 'sum', toDecimal_( computer.main_memory.read( 17 ) ) )
 
 
 
@@ -80,10 +100,8 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()

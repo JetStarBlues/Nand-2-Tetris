@@ -11,7 +11,7 @@ CLOCK_HALF_PERIOD = 0.005 # 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod
 SCREEN_REFRESH_RATE = 100  # ms
 
 ROM_SIZE = 2**15
-RAM_SIZE = 24577
+RAM_SIZE = 2**15
 
 # RAM Allocation
 DATA_MEMORY_MAP   = 0

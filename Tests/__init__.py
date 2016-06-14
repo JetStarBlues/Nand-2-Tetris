@@ -2,7 +2,7 @@
 from Components import *
 
 # Tests
-import Tests.SynchronousTests
-import Tests.AsynchronousTests
-import Tests.KnownValues
 from Tests._x__testingHelpers import *
+from Tests.KnownValues import *
+import Tests.AsynchronousTests
+import Tests.SynchronousTests

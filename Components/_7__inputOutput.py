@@ -21,6 +21,7 @@ class IO():
 		# General ---
 		self.N = N
 		self.main_memory = main_memory
+		self.hasExited = False
 
 
 		# Initialize IO devices ---
@@ -48,21 +49,27 @@ class IO():
 
 	def _initTkinter( self ):
 
+		# general
 		self.root = tkinter.Tk()
 		self.root.wm_title('Hack')
 		self.root.iconbitmap('Components/favicon.ico')
 		
+		# events
 		self.root.bind( '<KeyPress>', self._handleKeyPress )
 		self.root.bind( '<KeyRelease>', self._handleKeyRelease )
+		self.root.protocol( 'WM_DELETE_WINDOW', self._quitTkinter )  # when user closes window by clicking X
 
+		# img stuff
 		self.img = tkinter.PhotoImage( width = self.screen.width, height = self.screen.height )
 
 		label = tkinter.Label(self.root)
 		label.pack()
 		label.config( image = self.img )
 
+		# loop
 		self.update()
 
+		#
 		self.root.mainloop()
 
 
@@ -90,6 +97,7 @@ class IO():
 	def _quitTkinter( self, ev = None ):
 
 		self.root.quit()
+		self.hasExited = True
 
 
 

@@ -13,19 +13,39 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
-count = 0
+testName, clock, fails, count, N, computer, a, b, expected = [ None ] * 9
 
-N = 16
-computer = ComputerN_( N, 2**16, 2**15 )
+def setup():
 
-computer.load( KnownValues.pathTo_kv_4 + 'test6_mult.bin' )
-a = 3
-b = 9000
-expected = a * b
+	global testName
+	global clock
+	global fails
+	global count
+	global N
+	global computer
+	global a
+	global b
+	global expected
 
+	testName = fileName( __name__ )
+
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+	count = 0
+
+	N = 16
+	computer = ComputerN_( N, 2**16, 2**15 )
+
+	computer.load( KnownValues.pathTo_kv_4 + 'test6_mult.bin' )
+	a = 3
+	b = 9000
+	expected = a * b
+
+
+# Update ---
 
 def update(clk):
 
@@ -52,7 +72,7 @@ def update(clk):
 
 
 		result = computer.main_memory.read( 2 )
-		result_dec = toDecimal( toString( result ) )
+		result_dec = toDecimal_( result )
 
 
 		print( '\n-- Finished test ' + testName )
@@ -63,7 +83,6 @@ def update(clk):
 			print( 'Fail! Something somewhere is not working' )
 			print( result_dec, result )
 			
-
 
 def record():
 	pass
@@ -79,10 +98,8 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()

@@ -13,19 +13,39 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
-count = 0
+testName, clock, fails, count, N, computer, a, b, expected = [ None ] * 9
 
-N = 16
-computer = ComputerN_( N, 2**16, 2**15 )
+def setup():
 
-computer.load( KnownValues.pathTo_kv_4 + 'test2_flip.bin' )
+	global testName
+	global clock
+	global fails
+	global count
+	global N
+	global computer
+	global a
+	global b
+	global expected
 
-a = 50
-b = 33
+	testName = fileName( __name__ )
 
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+	count = 0
+
+	N = 16
+	computer = ComputerN_( N, 2**16, 2**15 )
+
+	computer.load( KnownValues.pathTo_kv_4 + 'test2_flip.bin' )
+
+	a = 50
+	b = 33
+
+
+# Update ---
 
 def update(clk):
 
@@ -77,10 +97,8 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()

@@ -13,17 +13,38 @@ from Tests import *
 
 # Setup ---
 
-testName = fileName( __name__ )
-clock = Clock()
-fails = FailLogger()
-count = 0
+testName, clock, fails, count, N, computer, a, b, expected = [ None ] * 9
 
-N = 16
-computer = ComputerN_( N, 2**16, 2**15 )
-io = IO( N, computer.main_memory )
+def setup():
 
-computer.load( KnownValues.pathTo_kv_4 + 'test8_fill.bin' )
+	global testName
+	global clock
+	global fails
+	global count
+	global N
+	global computer
+	global a
+	global b
+	global expected
+	global io
 
+	testName = fileName( __name__ )
+
+	clock = Clock()
+	clock.callbackRising = callOnRising
+	clock.callbackFalling = callOnFalling
+
+	fails = FailLogger()
+	count = 0
+
+	N = 16
+	computer = ComputerN_( N, 2**16, 2**15 )
+	io = IO( N, computer.main_memory )
+
+	computer.load( KnownValues.pathTo_kv_4 + 'test8_fill.bin' )
+
+
+# Update ---
 
 def update(clk):
 
@@ -47,6 +68,9 @@ def update(clk):
 	else:
 		clock.stop() # stop the clock			
 
+	if io.hasExited:
+		clock.stop() # stop the clock
+
 
 def record():
 	pass
@@ -62,10 +86,8 @@ def callOnRising():
 def callOnFalling():
 	record()
 
-clock.callbackRising = callOnRising
-clock.callbackFalling = callOnFalling
-
 
 # Start program
 def start():
+	setup()
 	clock.run()
