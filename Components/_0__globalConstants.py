@@ -19,6 +19,13 @@ SCREEN_MEMORY_MAP = 16384
 KBD_MEMORY_MAP    = 24576
 
 
+# Performance mode --
+#  Uses Python iterables instead of flip flops for memory. 
+#  Can get away with exponentialy slower clock periods.
+PERFORMANCE_MODE = True
+if PERFORMANCE_MODE : 
+	CLOCK_HALF_PERIOD = 0.00001
+
 
 # --- Hack Software ---------------------------------
 

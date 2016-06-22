@@ -15,11 +15,15 @@ class MemoryROMXN_():
 
 	def __init__( self, X, N ):
 
-		self.ROM = RAMXN_( X, N )
 		self.isReady = False
 
 		self.X = X
-		self.N = N
+		self.N = N		
+
+		if PERFORMANCE_MODE:
+			self.ROM = RAMXN_performance_( X, N )
+		else:
+			self.ROM = RAMXN_( X, N )
 
 	
 	def flash( self, binary_file ):
@@ -44,11 +48,11 @@ class MemoryROMXN_():
 				
 			for instruction in input_file:
 
+				instruction = instruction.rstrip()  # remove newline characters
+
 				self.ROM.write( 1, instruction, 1, address )  # write
 
 				address += 1
-
-				time.sleep( CLOCK_HALF_PERIOD ) # wait until write complete
 
 		print( 'Completed ROM flash. Took {} seconds for {} lines'.format( time.time() - startTime, address ) )
 
@@ -71,7 +75,10 @@ class MemoryRAMXN_():
 
 	def __init__( self, X, N ):
 
-		self.RAM = RAMXN_( X, N )
+		if PERFORMANCE_MODE:
+			self.RAM = RAMXN_performance_( X, N )
+		else:
+			self.RAM = RAMXN_( X, N )
 
 
 	def write( self, clk, x, write, address ):
@@ -94,9 +101,15 @@ class CPU_():
 	def __init__( self, N, pC_size ):
 		
 		self.N = N
-		self.A_register = RegisterN_( N )
-		self.D_register = RegisterN_( N )
+
 		self.programCounter = ProgramCounterN_( pC_size )
+
+		if PERFORMANCE_MODE:
+			self.A_register = RegisterN_performance_( N )
+			self.D_register = RegisterN_performance_( N )
+		else:
+			self.A_register = RegisterN_( N )
+			self.D_register = RegisterN_( N )
 
 
 	def doTheThing( self, clk, RESET, main_memory, program_memory ):
@@ -113,11 +126,10 @@ class CPU_():
 		 I'm using an if statement (so sad), to accomplish this in code.
 		'''
 
-		if instruction[0] == 0:
+		if int( instruction[0] ) == 0:
 
 			# --- Execute A instruction ---
 			self.A_register.write( clk, instruction, 1 ) # write
-
 
 			jump, increment = 0, 1
 			self.programCounter.doTheThing( clk, zeroN_( self.N ), RESET, jump, increment ) # increment

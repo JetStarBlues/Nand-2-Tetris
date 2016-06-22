@@ -13,7 +13,8 @@ class Register_():
 	def __init__( self ):
 
 		self.ff = DFlipFlop()
-		self.ff.clear()         # start with out = 0
+
+		self.ff.clear()  # start with out = 0
 
 
 	def write( self, clk, x, write ):
@@ -144,9 +145,12 @@ class ProgramCounterN_():
 
 	def __init__( self, N ):
 
-		self.N = N
-		
-		self.register = RegisterN_( N )
+		self.N = N	
+
+		if PERFORMANCE_MODE:
+			self.register = RegisterN_performance_( N )
+		else:
+			self.register = RegisterN_( N )
 
 
 	def doTheThing( self, clk, x, rst, write, inc ):
