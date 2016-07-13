@@ -27,6 +27,16 @@ if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0.00001
 
 
+# Wishlist --
+# COLOR_MODE = True
+# if COLOR_MODE :
+#	ROM_SIZE = 2**16
+#	RAM_SIZE = 2**16
+# 	KBD_MEMORY_MAP    = 16384
+# 	SCREEN_MEMORY_MAP = 16385
+
+
+
 # --- Hack Software ---------------------------------
 
 

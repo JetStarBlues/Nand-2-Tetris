@@ -4,6 +4,7 @@ PlayArea/test.py
 PlayArea/assembler/
 PlayArea/kbd/
 PlayArea/logo/
+PlayArea/vm/
 
 
 Other/output.txt

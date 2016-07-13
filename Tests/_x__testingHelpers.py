@@ -47,7 +47,7 @@ class FailLogger():
 
 		if self.fails:
 
-			print( '\n--- {} values failed --- \n'.format( len(self.fails) ) )
+			print( '\n--- {} values failed for test {} --- \n'.format( len(self.fails), testName ) )
 
 			for fail in self.fails:
 				print( 'exp {}  got {}  at {}'.format( fail[0], fail[1], fail[2] ) )

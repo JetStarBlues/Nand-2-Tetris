@@ -3,9 +3,6 @@
 # Hack computer
 from Components import *
 
-# Helpers
-from Tests._x__testingHelpers import *
-
 
 
 ''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
@@ -16,7 +13,8 @@ io = IO( N_BITS, computer.main_memory )
 
 
 # Load program
-computer.program_memory.flash( 'Tests/KnownValues/kv_programs/kv_4__computer/bin/demo_eo6.bin')
+computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6.bin' )
+
 
 # Set data bits required by program accordingly
 # computer.main_memory.write( 1, toBinary( N_BITS, x ), 1, 0 )  # clk, x, write, address
