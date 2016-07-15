@@ -14,6 +14,7 @@ io = IO( N_BITS, computer.main_memory )
 
 # Load program
 computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6.bin' )
+# computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6_color.bin' )
 
 
 # Set data bits required by program accordingly

@@ -28,12 +28,13 @@ if PERFORMANCE_MODE :
 
 
 # Wishlist --
-# COLOR_MODE = True
-# if COLOR_MODE :
-#	ROM_SIZE = 2**16
-#	RAM_SIZE = 2**16
-# 	KBD_MEMORY_MAP    = 16384
-# 	SCREEN_MEMORY_MAP = 16385
+COLOR_MODE_4BIT = False
+if COLOR_MODE_4BIT :
+	# Revisit. If find clever way to init colors (probably thru software) no need to change any of the following,
+	N_BITS = 17  # first bit reserved ( used to decide if A or C instruction )
+	RAM_SIZE = 2**16
+	KBD_MEMORY_MAP    = 16384
+	SCREEN_MEMORY_MAP = 16385
 
 
 
@@ -46,3 +47,25 @@ if PERFORMANCE_MODE :
 
 SCREEN_BACKGROUND_COLOR = '#FFFCF3'
 SCREEN_FOREGROUND_COLOR = '#717164'
+
+COLOR_PALETTE_4BIT = {
+
+	# PICO-8 palette
+	#  www.lexaloffle.com/gfx/pico8_pal_017.png
+	'0000' : '#FFF1E8',
+	'0001' : '#1D2B53',
+	'0010' : '#7E2553',
+	'0011' : '#008751',
+	'0100' : '#AB5236',
+	'0101' : '#5F574F',
+	'0110' : '#C2C3C7',
+	'0111' : '#000000',
+	'1000' : '#FF004D',
+	'1001' : '#FFA300',
+	'1010' : '#FFEC27',
+	'1011' : '#00E436',
+	'1100' : '#29ADFF',
+	'1101' : '#83769C',
+	'1110' : '#FF77A8',
+	'1111' : '#FFCCAA',
+}

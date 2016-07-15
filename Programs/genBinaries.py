@@ -30,6 +30,7 @@ files = [
 	# 'test10_pong',
 
 	'demo_eo6',
+	# 'demo_eo6_color',
 ]
 
 subdir = 'Demos/'

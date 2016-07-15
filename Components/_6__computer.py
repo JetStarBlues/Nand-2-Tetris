@@ -111,12 +111,21 @@ class CPU_():
 			self.A_register = RegisterN_( N )
 			self.D_register = RegisterN_( N )
 
+		# n_bit instruction support
+		nUnusedBits = N - 14  # shoved between opcode and ysel
+		self.opcode =  0
+		self.ysel   =  1 + nUnusedBits
+		self.cmp    =  2 + nUnusedBits
+		self.dst    =  8 + nUnusedBits
+		self.jmp    = 11 + nUnusedBits
+
 
 	def doTheThing( self, clk, RESET, main_memory, program_memory ):
 
 		# --- Fetch instruction ---
 		instruction_address = self.programCounter.read()
 		instruction = program_memory.read( instruction_address )
+		# print( instruction_address )
 
 
 		# --- Execute instruction ---
@@ -126,7 +135,7 @@ class CPU_():
 		 I'm using an if statement (so sad), to accomplish this in code.
 		'''
 
-		if int( instruction[0] ) == 0:
+		if int( instruction[ self.opcode ] ) == 0:
 
 			# --- Execute A instruction ---
 			self.A_register.write( clk, instruction, 1 ) # write
@@ -147,10 +156,15 @@ class CPU_():
 				self.N,
 				main_memory.read( self.A_register.readDecimal() ),
 				self.A_register.read(),
-				instruction[3]
+				instruction[ self.ysel ]
 			) 
 
-			ALU_out = ALU_( self.N, x, y, instruction[4], instruction[5], instruction[6], instruction[7], instruction[8], instruction[9] )
+			ALU_out = ALU_( 
+				self.N,
+				x, y, 
+				instruction[ self.cmp + 0 ], instruction[ self.cmp + 1 ], instruction[ self.cmp + 2 ], 
+				instruction[ self.cmp + 3 ], instruction[ self.cmp + 4 ], instruction[ self.cmp + 5 ] 
+			)
 
 
 			# - Jump -
@@ -178,7 +192,7 @@ class CPU_():
 				zr,                     # JEQ
 				not_( or_( zr, ng ) ),  # JGT
 				0,                      # NULL
-				instruction[13], instruction[14], instruction[15] 
+				instruction[ self.jmp + 0 ], instruction[ self.jmp + 1 ], instruction[ self.jmp + 2 ] 
 			)
 
 			increment = 1 # hold high, pC design ensures priority of control bits preserved
@@ -198,9 +212,9 @@ class CPU_():
 				'NULL' : '000',
 			'''
 
-			writeA = mux8to1_( 1, 1, 1, 1, 0, 0, 0, 0, instruction[10], instruction[11], instruction[12] )
-			writeD = mux8to1_( 1, 1, 0, 0, 1, 1, 0, 0, instruction[10], instruction[11], instruction[12] )
-			writeM = mux8to1_( 1, 0, 1, 0, 1, 0, 1, 0, instruction[10], instruction[11], instruction[12] )
+			writeA = mux8to1_( 1, 1, 1, 1, 0, 0, 0, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
+			writeD = mux8to1_( 1, 1, 0, 0, 1, 1, 0, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
+			writeM = mux8to1_( 1, 0, 1, 0, 1, 0, 1, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
 
 			self.A_register.write( clk, ALU_out[0], writeA ) # write
 			self.D_register.write( clk, ALU_out[0], writeD ) # write

@@ -255,12 +255,14 @@ def translate_Instructions( cmdList ):
 		# A instruction
 		if cmd_s[0] == '@':
 			addr = int( cmd_s[1:] )
-			cmd_b = _toBinary( 16, addr )
+			cmd_b = _toBinary( N_BITS, addr ) # opcode = 0
 
 
 		# C instruction
 		else:
-			header = '111'
+			opcode = '1'
+			nUnusedBits = ( N_BITS - 14 )  # 14 bits used to encode opcode, dest, comp, jmp
+			header = opcode + '1' * nUnusedBits
 			
 			dest, comp, jmp = [None] * 3
 

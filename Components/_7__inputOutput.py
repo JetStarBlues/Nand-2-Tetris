@@ -126,9 +126,15 @@ class Screen():
 		self.height = 256		
 		self.registersPerRow = self.width // self.N
 
-		# Colors
-		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
-		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
+		# 1Bit color mode (default)
+		self.bgColor = SCREEN_BACKGROUND_COLOR
+		self.fgColor = SCREEN_FOREGROUND_COLOR
+
+		# 4Bit color mode
+		if COLOR_MODE_4BIT:
+			self.nRegisters *= 4
+			self.registersPerRow *= 4
+			self.colors = COLOR_PALETTE_4BIT
 
 		# Pixel array
 		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
@@ -136,20 +142,21 @@ class Screen():
 		# Tkinter string
 		self.data = None
 
-
+	
 	def update( self ):
 
-		# Get screen data from Hack's main memory ---
+		# Get screen data from Hack's main memory
+
 		self.readMainMemory()
 
+		# Format pixel array as tkinter string
 
-		# Format pixel array to tkinter string ---
-		data = [ '{' + ''.join( map( str, row ) ) + '} ' for row in self.pixels ]
-		data = ''.join( data )
+		if COLOR_MODE_4BIT:
+			self.update_4BitMode()
+		else:
+			self.update_1BitMode()
 
-		self.data = data.replace( '0', self.bgColor ).replace( '1', self.fgColor )
-
-
+	
 	def readMainMemory( self ):
 
 		# Get screen data from Hack's main memory
@@ -163,7 +170,58 @@ class Screen():
 
 	def write( self, x, address ):
 
-		# Psuedo N bit RAM interface ---
+		#  Maps RAM access style to pixel array access style
+
+		if COLOR_MODE_4BIT:
+			self.write_4BitMode( x, address )
+		else:
+			self.write_1BitMode( x, address )
+
+
+	def update_1BitMode( self ):
+
+		# Format as tkinter string
+		data = [ 
+			'{' + 
+			''.join( map( self.get1BitColor, row ) ) + 
+			'} ' 
+			for row in self.pixels 
+		]
+		data = ''.join( data )
+
+		self.data = data
+
+
+	def get1BitColor( self, color_key):
+
+		if color_key == 1:
+			return self.fgColor + ' '
+		else:
+			return self.bgColor + ' '
+
+
+	def update_4BitMode( self ):
+
+		# Format as tkinter string
+		data = [ 
+			'{' + 
+			''.join( map( self.get4BitColor, row ) ) + 
+			'} ' 
+			for row in self.pixels 
+		]
+		data = ''.join( data )
+
+		self.data = data
+
+
+	def get4BitColor( self, color_key ):
+
+		color_key = ''.join( map( str, color_key ) )  # convert tuple to string
+		return self.colors[ color_key ] + ' '         # look up corresponding color
+
+
+	def write_1BitMode( self, x, address ):
+
 		#  Maps RAM access style to pixel array access style
 
 		row = address // self.registersPerRow
@@ -171,6 +229,19 @@ class Screen():
 
 		for col, bit in zip( range( col_0, col_0 + self.N ), range( 0, self.N ) ):
 			self.pixels[row][col] = x[bit]
+
+
+	def write_4BitMode( self, x, address ):
+
+		#  Maps RAM access style to pixel array access style
+
+		x = x[ - self.N : ]  # last 16 bits. Revisit, probably not necessary with clever color assignment
+
+		row = address // self.registersPerRow
+		col_0 = address % self.registersPerRow * 4
+
+		for col, nibble in zip( range( col_0, col_0 + 4 ), range( 0, self.N, 4 ) ):
+			self.pixels[row][col] = x[ nibble : nibble + 4 ]
 
 
 
