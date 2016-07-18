@@ -10,6 +10,8 @@ CLOCK_HALF_PERIOD = 0.018  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
 SCREEN_REFRESH_RATE = 100  # ms
 
+# Note, addressable memory is one less than N_BITS since 
+#  first bit reserved ( used to decide if A or C instruction )
 ROM_SIZE = 2**15
 RAM_SIZE = 2**15
 
@@ -21,10 +23,11 @@ KBD_MEMORY_MAP    = 24576
 
 # Performance mode --
 #  Uses Python iterables instead of flip flops for memory. 
-#  Can get away with exponentialy slower clock periods.
+#  Can get away with exponentially slower clock periods.
 PERFORMANCE_MODE = True
 if PERFORMANCE_MODE : 
-	CLOCK_HALF_PERIOD = 0.00001
+	CLOCK_HALF_PERIOD = 0.00001 # conservative
+	CLOCK_HALF_PERIOD = 1e-8 # aggressive
 
 
 # Wishlist --

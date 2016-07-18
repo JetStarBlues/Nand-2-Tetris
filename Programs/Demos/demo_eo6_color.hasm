@@ -434,7 +434,7 @@
 	@i
 	M = 0
 
-	@color1
+	@color3
 	D = M
 	@color
 	M = D
@@ -461,7 +461,7 @@
 	@i
 	M = 0
 
-	@color2
+	@color6
 	D = M
 	@color
 	M = D
@@ -488,7 +488,7 @@
 	@i
 	M = 0
 
-	@color3
+	@color7
 	D = M
 	@color
 	M = D
@@ -515,7 +515,7 @@
 	@i
 	M = 0
 
-	@color4
+	@color8
 	D = M
 	@color
 	M = D
@@ -542,7 +542,7 @@
 	@i
 	M = 0
 
-	@color5
+	@color9
 	D = M
 	@color
 	M = D
@@ -569,7 +569,7 @@
 	@i
 	M = 0
 
-	@color6
+	@color10
 	D = M
 	@color
 	M = D
@@ -596,7 +596,7 @@
 	@i
 	M = 0
 
-	@color7
+	@color11
 	D = M
 	@color
 	M = D
@@ -623,7 +623,7 @@
 	@i
 	M = 0
 
-	@color8
+	@color12
 	D = M
 	@color
 	M = D
@@ -650,7 +650,7 @@
 	@i
 	M = 0
 
-	@color9
+	@color13
 	D = M
 	@color
 	M = D
@@ -677,7 +677,7 @@
 	@i
 	M = 0
 
-	@color10
+	@color14
 	D = M
 	@color
 	M = D

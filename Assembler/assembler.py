@@ -106,6 +106,11 @@ lookup_globalAddresses = {
 	'@ARG'    : '@2',
 	'@THIS'   : '@3',
 	'@THAT'   : '@4',
+	'@TEMP'   : '@5',
+	'@GP'     : '@13',
+	'@STATIC' : '@16',
+	'@STACK'  : '@256',
+	'@HEAP'   : '@2048',
 }
 
 
@@ -254,12 +259,16 @@ def translate_Instructions( cmdList ):
 
 		# A instruction
 		if cmd_s[0] == '@':
+
+			opcode = '0'
 			addr = int( cmd_s[1:] )
-			cmd_b = _toBinary( N_BITS, addr ) # opcode = 0
+			addr = _toBinary( N_BITS - 1, addr )
+			cmd_b = opcode + addr
 
 
 		# C instruction
 		else:
+			
 			opcode = '1'
 			nUnusedBits = ( N_BITS - 14 )  # 14 bits used to encode opcode, dest, comp, jmp
 			header = opcode + '1' * nUnusedBits

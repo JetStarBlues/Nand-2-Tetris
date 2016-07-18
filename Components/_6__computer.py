@@ -125,7 +125,7 @@ class CPU_():
 		# --- Fetch instruction ---
 		instruction_address = self.programCounter.read()
 		instruction = program_memory.read( instruction_address )
-		# print( instruction_address )
+		# print( instruction_address, instruction )
 
 
 		# --- Execute instruction ---
