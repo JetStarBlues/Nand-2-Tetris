@@ -13,7 +13,7 @@ from ._x__components import *
 class IO():
 
 	''' Input and output devices.
-		 Currently consists of screen and keyboard.
+	     Currently consists of screen and keyboard.
 	'''
 
 	def __init__( self, N, main_memory ):
@@ -27,6 +27,7 @@ class IO():
 		# Initialize IO devices ---
 		self.screen = Screen( self.main_memory )
 		self.keyboard = Keyboard( self.N, self.main_memory )
+		self.mouse = Mouse( self.N, self.main_memory )
 
 
 		# Initialize tkinter ---
@@ -57,6 +58,7 @@ class IO():
 		# events
 		self.root.bind( '<KeyPress>', self._handleKeyPress )
 		self.root.bind( '<KeyRelease>', self._handleKeyRelease )
+		self.root.bind( '<Button-1>', self._handleMouseClick )
 		self.root.protocol( 'WM_DELETE_WINDOW', self._quitTkinter )  # when user closes window by clicking X
 
 		# img stuff
@@ -87,6 +89,11 @@ class IO():
 		self.keyboard.handleKeyRelease()
 
 
+	def _handleMouseClick( self, ev = None ):
+
+		self.mouse.handleMouseClick( ev.x, ev.y )
+
+
 	def _updateTkinterImg( self, data ):
 
 		self.img.put( data, to = (0, 0, self.screen.width, self.screen.height) )
@@ -107,11 +114,11 @@ class IO():
 class Screen():
 
 	'''
-		16 bit screen with a 512 x 256 pixels display.
-		Specifications hardcoded for simplicity.
+	    16 bit screen with a 512 x 256 pixels display.
+	    Specifications hardcoded for simplicity.
 
-		Data stored using a 256 x 512 array to help with tkinter draw speed
-		(In lieu of using a 1 x 8192 array which more closely resembles RAM).
+	    Data stored using a 256 x 512 array to help with tkinter draw speed
+	    (In lieu of using a 1 x 8192 array which more closely resembles RAM).
 	'''
 
 	def __init__( self, main_memory ):
@@ -280,19 +287,19 @@ class Keyboard():
 	def write( self ):
 
 		'''
-			Bypasses I/O interrupt handling by CPU as the keyboard
-			 writes directly to main_memory. In the physical implementation,
-			 only the CPU would have access to main_memory requiring the use
-			 of interrupt handling logic.
+		    Bypasses I/O interrupt handling by CPU as the keyboard
+		     writes directly to main_memory. In the physical implementation,
+		     only the CPU would have access to main_memory requiring the use
+		     of interrupt handling logic.
 
-			See, www.cs.umd.edu/class/sum2003/cmsc311/Notes/IO/extInt.html
+		    See, www.cs.umd.edu/class/sum2003/cmsc311/Notes/IO/extInt.html
 		'''
 
 		keyCode = lookup_keyboard[ self.keySym ][0]   # decimal
 
 		keyCode = bin( keyCode )[2:].zfill( self.N )  # binary
 
-		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )  # clk, x, write, address
+		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )  # clk, data, write, address
 
 		# print( self.main_memory.read( KBD_MEMORY_MAP ) )
 
@@ -432,5 +439,50 @@ lookup_keyboard = {
 	    'Control_L' : [ 155 ,         None ],
 	    'Control_R' : [ 156 ,         None ],
 	        'Alt_L' : [ 157 ,         None ],
-	        'Alt_R' : [ 158 ,         None ],	      	      
+	        'Alt_R' : [ 158 ,         None ],
 }
+
+
+
+''''''''''''''''''''''''' mouse '''''''''''''''''''''''''''
+
+
+class Mouse():
+
+	''' N bit mouse '''
+
+	def __init__( self, N, main_memory ):
+
+		self.main_memory = main_memory
+
+		self.N = N
+
+		self.keySym = None
+
+
+	def handleMouseClick( self, mouseX, mouseY ):
+
+		# print( "x", mouseX, " y", mouseY )
+
+		self.write( mouseX, mouseY )
+
+
+	def write( self, mouseX, mouseY ):
+
+		'''
+		    Bypasses I/O interrupt handling by CPU as the keyboard
+		     writes directly to main_memory. In the physical implementation,
+		     only the CPU would have access to main_memory requiring the use
+		     of interrupt handling logic.
+
+		    See, www.cs.umd.edu/class/sum2003/cmsc311/Notes/IO/extInt.html
+		'''
+
+		mouseX = bin( mouseX )[2:].zfill( self.N )  # binary
+		mouseY = bin( mouseY )[2:].zfill( self.N )  # binary
+
+		self.main_memory.write( 1, mouseX, 1, MOUSEX_MEMORY_MAP )  # clk, data, write, address
+		self.main_memory.write( 1, mouseY, 1, MOUSEY_MEMORY_MAP )  # clk, data, write, address
+
+		# print( self.main_memory.read( MOUSEX_MEMORY_MAP ) )
+		# print( self.main_memory.read( MOUSEY_MEMORY_MAP ) )

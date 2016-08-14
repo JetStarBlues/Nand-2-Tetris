@@ -137,10 +137,10 @@ class ProgramCounterN_():
 
 	''' N bit program counter 
 
-			if    rst(t-1)   : out(t) = 0
-			elif  write(t-1) : out(t) = in(t-1)
-			elif  inc(t-1)   : out(t) = out(t-1) + 1
-			else             : out(t) = out(t-1)
+	        if    rst(t-1)   : out(t) = 0
+	        elif  write(t-1) : out(t) = in(t-1)
+	        elif  inc(t-1)   : out(t) = out(t-1) + 1
+	        else             : out(t) = out(t-1)
 	'''
 
 	def __init__( self, N ):

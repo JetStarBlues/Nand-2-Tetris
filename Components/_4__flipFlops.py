@@ -113,9 +113,7 @@ class DFlipFlop():
 	def doTheThing_( self, e, d ):
 
 		# execute only after delay...
-		# print("> ff delay started at", round(time.time(),8))
 		time.sleep( self.propogationDelay )
-		# print(">> ff delay complete at", round(time.time(),8))
 
 		#
 		r = and_( e, not_( d ) )

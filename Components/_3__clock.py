@@ -12,8 +12,8 @@ from ._x__components import *
 class Clock():
 	
 	''' Uses Python logic and modules ...
-		 In mechanical and/or FPGA implementation, this would be
-		 handled by an external clock (crsytal oscillator) '''
+	     In mechanical and/or FPGA implementation, this would be
+	     handled by an external clock (crsytal oscillator) '''
 
 	def __init__( self ):
 

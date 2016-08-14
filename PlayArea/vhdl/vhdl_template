@@ -1,0 +1,28 @@
+//
+library ieee;
+use ieee.std_logic_1164.all;
+
+
+//
+entity entityName is
+
+	port (
+		portName : direction type; // direction ( in, out, inout ), type ( std_logic_vector, bit, std_logic )
+		portName : direction type
+	);
+
+end entity entityName;
+
+
+//
+architecture architectureName of entityName is
+
+	signal signalName : type;  // decleration
+	signal signalName : type;
+
+begin
+	
+	portName <= logicExpression;   // assignment
+	signalName <= logicExpression;
+
+end

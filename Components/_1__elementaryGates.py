@@ -26,7 +26,7 @@ def xnor_( a, b ):
 
 
 
-''''''''''''''''''''''''' Encoders & Decoders '''''''''''''''''''''''''	
+''''''''''''''''''''''''' Decoders & Encoders '''''''''''''''''''''''''	
 
 # MSB to LSB
 
@@ -81,7 +81,7 @@ def mux_( d1, d0, sel ):
 
 	''' 2to1 multiplexor is equivalent to an if/else statement of form,
 			out = d0 if sel == 0
-				  d1 if sel == 1			  
+			      d1 if sel == 1			  
 
 		Or in boolean algebra
 			out = ( !s * d0 ) + ( s * d1 )
@@ -166,7 +166,7 @@ def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 def dMux_( x, sel ):
 
 	'''	out = [ 0, x ] if sel == 0
-			  [ x, 0 ] if sel == 1
+		      [ x, 0 ] if sel == 1
 	'''
 	d0 = and_( x, not_( sel ) )
 	d1 = and_( x, sel )
@@ -176,9 +176,9 @@ def dMux_( x, sel ):
 def dMux1to4_( x, s1, s0 ):
 
 	'''	out = [ 0, 0, 0, x ] if sel == 00
-			  [ 0, 0, x, 0 ] if sel == 01
-			  [ 0, x, 0, 0 ] if sel == 10
-			  [ x, 0, 0, 0 ] if sel == 11
+		      [ 0, 0, x, 0 ] if sel == 01
+		      [ 0, x, 0, 0 ] if sel == 10
+		      [ x, 0, 0, 0 ] if sel == 11
 	'''
 
 	''' using elementary gates '''
@@ -208,7 +208,7 @@ def dMux1to8_( x, s2, s1, s0 ):
 	p1 = dMux_( x, s2 )
 	p2 = dMux1to4_( p1[0], s1, s0 )
 	p3 = dMux1to4_( p1[1], s1, s0 )
-	return ( p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p3[2], p3[3] ) # d3, d2, d1, d0
+	return ( p2[0], p2[1], p2[2], p2[3], p3[0], p3[1], p3[2], p3[3] ) # d7, d6, d5, d4, d3, d2, d1, d0
 
 
 
@@ -251,7 +251,7 @@ def orNto1_( x ):
 	return out
 
 	''' alternate way, takes advantage of using gates in parallel 
-		> speed savings if physical implementation
+	    > speed savings if physical implementation
 	    https://github.com/havivha/Nand2Tetris/blob/master/02/Or8Way.hdl
 	    t1 = or ( in[0], in[1] )
 	    t2 = or ( in[2], in[3] )

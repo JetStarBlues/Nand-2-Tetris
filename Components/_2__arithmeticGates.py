@@ -58,7 +58,7 @@ def incrementN_( N, x ):
 def fastIncrement_( x ):
 
 	''' is this implementable with logic gates? See vid 2.3
-		Doubt it atm due to break-statement '''
+	    Doubt it atm due to break-statement '''
 	# special case, keep flipping RtoL till flip a zero
 
 	summ = list( x ) # mutable
@@ -97,7 +97,7 @@ def fullSubtractor_( a, b, c ):
 def subtractN_( N, a, b ):
 
 	''' N bit subractor, takes and outputs Nbit numbers
-		 if a < b, answer returned is in 2s complement
+	     if a < b, answer returned is in 2s complement
 	'''
 	diff = [None] * N
 	borrow = 0
