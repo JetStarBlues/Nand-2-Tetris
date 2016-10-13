@@ -142,6 +142,8 @@ def isNegative_( x ):
 
 ''''''''''''''''''''''''''' shift register '''''''''''''''''''''''''''
 
+# MSB to LSB
+
 '''
 	As is can shift max '1111' -> 15 on one command...
 	So a call like shift(20) would need to be split up...
@@ -152,7 +154,7 @@ def isNegative_( x ):
 	(and correspoinding 16muxes) to hardware... revusit as needed
 '''
 
-def shiftRightN_( N, x, s3, s2, s1, s0 ):
+def shiftRightN_( N, x, y ):
 
 	''' Barrel shifter '''
 
@@ -161,46 +163,48 @@ def shiftRightN_( N, x, s3, s2, s1, s0 ):
 	t2 = [None] * N
 	t3 = [None] * N
 
+	y = y[::-1] # make life simpler by matching array access to MSB-to-LSB format
+
 	#
 	for i in range( N - 1, 0, -1 ):
-		t0[i] = mux_( x[i - 1], x[i], s0 )
+		t0[i] = mux_( x[i - 1], x[i], y[0] )
 
-	t0[0] = mux_( 0, x[0], s0 )
+	t0[0] = mux_( 0, x[0], y[0] )
 
 	#
 	for i in range( N - 1, 1, -1 ):
-		t1[i] = mux_( t0[i - 2], t0[i], s1 )
+		t1[i] = mux_( t0[i - 2], t0[i], y[1] )
 
-	t1[1] = mux_( 0, t0[1], s1 )
-	t1[0] = mux_( 0, t0[0], s1 )
+	t1[1] = mux_( 0, t0[1], y[1] )
+	t1[0] = mux_( 0, t0[0], y[1] )
 
 	#
 	for i in range( N - 1, 3, -1 ):
-		t2[i] = mux_( t1[i - 4], t1[i], s2 )
+		t2[i] = mux_( t1[i - 4], t1[i], y[2] )
 
-	t2[3] = mux_( 0, t1[3], s2 )
-	t2[2] = mux_( 0, t1[2], s2 )
-	t2[1] = mux_( 0, t1[1], s2 )
-	t2[0] = mux_( 0, t1[0], s2 )	
+	t2[3] = mux_( 0, t1[3], y[2] )
+	t2[2] = mux_( 0, t1[2], y[2] )
+	t2[1] = mux_( 0, t1[1], y[2] )
+	t2[0] = mux_( 0, t1[0], y[2] )	
 
 	#
 	for i in range( N - 1, 7, -1 ):
-		t3[i] = mux_( t2[i - 8], t2[i], s3 )
+		t3[i] = mux_( t2[i - 8], t2[i], y[3] )
 
-	t3[7] = mux_( 0, t2[7], s3 )
-	t3[6] = mux_( 0, t2[6], s3 )
-	t3[5] = mux_( 0, t2[5], s3 )
-	t3[4] = mux_( 0, t2[4], s3 )
-	t3[3] = mux_( 0, t2[3], s3 )
-	t3[2] = mux_( 0, t2[2], s3 )
-	t3[1] = mux_( 0, t2[1], s3 )
-	t3[0] = mux_( 0, t2[0], s3 )
+	t3[7] = mux_( 0, t2[7], y[3] )
+	t3[6] = mux_( 0, t2[6], y[3] )
+	t3[5] = mux_( 0, t2[5], y[3] )
+	t3[4] = mux_( 0, t2[4], y[3] )
+	t3[3] = mux_( 0, t2[3], y[3] )
+	t3[2] = mux_( 0, t2[2], y[3] )
+	t3[1] = mux_( 0, t2[1], y[3] )
+	t3[0] = mux_( 0, t2[0], y[3] )
 
 	#
 	return t3
 
 
-def shiftLeftN_( N, x, s3, s2, s1, s0 ):
+def shiftLeftN_( N, x, y ):
 
 	''' Barrel shifter '''
 
@@ -209,40 +213,42 @@ def shiftLeftN_( N, x, s3, s2, s1, s0 ):
 	t2 = [None] * N
 	t3 = [None] * N
 
+	y = y[::-1] # make life simpler by matching array access to MSB-to-LSB format
+
 	#
-	t0[N - 1] = mux_( 0, x[N - 1], s0 )
+	t0[N - 1] = mux_( 0, x[N - 1], y[0] )
 	
 	for i in range( N - 2, -1, -1 ):
-		t0[i] = mux_( x[i + 1], x[i], s0 )
+		t0[i] = mux_( x[i + 1], x[i], y[0] )
 
 	#
-	t1[N - 1] = mux_( 0, t0[N - 1], s1 )
-	t1[N - 2] = mux_( 0, t0[N - 2], s1 )
+	t1[N - 1] = mux_( 0, t0[N - 1], y[1] )
+	t1[N - 2] = mux_( 0, t0[N - 2], y[1] )
 
 	for i in range( N - 3, -1, -1 ):
-		t1[i] = mux_( t0[i + 2], t0[i], s1 )
+		t1[i] = mux_( t0[i + 2], t0[i], y[1] )
 
 	#
-	t2[N - 1] = mux_( 0, t1[N - 1], s2 )
-	t2[N - 2] = mux_( 0, t1[N - 2], s2 )
-	t2[N - 3] = mux_( 0, t1[N - 3], s2 )
-	t2[N - 4] = mux_( 0, t1[N - 4], s2 )
+	t2[N - 1] = mux_( 0, t1[N - 1], y[2] )
+	t2[N - 2] = mux_( 0, t1[N - 2], y[2] )
+	t2[N - 3] = mux_( 0, t1[N - 3], y[2] )
+	t2[N - 4] = mux_( 0, t1[N - 4], y[2] )
 
 	for i in range( N - 5, -1, -1 ):
-		t2[i] = mux_( t1[i + 4], t1[i], s2 )
+		t2[i] = mux_( t1[i + 4], t1[i], y[2] )
 
 	#
-	t3[N - 1] = mux_( 0, t2[N - 1], s3 )
-	t3[N - 2] = mux_( 0, t2[N - 2], s3 )
-	t3[N - 3] = mux_( 0, t2[N - 3], s3 )
-	t3[N - 4] = mux_( 0, t2[N - 4], s3 )
-	t3[N - 5] = mux_( 0, t2[N - 5], s3 )
-	t3[N - 6] = mux_( 0, t2[N - 6], s3 )
-	t3[N - 7] = mux_( 0, t2[N - 7], s3 )
-	t3[N - 8] = mux_( 0, t2[N - 8], s3 )
+	t3[N - 1] = mux_( 0, t2[N - 1], y[3] )
+	t3[N - 2] = mux_( 0, t2[N - 2], y[3] )
+	t3[N - 3] = mux_( 0, t2[N - 3], y[3] )
+	t3[N - 4] = mux_( 0, t2[N - 4], y[3] )
+	t3[N - 5] = mux_( 0, t2[N - 5], y[3] )
+	t3[N - 6] = mux_( 0, t2[N - 6], y[3] )
+	t3[N - 7] = mux_( 0, t2[N - 7], y[3] )
+	t3[N - 8] = mux_( 0, t2[N - 8], y[3] )
 
 	for i in range( N - 9, -1, -1 ):
-		t3[i] = mux_( t2[i + 8], t2[i], s3 )
+		t3[i] = mux_( t2[i + 8], t2[i], y[3] )
 
 	#
 	return t3
@@ -253,34 +259,95 @@ def shiftLeftN_( N, x, s3, s2, s1, s0 ):
 
 # MSB to LSB
 
-def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
+def ALU_( N, x, y, ub1, ub0, zx, nx, zy, ny, f, no ):
 
 	''' N bit ALU '''
 
 	'''
 	 out, zr, ng = [ None, 0, 0 ]
- 	 if zx == 1 : x = zeroN_( N )
- 	 if nx == 1 : x = notN_( N, x )
- 	 if zy == 1 : y = zeroN_( N )
- 	 if ny == 1 : y = notN_( N, y )
- 	 if  f == 1 : out = addN_( N, x, y )  # out = x + y
- 	 if  f == 0 : out = andN_( N, x, y )  # out = x & y
- 	 if no == 1 : out = notN_( N, out )   # out = !out
- 	 if out == 0: zr = 1
- 	 if out < 0 : ng = 1
 
+	 if ub1 == 1 :
+	 	if ub0 == 1 :
+ 	 		if zx == 1 : x = zeroN_( N )
+ 	 		if nx == 1 : x = notN_( N, x )
+ 	 		if zy == 1 : y = zeroN_( N )
+ 	 		if ny == 1 : y = notN_( N, y )
+ 	 		if  f == 1 : out = addN_( N, x, y )  # out = x + y
+ 	 		if  f == 0 : out = andN_( N, x, y )  # out = x & y
+ 	 		if no == 1 : out = notN_( N, out )   # out = !out
+
+		if ub0 == 0 :
+			out = xorN_( N, x, y )
+
+	 if ub1 == 0 :
+	 	if ub0 == 1 : out = shiftLeftN_( N, x, y )
+	 	if ub0 == 0 : out = shiftRightN_( N, x, y )
+
+	 if out == 0 : zr = 1
+ 	 if out < 0  : ng = 1	
 	 return ( out, zr, ng ) 
 	'''
 
 	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
 
-	x =   muxN_( N,  zeroN_( N )     ,  x               ,  zx                 )
-	x =   muxN_( N,  notN_( N, x )   ,  x               ,  nx                 )
-	y =   muxN_( N,  zeroN_( N )     ,  y               ,  zy                 )
-	y =   muxN_( N,  notN_( N, y )   ,  y               ,  ny                 )
-	out = muxN_( N,  addN_( N, x, y ),  andN_( N, x, y ),  f                  )
-	out = muxN_( N,  notN_( N, out ) ,  out             ,  no                 )
-	zr =  mux_(      1               ,  0               ,  isZero_( out )     )
-	ng =  mux_(      1               ,  0               ,  isNegative_( out ) )
+	x0 = muxN_( N,  zeroN_( N )       ,  x                 ,  zx )
+	x0 = muxN_( N,  notN_( N, x0 )    ,  x0                ,  nx )
+	y0 = muxN_( N,  zeroN_( N )       ,  y                 ,  zy )
+	y0 = muxN_( N,  notN_( N, y0 )    ,  y0                ,  ny )
+	t2 = muxN_( N,  addN_( N, x0, y0 ),  andN_( N, x0, y0 ),  f  )
+	t2 = muxN_( N,  notN_( N, t2 )    ,  t2                ,  no )
+
+	t1 = muxN_( N,
+
+		t2,
+		xorN_( N, x, y ),
+		ub0
+
+	)
+
+	t0 = muxN_( N,
+
+		shiftLeftN_( N, x, y ),
+		shiftRightN_( N, x, y ),
+		ub0
+	)
+
+	out = muxN_( N, t1, t0, ub1 )
+	zr =  mux_( 1, 0, isZero_( out ) )
+	ng =  mux_( 1, 0, isNegative_( out ) )
 
 	return ( out, zr, ng )
+
+
+
+# def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
+
+# 	''' N bit ALU '''
+
+# 	'''
+# 	 out, zr, ng = [ None, 0, 0 ]
+#  	 if zx == 1 : x = zeroN_( N )
+#  	 if nx == 1 : x = notN_( N, x )
+#  	 if zy == 1 : y = zeroN_( N )
+#  	 if ny == 1 : y = notN_( N, y )
+#  	 if  f == 1 : out = addN_( N, x, y )  # out = x + y
+#  	 if  f == 0 : out = andN_( N, x, y )  # out = x & y
+#  	 if no == 1 : out = notN_( N, out )   # out = !out
+#  	 if out == 0: zr = 1
+#  	 if out < 0 : ng = 1
+
+# 	 return ( out, zr, ng ) 
+# 	'''
+
+# 	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
+
+# 	x =   muxN_( N,  zeroN_( N )     ,  x               ,  zx                 )
+# 	x =   muxN_( N,  notN_( N, x )   ,  x               ,  nx                 )
+# 	y =   muxN_( N,  zeroN_( N )     ,  y               ,  zy                 )
+# 	y =   muxN_( N,  notN_( N, y )   ,  y               ,  ny                 )
+# 	out = muxN_( N,  addN_( N, x, y ),  andN_( N, x, y ),  f                  )
+# 	out = muxN_( N,  notN_( N, out ) ,  out             ,  no                 )
+# 	zr =  mux_(      1               ,  0               ,  isZero_( out )     )
+# 	ng =  mux_(      1               ,  0               ,  isNegative_( out ) )
+
+# 	return ( out, zr, ng )

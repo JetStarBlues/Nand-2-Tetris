@@ -252,7 +252,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 	negate_( x )
 	isNegative_( x )
 
-	ALU_( x, y, zx, nx, zy, ny, f, no )
+	ALU_( x, y, ub1, ub0, zx, nx, zy, ny, f, no )
 '''
 
 '''
@@ -326,10 +326,10 @@ class Test_ArithmeticGates( unittest.TestCase ):
 	def test_ALU_( self ):
 		''' ALU '''
 		for g in k_ALU16:
-			result = ALU_( 16, g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7] )
-			self.assertEqual( toString( result[0] ), g[8] )
-			self.assertEqual( result[1], g[9] )
-			self.assertEqual( result[2], g[10] )
+			result = ALU_( 16, g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7], g[8], g[9] )
+			self.assertEqual( toString( result[0] ), g[10] )
+			self.assertEqual( result[1], g[11] )
+			self.assertEqual( result[2], g[12] )
 
 
 
