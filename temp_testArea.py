@@ -10,26 +10,28 @@ from Tests import *
 # 	print(s)
 
 
-# from Tests.SynchronousTests._2__registerN import start as startTest
 
-
-
-from Tests._x__testingHelpers import toBinary as toBin
+# from Tests._x__testingHelpers import toBinary as toBin
 
 N = 16
 m = 2 ** N - 1
 
-from random import random as rand
-from math import floor
+# from random import random as rand
+# from math import floor
 
-def r(x): return math.floor( rand() * x )
+# def r(x): return math.floor( rand() * x )
 
-for i in range(5):
-	x = r(m)
-	y = r(15)
-	# z = x ^ y
-	z = x >> y
+# for i in range(5):
+# 	x = r(m)
+# 	# y = r(m)
+# 	y = r(15)
+# 	z = x ^ y
+# 	# z = x >> y
 
-	# print(x, y, z)
-	print( toBin(N, x), toBin(N, y), toBin(N, z) )
+# 	print(x, y, z)
+# 	# print( toBin(N, x), toBin(N, y), toBin(N, z) )
 
+
+from Tests.SynchronousTests._6__computerN__12a import start as startTest
+
+startTest()

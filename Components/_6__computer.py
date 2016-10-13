@@ -112,12 +112,13 @@ class CPU_():
 			self.D_register = RegisterN_( N )
 
 		# n_bit instruction support
-		nUnusedBits = N - 14  # shoved between opcode and ysel
-		self.opcode =  0
-		self.ysel   =  1 + nUnusedBits
-		self.cmp    =  2 + nUnusedBits
-		self.dst    =  8 + nUnusedBits
-		self.jmp    = 11 + nUnusedBits
+		nUnusedBits = N - 16  # shoved between opcode and ysel
+		self.opcode = 0
+		self.fub    = 1  + nUnusedBits
+		self.ysel   = 3  + nUnusedBits
+		self.cmp    = 4  + nUnusedBits
+		self.dst    = 10 + nUnusedBits
+		self.jmp    = 13 + nUnusedBits
 
 
 	def doTheThing( self, clk, RESET, main_memory, program_memory ):
@@ -161,7 +162,8 @@ class CPU_():
 
 			ALU_out = ALU_( 
 				self.N,
-				x, y, 
+				x, y,
+				instruction[ self.fub + 0 ], instruction[ self.fub + 1 ],
 				instruction[ self.cmp + 0 ], instruction[ self.cmp + 1 ], instruction[ self.cmp + 2 ], 
 				instruction[ self.cmp + 3 ], instruction[ self.cmp + 4 ], instruction[ self.cmp + 5 ] 
 			)

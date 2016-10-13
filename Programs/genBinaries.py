@@ -28,12 +28,18 @@ files = [
 	# 'test9a_rect',
 	# 'test9d_rect',
 	# 'test10_pong',
+	# 'test11_xor',
+	# 'test12_shiftLeft',
+	# 'test12a_shiftLeft',
+	# 'test13_shiftRight',
+	# 'test13a_shiftRight',
 
-	'demo_eo6',
+	# 'demo_eo6',
 	# 'demo_eo6_color',
 ]
 
-subdir = 'Demos/'
+subdir = 'Tests/Chapter_6_assembly/'
+# subdir = 'Demos/'
 
 for file in files:
 	# print(file)

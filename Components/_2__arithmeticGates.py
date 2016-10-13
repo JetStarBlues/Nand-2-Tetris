@@ -259,29 +259,29 @@ def shiftLeftN_( N, x, y ):
 
 # MSB to LSB
 
-def ALU_( N, x, y, ub1, ub0, zx, nx, zy, ny, f, no ):
+def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
 	''' N bit ALU '''
 
 	'''
 	 out, zr, ng = [ None, 0, 0 ]
 
-	 if ub1 == 1 :
-	 	if ub0 == 1 :
- 	 		if zx == 1 : x = zeroN_( N )
- 	 		if nx == 1 : x = notN_( N, x )
- 	 		if zy == 1 : y = zeroN_( N )
- 	 		if ny == 1 : y = notN_( N, y )
+	 if fub1 == 1 :
+	 	if fub0 == 1 :
+ 	 		if zx == 1 :   x = zeroN_( N )
+ 	 		if nx == 1 :   x = notN_( N, x )
+ 	 		if zy == 1 :   y = zeroN_( N )
+ 	 		if ny == 1 :   y = notN_( N, y )
  	 		if  f == 1 : out = addN_( N, x, y )  # out = x + y
  	 		if  f == 0 : out = andN_( N, x, y )  # out = x & y
  	 		if no == 1 : out = notN_( N, out )   # out = !out
 
-		if ub0 == 0 :
+		if fub0 == 0 :
 			out = xorN_( N, x, y )
 
-	 if ub1 == 0 :
-	 	if ub0 == 1 : out = shiftLeftN_( N, x, y )
-	 	if ub0 == 0 : out = shiftRightN_( N, x, y )
+	 if fub1 == 0 :
+	 	if fub0 == 1 : out = shiftLeftN_( N, x, y )
+	 	if fub0 == 0 : out = shiftRightN_( N, x, y )
 
 	 if out == 0 : zr = 1
  	 if out < 0  : ng = 1	
@@ -301,23 +301,21 @@ def ALU_( N, x, y, ub1, ub0, zx, nx, zy, ny, f, no ):
 
 		t2,
 		xorN_( N, x, y ),
-		ub0
-
+		fub0
 	)
 
 	t0 = muxN_( N,
 
 		shiftLeftN_( N, x, y ),
 		shiftRightN_( N, x, y ),
-		ub0
+		fub0
 	)
 
-	out = muxN_( N, t1, t0, ub1 )
+	out = muxN_( N, t1, t0, fub1 )
 	zr =  mux_( 1, 0, isZero_( out ) )
 	ng =  mux_( 1, 0, isNegative_( out ) )
 
 	return ( out, zr, ng )
-
 
 
 # def ALU_( N, x, y, zx, nx, zy, ny, f, no ):

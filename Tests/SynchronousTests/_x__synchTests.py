@@ -33,6 +33,11 @@ files = [
 	'_6__computerN__5',
 	'_6__computerN__5a',
 	'_6__computerN__6',
+	'_6__computerN__11',
+	'_6__computerN__12',
+	'_6__computerN__12a',
+	'_6__computerN__13',
+	'_6__computerN__13a',
 
 	# Computer w/ screen output ... have to run individually
 	# '_6__computerN__8',  # currently unpractical, find max speed can operate reliably
