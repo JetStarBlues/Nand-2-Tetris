@@ -139,6 +139,116 @@ def isNegative_( x ):
 	return x[0]
 
 
+
+''''''''''''''''''''''''''' shift register '''''''''''''''''''''''''''
+
+'''
+	As is can shift max '1111' -> 15 on one command...
+	So a call like shift(20) would need to be split up...
+	  Thinking the user should do this when coding... or
+	  could be stdlib fx that does this...
+
+	If want to do shift(16) in one cycle, can add s4 support
+	(and correspoinding 16muxes) to hardware... revusit as needed
+'''
+
+def shiftRightN_( N, x, s3, s2, s1, s0 ):
+
+	''' Barrel shifter '''
+
+	t0 = [None] * N
+	t1 = [None] * N
+	t2 = [None] * N
+	t3 = [None] * N
+
+	#
+	for i in range( N - 1, 0, -1 ):
+		t0[i] = mux_( x[i - 1], x[i], s0 )
+
+	t0[0] = mux_( 0, x[0], s0 )
+
+	#
+	for i in range( N - 1, 1, -1 ):
+		t1[i] = mux_( t0[i - 2], t0[i], s1 )
+
+	t1[1] = mux_( 0, t0[1], s1 )
+	t1[0] = mux_( 0, t0[0], s1 )
+
+	#
+	for i in range( N - 1, 3, -1 ):
+		t2[i] = mux_( t1[i - 4], t1[i], s2 )
+
+	t2[3] = mux_( 0, t1[3], s2 )
+	t2[2] = mux_( 0, t1[2], s2 )
+	t2[1] = mux_( 0, t1[1], s2 )
+	t2[0] = mux_( 0, t1[0], s2 )	
+
+	#
+	for i in range( N - 1, 7, -1 ):
+		t3[i] = mux_( t2[i - 8], t2[i], s3 )
+
+	t3[7] = mux_( 0, t2[7], s3 )
+	t3[6] = mux_( 0, t2[6], s3 )
+	t3[5] = mux_( 0, t2[5], s3 )
+	t3[4] = mux_( 0, t2[4], s3 )
+	t3[3] = mux_( 0, t2[3], s3 )
+	t3[2] = mux_( 0, t2[2], s3 )
+	t3[1] = mux_( 0, t2[1], s3 )
+	t3[0] = mux_( 0, t2[0], s3 )
+
+	#
+	return t3
+
+
+def shiftLeftN_( N, x, s3, s2, s1, s0 ):
+
+	''' Barrel shifter '''
+
+	t0 = [None] * N
+	t1 = [None] * N
+	t2 = [None] * N
+	t3 = [None] * N
+
+	#
+	t0[N - 1] = mux_( 0, x[N - 1], s0 )
+	
+	for i in range( N - 2, -1, -1 ):
+		t0[i] = mux_( x[i + 1], x[i], s0 )
+
+	#
+	t1[N - 1] = mux_( 0, t0[N - 1], s1 )
+	t1[N - 2] = mux_( 0, t0[N - 2], s1 )
+
+	for i in range( N - 3, -1, -1 ):
+		t1[i] = mux_( t0[i + 2], t0[i], s1 )
+
+	#
+	t2[N - 1] = mux_( 0, t1[N - 1], s2 )
+	t2[N - 2] = mux_( 0, t1[N - 2], s2 )
+	t2[N - 3] = mux_( 0, t1[N - 3], s2 )
+	t2[N - 4] = mux_( 0, t1[N - 4], s2 )
+
+	for i in range( N - 5, -1, -1 ):
+		t2[i] = mux_( t1[i + 4], t1[i], s2 )
+
+	#
+	t3[N - 1] = mux_( 0, t2[N - 1], s3 )
+	t3[N - 2] = mux_( 0, t2[N - 2], s3 )
+	t3[N - 3] = mux_( 0, t2[N - 3], s3 )
+	t3[N - 4] = mux_( 0, t2[N - 4], s3 )
+	t3[N - 5] = mux_( 0, t2[N - 5], s3 )
+	t3[N - 6] = mux_( 0, t2[N - 6], s3 )
+	t3[N - 7] = mux_( 0, t2[N - 7], s3 )
+	t3[N - 8] = mux_( 0, t2[N - 8], s3 )
+
+	for i in range( N - 9, -1, -1 ):
+		t3[i] = mux_( t2[i + 8], t2[i], s3 )
+
+	#
+	return t3
+
+
+
 ''''''''''''''''''''''' Arithmetic Logic Unit '''''''''''''''''''''''
 
 # MSB to LSB

@@ -226,6 +226,9 @@ def andN_( N, a, b ):
 def orN_( N, a, b ):
 	return tuple( or_( a[i], b[i] ) for i in range( N ) )
 
+def xorN_( N, a, b ):
+	return tuple( xor_( a[i], b[i] ) for i in range( N ) )
+
 def muxN_( N, d1, d0, sel ):
 	return tuple( mux_( d1[i], d0[i], sel ) for i in range( N ) )
 
