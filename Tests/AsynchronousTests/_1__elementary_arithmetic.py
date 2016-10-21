@@ -252,6 +252,9 @@ class Test_ElementaryGates( unittest.TestCase ):
 	negate_( x )
 	isNegative_( x )
 
+	shiftRightN_( N, x, y )
+	shiftLeftN_( N, x, y )
+
 	ALU_( x, y, ub1, ub0, zx, nx, zy, ny, f, no )
 '''
 
@@ -322,6 +325,18 @@ class Test_ArithmeticGates( unittest.TestCase ):
 
 	def test_isNegative_( self ): 
 		pass
+
+	def test_shiftRightN_( self ):
+		''' shift right '''
+		for g in k_shiftRight16:
+			result = shiftRightN_( 16, g[0], g[1] )
+			self.assertEqual( toString( result ), g[2] )
+
+	def test_shiftLeftN_( self ):
+		''' shift left '''
+		for g in k_shiftLeft16:
+			result = shiftLeftN_( 16, g[0], g[1] )
+			self.assertEqual( toString( result ), g[2] )
 
 	def test_ALU_( self ):
 		''' ALU '''

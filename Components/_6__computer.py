@@ -190,7 +190,7 @@ class CPU_():
 				or_( zr, ng ),          # JLE
 				not_( zr ),             # JNE
 				ng,                     # JLT
-				or_( zr, not_( ng ) ),  # JGE
+				not_( ng ),             # JGE
 				zr,                     # JEQ
 				not_( or_( zr, ng ) ),  # JGT
 				0,                      # NULL

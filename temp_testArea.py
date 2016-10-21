@@ -32,6 +32,6 @@ m = 2 ** N - 1
 # 	# print( toBin(N, x), toBin(N, y), toBin(N, z) )
 
 
-from Tests.SynchronousTests._6__computerN__12a import start as startTest
+from Tests.SynchronousTests._6__computerN__8 import start as startTest
 
 startTest()
