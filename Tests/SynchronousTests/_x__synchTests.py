@@ -5,13 +5,13 @@
     The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Built ins
 # import multiprocessing
 
 
-''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
+'''------------------------------- Main -------------------------------'''
 
 
 files = [

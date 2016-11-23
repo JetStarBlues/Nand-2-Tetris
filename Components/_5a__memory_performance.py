@@ -5,14 +5,14 @@
 '''
 
 
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Hack computer
 from ._x__components import *
 
 
 
-''''''''''''''''''''''''''' registers '''''''''''''''''''''''''''''
+'''---------------------------- Registers ----------------------------'''
 
 class RegisterN_performance_():
 
@@ -25,7 +25,7 @@ class RegisterN_performance_():
 
 	def write( self, clk, x, write ):
 		
-		if int( clk ) == 1 and int( write ) == 1:
+		if clk == 1 and write == 1:
 
 			self.register = x
 
@@ -47,7 +47,7 @@ class RegisterN_performance_():
 
 
 
-'''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
+'''------------------------------- RAM -------------------------------'''
 
 class RAMXN_performance_():
 
@@ -60,7 +60,7 @@ class RAMXN_performance_():
 
 	def write( self, clk, x, write, address ):
 		
-		if int( clk ) == 1 and int( write ) == 1:
+		if clk == 1 and write == 1:
 			
 			self.registers[address] = x
 
@@ -68,3 +68,56 @@ class RAMXN_performance_():
 	def read( self, address ):
 
 		return self.registers[address]
+
+
+
+'''------------------------- Program counter -------------------------'''
+
+class ProgramCounterN_performance_():
+
+	''' N bit program counter '''
+
+	def __init__( self, N ):
+
+		self.N = N	
+		
+		self.register = RegisterN_performance_( N )
+
+
+	def doTheThing( self, clk, x, rst, write, inc ):
+		
+		change = or3_( write, inc, rst )
+
+		d = muxN_performance_(
+
+				self.N,
+				zeroN,
+				muxN_performance_(
+
+					self.N,
+					x[ -self.N : ],  # turn x to N bit by trimming signifcant bits
+					muxN_performance_(
+
+						self.N,
+						( incrementN_, ( self.N, self.register.read() ) ),
+						( self.register.read, () ),
+
+						inc 
+					),
+
+					write
+				),
+
+				rst
+			)
+
+		self.register.write( clk, d, change )
+
+
+	def read( self ):
+		
+		# return self.register.readDecimal()
+
+		out = self.register.readDecimal()
+		# print( out )
+		return( out )

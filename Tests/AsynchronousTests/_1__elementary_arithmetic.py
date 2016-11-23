@@ -5,7 +5,7 @@
 	The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''------------------------------ Imports ------------------------------'''
 
 # Built ins
 import unittest
@@ -14,7 +14,7 @@ import unittest
 from Tests import *
 
 
-''''''''''''''''''''''''' elementary gates '''''''''''''''''''''''''''
+'''------------------------- Elementary gates -------------------------'''
 
 '''
 	and_( a, b )
@@ -231,7 +231,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 
 
 
-''''''''''''''''''''''''' arithmetic gates '''''''''''''''''''''''''''
+'''------------------------- Arithmetic gates -------------------------'''
 
 '''
 	zeroN_( N )
@@ -349,7 +349,7 @@ class Test_ArithmeticGates( unittest.TestCase ):
 
 
 
-''''''''''''''''''''''''''' Run the tests '''''''''''''''''''''''''''''
+'''-------------------------- Run the tests --------------------------'''
 
 if __name__ == '__main__':
 	unittest.main()

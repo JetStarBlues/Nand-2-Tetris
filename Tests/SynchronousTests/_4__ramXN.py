@@ -1,14 +1,12 @@
-''' =========================================================
-              RAMXN_( X, N, clk, x, write, address )
-    ========================================================= '''
+'''=== RAMXN ========================================================='''
 
 
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 from Tests import *
 
 
-''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
+'''------------------------------ Main ------------------------------'''
 
 # Setup ---
 
@@ -47,6 +45,9 @@ def setup():
 	k_idx = -2
 	r_idx = 0
 	ram = RAMXN_( X[r_idx], N )
+	
+	if PERFORMANCE_MODE:
+		ram = RAMXN_performance_( X[r_idx], N )
 
 
 # Update ---
@@ -95,11 +96,11 @@ def record():
 	expected = toBinary( N, k[r_idx][k_idx + 1][4] )
 
 	if expected != result:
-		fails.record( expected, result, toString( [k_idx + 1, '  for RAM', r_idx] ) ) # log the fail
+		fails.record( expected, result, toString( [ k_idx + 1, '  for RAM', r_idx ] ) ) # log the fail
 
 
 
-''''''''''''''''''''''''''' run '''''''''''''''''''''''''''''
+'''------------------------------- Run -------------------------------'''
 
 # Things to execute on clock edges
 def callOnRising():

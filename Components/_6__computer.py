@@ -1,4 +1,4 @@
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Built ins
 import time, math
@@ -7,7 +7,7 @@ import time, math
 from ._x__components import *
 
 
-''''''''''''''''''''''''' MemoryROM '''''''''''''''''''''''''''
+'''---------------------------- MemoryROM ----------------------------'''
 
 class MemoryROMXN_():
 
@@ -67,7 +67,7 @@ class MemoryROMXN_():
 
 
 
-''''''''''''''''''''''''' MemoryRAM '''''''''''''''''''''''''''
+'''---------------------------- MemoryRAM ----------------------------'''
 
 class MemoryRAMXN_():
 
@@ -92,7 +92,7 @@ class MemoryRAMXN_():
 
 
 
-''''''''''''''''''''''''''' CPU '''''''''''''''''''''''''''''
+'''------------------------------- CPU -------------------------------'''
 
 class CPU_():
 
@@ -102,12 +102,12 @@ class CPU_():
 		
 		self.N = N
 
-		self.programCounter = ProgramCounterN_( pC_size )
-
 		if PERFORMANCE_MODE:
+			self.programCounter = ProgramCounterN_performance_( pC_size )
 			self.A_register = RegisterN_performance_( N )
 			self.D_register = RegisterN_performance_( N )
 		else:
+			self.programCounter = ProgramCounterN_( pC_size )
 			self.A_register = RegisterN_( N )
 			self.D_register = RegisterN_( N )
 
@@ -142,7 +142,7 @@ class CPU_():
 			self.A_register.write( clk, instruction, 1 ) # write
 
 			jump, increment = 0, 1
-			self.programCounter.doTheThing( clk, zeroN_( self.N ), RESET, jump, increment ) # increment
+			self.programCounter.doTheThing( clk, zeroN, RESET, jump, increment ) # increment
 
 
 		else:
@@ -153,12 +153,26 @@ class CPU_():
 			 
 			x = self.D_register.read()
 
-			y = muxN_(
-				self.N,
-				main_memory.read( self.A_register.readDecimal() ),
-				self.A_register.read(),
-				instruction[ self.ysel ]
-			) 
+			y = None
+
+			if PERFORMANCE_MODE:
+
+				y = muxN_performance_(
+					self.N,
+					main_memory.read( self.A_register.readDecimal() ),
+					# ( main_memory.read, ( self.A_register.readDecimal() ) ),  # dnw
+					( self.A_register.read, () ),
+					instruction[ self.ysel ]
+				)
+
+			else:
+
+				y = muxN_(
+					self.N,
+					main_memory.read( self.A_register.readDecimal() ),
+					self.A_register.read(),
+					instruction[ self.ysel ]
+				)
 
 			ALU_out = ALU_( 
 				self.N,
@@ -190,7 +204,7 @@ class CPU_():
 				or_( zr, ng ),          # JLE
 				not_( zr ),             # JNE
 				ng,                     # JLT
-				not_( ng ),             # JGE
+				or_( zr, not_( ng ) ),  # JGE
 				zr,                     # JEQ
 				not_( or_( zr, ng ) ),  # JGT
 				0,                      # NULL
@@ -228,7 +242,7 @@ class CPU_():
 
 
 
-''''''''''''''''''''''''''' Computer '''''''''''''''''''''''''''''
+'''----------------------------- Computer -----------------------------'''
 
 class ComputerN_():
 

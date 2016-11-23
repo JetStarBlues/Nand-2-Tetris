@@ -1,4 +1,4 @@
-''''''''''''''''''''''''' imports '''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Built ins
 import tkinter, threading
@@ -8,7 +8,7 @@ from ._x__components import *
 
 
 
-''''''''''''''''''''''''' I/O '''''''''''''''''''''''''''
+'''------------------------------- I/O -------------------------------'''
 
 class IO():
 
@@ -45,7 +45,7 @@ class IO():
 
 		self.screen.update()
 
-		self._updateTkinterImg( self.screen.data )
+		self._updateTkinterImg()
 
 
 	def _initTkinter( self ):
@@ -94,9 +94,9 @@ class IO():
 		self.mouse.handleMouseClick( ev.x, ev.y )
 
 
-	def _updateTkinterImg( self, data ):
+	def _updateTkinterImg( self ):
 
-		self.img.put( data, to = (0, 0, self.screen.width, self.screen.height) )
+		self.img.put( self.screen.data, to = (0, 0, self.screen.width, self.screen.height) )
 
 		self.root.after( self.refreshRate, self.update )  # set timer
 
@@ -108,17 +108,13 @@ class IO():
 
 
 
-''''''''''''''''''''''''' screen '''''''''''''''''''''''''''
-
+'''----------------------------- Screen -----------------------------'''
 
 class Screen():
 
 	'''
 	    16 bit screen with a 512 x 256 pixels display.
 	    Specifications hardcoded for simplicity.
-
-	    Data stored using a 256 x 512 array to help with tkinter draw speed
-	    (In lieu of using a 1 x 8192 array which more closely resembles RAM).
 	'''
 
 	def __init__( self, main_memory ):
@@ -131,129 +127,107 @@ class Screen():
 		# Dimensions
 		self.width = 512
 		self.height = 256		
-		self.registersPerRow = self.width // self.N
+		self.nRegistersPerRow = self.width // self.N
 
 		# 1Bit color mode (default)
-		self.bgColor = SCREEN_BACKGROUND_COLOR
-		self.fgColor = SCREEN_FOREGROUND_COLOR
+		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
+		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
+		self.colors = {
+			'1' : self.fgColor,
+			'0' : self.bgColor,
+		}
 
 		# 4Bit color mode
 		if COLOR_MODE_4BIT:
 			self.nRegisters *= 4
-			self.registersPerRow *= 4
+			self.nRegistersPerRow *= 4
 			self.colors = COLOR_PALETTE_4BIT
+			for key, value in self.colors.items():
+				self.colors[key] = value + ' '
 
-		# Pixel array
-		self.pixels = [ [0] * self.width for _ in range( self.height ) ]
-
-		# Tkinter string
-		self.data = None
+		# Pixel data.
+		#  Formatted for Tkinter (see http://tkinter.unpythonic.net/wiki/PhotoImage)
+		self.data = ''
 
 	
 	def update( self ):
 
 		# Get screen data from Hack's main memory
-
-		self.readMainMemory()
-
-		# Format pixel array as tkinter string
+		#  and update pixels accordingly
 
 		if COLOR_MODE_4BIT:
 			self.update_4BitMode()
 		else:
 			self.update_1BitMode()
 
-	
-	def readMainMemory( self ):
-
-		# Get screen data from Hack's main memory
-
-		for address in range( self.nRegisters ):
-			
-			data = self.main_memory.read( SCREEN_MEMORY_MAP + address )
-
-			self.write( data, address )
-
-
-	def write( self, x, address ):
-
-		#  Maps RAM access style to pixel array access style
-
-		if COLOR_MODE_4BIT:
-			self.write_4BitMode( x, address )
-		else:
-			self.write_1BitMode( x, address )
-
 
 	def update_1BitMode( self ):
 
-		# Format as tkinter string
-		data = [ 
-			'{' + 
-			''.join( map( self.get1BitColor, row ) ) + 
-			'} ' 
-			for row in self.pixels 
-		]
-		data = ''.join( data )
+		self.data = ''  # clear
 
-		self.data = data
+		for y in range( self.height ):
+
+			row = '{'
+
+			for x in range( self.nRegistersPerRow ):
+
+				idx = x + y * self.nRegistersPerRow
+
+				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
+
+				for i in range( self.N ):
+				
+					pixel = register[ i ]
+
+					color = self.get1BitColor( pixel )
+
+					row += color
+
+			row += '} '
+
+			self.data += row
 
 
-	def get1BitColor( self, color_key):
+	def get1BitColor( self, colorCode ):
 
-		if color_key == 1:
-			return self.fgColor + ' '
-		else:
-			return self.bgColor + ' '
+		return self.colors[ str( colorCode ) ]  # look up corresponding color
 
 
 	def update_4BitMode( self ):
 
-		# Format as tkinter string
-		data = [ 
-			'{' + 
-			''.join( map( self.get4BitColor, row ) ) + 
-			'} ' 
-			for row in self.pixels 
-		]
-		data = ''.join( data )
+		self.data = ''  # clear
 
-		self.data = data
+		for y in range( self.height ):
 
+			row = '{'
 
-	def get4BitColor( self, color_key ):
+			for x in range( self.nRegistersPerRow ):
 
-		color_key = ''.join( map( str, color_key ) )  # convert tuple to string
-		return self.colors[ color_key ] + ' '         # look up corresponding color
+				idx = x + y * self.nRegistersPerRow
 
+				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-	def write_1BitMode( self, x, address ):
+				for i in range( 0, self.N, 4 ):
+				
+					pixel = register[ i : i + 4 ]
 
-		#  Maps RAM access style to pixel array access style
+					color = self.get4BitColor( pixel )
 
-		row = address // self.registersPerRow
-		col_0 = address % self.registersPerRow * self.N
+					row += color
 
-		for col, bit in zip( range( col_0, col_0 + self.N ), range( 0, self.N ) ):
-			self.pixels[row][col] = x[bit]
+			row += '} '
+
+			self.data += row
 
 
-	def write_4BitMode( self, x, address ):
+	def get4BitColor( self, colorCode ):
 
-		#  Maps RAM access style to pixel array access style
-
-		x = x[ - self.N : ]  # last 16 bits. Revisit, probably not necessary with clever color assignment
-
-		row = address // self.registersPerRow
-		col_0 = address % self.registersPerRow * 4
-
-		for col, nibble in zip( range( col_0, col_0 + 4 ), range( 0, self.N, 4 ) ):
-			self.pixels[row][col] = x[ nibble : nibble + 4 ]
+		colorCode = ''.join( map( str, colorCode ) )  # convert tuple to string
+		return self.colors[ colorCode ]               # look up corresponding color
 
 
 
-''''''''''''''''''''''''' keyboard '''''''''''''''''''''''''''
-
+'''----------------------------- Keyboard -----------------------------'''
 
 class Keyboard():
 
@@ -328,7 +302,7 @@ lookup_keyboard = {
 	        'comma' : [  44 ,          ',' ],
 	        'minus' : [  45 ,          '-' ],
 	       'period' : [  46 ,          '.' ],
-	 'forwardslash' : [  47 ,          '/' ],
+	        'slash' : [  47 ,          '/' ],
 	            '0' : [  48 ,          '0' ],
 	            '1' : [  49 ,          '1' ],
 	            '2' : [  50 ,          '2' ],
@@ -444,8 +418,7 @@ lookup_keyboard = {
 
 
 
-''''''''''''''''''''''''' mouse '''''''''''''''''''''''''''
-
+'''------------------------------ Mouse ------------------------------'''
 
 class Mouse():
 

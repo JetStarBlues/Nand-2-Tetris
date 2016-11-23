@@ -3,7 +3,7 @@
 	 http://www.nand2tetris.org/
 '''
 
-''''''''''''''''''''''''''' arithmetic gates '''''''''''''''''''''''''''''
+'''------------------------- Arithmetic gates -------------------------'''
 
 k_halfAdder = [
 	# [ a, b, ( sum, carry ) ]

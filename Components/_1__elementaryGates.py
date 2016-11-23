@@ -1,4 +1,10 @@
-''''''''''''''''''''' The elementary logic gates '''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
+
+# Hack computer
+from ._x__components import *
+
+
+'''------------------- The elementary logic gates -------------------'''
 
 def and_( a, b ):
 	return ( int( a ) & int( b ) )
@@ -13,7 +19,7 @@ def not_( x ):
 	return 1 if int( x ) == 0 else 0	
 
 
-''''''''''''''''''''''''' And their inverses '''''''''''''''''''''''''
+'''----------------------- And their inverses -----------------------'''
 
 def nand_( a, b ):
 	return not_( and_( a, b ) )
@@ -26,7 +32,7 @@ def xnor_( a, b ):
 
 
 
-''''''''''''''''''''''''' Decoders & Encoders '''''''''''''''''''''''''	
+'''----------------------- Decoders & Encoders -----------------------'''	
 
 # MSB to LSB
 
@@ -73,7 +79,7 @@ def encoder8to3_( d7, d6, d5, d4, d3, d2, d1, d0 ):
 
 
 
-''''''''''''''''''''' Multiplexers & Demultiplexers '''''''''''''''''''''
+'''------------------ Multiplexers & Demultiplexers ------------------'''
 
 # MSB to LSB
 
@@ -86,11 +92,19 @@ def mux_( d1, d0, sel ):
 		Or in boolean algebra
 			out = ( !s * d0 ) + ( s * d1 )
 	''' 
-	out = or_( 
-		and_( not_( sel ), d0 ),
-		and_( sel, d1 )
-	)
-	return out
+
+	if PERFORMANCE_MODE:
+
+		if int( sel ) == 1 : return d1
+		else: return d0
+
+	else:
+
+		out = or_( 
+			and_( not_( sel ), d0 ),
+			and_( sel, d1 )
+		)
+		return out
 
 
 def mux4to1_( d3, d2, d1, d0, s1, s0 ):
@@ -101,11 +115,11 @@ def mux4to1_( d3, d2, d1, d0, s1, s0 ):
 		      d3 if sel == 11  '''
 
 	''' using elementary gates '''
-	p0 = and3_( d0, not_( s1 ), not_( s0 ) )
-	p1 = and3_( d1, not_( s1 ),       s0   )
-	p2 = and3_( d2,       s1  , not_( s0 ) )
-	p3 = and3_( d3,       s1  ,       s0   )
-	return or_( or_( p0, p1 ), or_( p2, p3 ) )
+	# p0 = and3_( d0, not_( s1 ), not_( s0 ) )
+	# p1 = and3_( d1, not_( s1 ),       s0   )
+	# p2 = and3_( d2,       s1  , not_( s0 ) )
+	# p3 = and3_( d3,       s1  ,       s0   )
+	# return or_( or_( p0, p1 ), or_( p2, p3 ) )
 
 	''' using decoder '''
 	# q = decoder2to4_( s1, s0 )
@@ -117,9 +131,9 @@ def mux4to1_( d3, d2, d1, d0, s1, s0 ):
 	# return or_( or_( p0, p1 ), or_( p2, p3 ) )
 
 	''' using other mux chips '''
-	# p1 = mux_( d3, d2, s0 )
-	# p2 = mux_( d1, d0, s0 )
-	# return mux_( p1, p2, s1 )
+	p1 = mux_( d3, d2, s0 )
+	p2 = mux_( d1, d0, s0 )
+	return mux_( p1, p2, s1 )
 
 
 def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
@@ -212,7 +226,7 @@ def dMux1to8_( x, s2, s1, s0 ):
 
 
 
-''''''''''''''''''''''''''' N-bit variants '''''''''''''''''''''''''''
+'''------------------------- N-bit variants -------------------------'''
 
 # Basically not4() is equivalent to having 4 not gates each processing
 #   a bit in parallel (same time)
@@ -232,6 +246,25 @@ def xorN_( N, a, b ):
 def muxN_( N, d1, d0, sel ):
 	return tuple( mux_( d1[i], d0[i], sel ) for i in range( N ) )
 
+def muxN_performance_( N, f1, f0, sel ):
+
+	''' Pass in functions so that execute only for the conditional branch that is true
+	     ( instead of executing both branches and passing in their results ).
+	'''
+	if int( sel ) == 1:
+
+		if isinstance( f1[1], tuple ):
+			return f1[0]( * f1[1] )  # f1 is a function, return result of call
+		else:
+			return f1  # f1 is a value
+	
+	else:
+
+		if isinstance( f0[1], tuple ):
+			return f0[0]( * f0[1] )
+		else:
+			return f0
+
 def muxN4to1_( N, d3, d2, d1, d0, s1, s0 ):
 	return tuple( mux4to1_( d3[i], d2[i], d1[i], d0[i], s1, s0 ) for i in range( N ) )
 
@@ -240,18 +273,27 @@ def muxN8to1_( N, d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 
 
 
-''''''''''''''''''''''''' multi-way variants '''''''''''''''''''''''''
+'''----------------------- Multi-way variants -----------------------'''
 
 def or3_( a, b, c ):
 	return ( or_( a, or_( b, c ) ) )
 
 def orNto1_( x ):
-	# technically, could break once reach a one ...
-	#   but is break doable with logic gates???
-	out = x[0]
-	for i in range( 1, len( x ) ):
-		out = or_( out, x[i] )
-	return out
+
+	if PERFORMANCE_MODE:
+
+		# Break once reach a one ...
+		for bit in x:
+			if int( bit ) == 1: return 1
+		return 0
+
+	else:
+
+		# Cascaded or gates
+		out = x[0]
+		for i in range( 1, len( x ) ):
+			out = or_( out, x[i] )
+		return out
 
 	''' alternate way, takes advantage of using gates in parallel 
 	    > speed savings if physical implementation

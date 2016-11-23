@@ -3,9 +3,12 @@
 # Hack computer
 from Components import *
 
+import yappi
 
 
 '''------------------------------- Main -------------------------------'''
+
+yappi.start()
 
 # Initialize
 computer = ComputerN_( N_BITS, RAM_SIZE, ROM_SIZE )
@@ -28,9 +31,12 @@ def update():
 
 	computer.run( clock.value )
 
-	if io.hasExited: 
+	if io.hasExited:
+	 
 		clock.stop()
 		print( 'See you later!' )
+
+		yappi.get_func_stats().print_all()
 
 
 # Setup and start clock

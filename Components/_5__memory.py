@@ -1,10 +1,10 @@
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Hack computer
 from ._x__components import *
 
 
-''''''''''''''''''''''''''' registers '''''''''''''''''''''''''''''
+'''---------------------------- Registers ----------------------------'''
 
 class Register_():
 
@@ -64,8 +64,7 @@ class RegisterN_():
 
 
 
-
-'''''''''''''''''''''''''''' RAM '''''''''''''''''''''''''''''
+'''------------------------------- RAM -------------------------------'''
 
 class RAM8_():
 
@@ -131,7 +130,7 @@ class RAMXN_():
 
 
 
-''''''''''''''''''''''''' program counter '''''''''''''''''''''''''''
+'''------------------------- Program counter -------------------------'''
 
 class ProgramCounterN_():
 
@@ -147,10 +146,7 @@ class ProgramCounterN_():
 
 		self.N = N	
 
-		if PERFORMANCE_MODE:
-			self.register = RegisterN_performance_( N )
-		else:
-			self.register = RegisterN_( N )
+		self.register = RegisterN_( N )
 
 
 	def doTheThing( self, clk, x, rst, write, inc ):
@@ -160,7 +156,7 @@ class ProgramCounterN_():
 		d = muxN_(
 
 				self.N,
-				zeroN_( self.N ),
+				zeroN,
 				muxN_(
 
 					self.N,

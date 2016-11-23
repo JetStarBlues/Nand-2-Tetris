@@ -5,7 +5,7 @@
     The tutorials show how maintainable and refactorable code becomes when use tests
 '''
 
-''''''''''''''''''''''''' shared functions '''''''''''''''''''''''''
+'''------------------------- Shared functions -------------------------'''
 
 # Formatting ---
 

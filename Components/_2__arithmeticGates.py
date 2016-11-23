@@ -1,23 +1,22 @@
-''''''''''''''''''''''''''' imports '''''''''''''''''''''''''''''
+'''----------------------------- Imports -----------------------------'''
 
 # Hack computer
 from ._x__components import *
 
 
-''''''''''''''''''''''''''''''' helpers '''''''''''''''''''''''''''''''
+'''----------------------------- Helpers -----------------------------'''
 
-def zeroN_( N ):
-	return [0] * N
 
-def oneN_( N ):
-	return [0] * ( N - 1 ) + [1]
+zeroN = [0] * N_BITS
+
+oneN  = [0] * ( N_BITS - 1 ) + [1]
 
 def isZero_( x ):
 	return not_( orNto1_( x ) )
 
 
 
-''''''''''''''''''''''''''''''' adders '''''''''''''''''''''''''''''''
+'''----------------------------- Adders -----------------------------'''
 
 # MSB to LSB
 
@@ -51,20 +50,24 @@ def addN_( N, a, b ):
 def incrementN_( N, x ):
 
 	''' add one '''
-	b = oneN_( N )
-	return addN_( N, x, b )
+	if PERFORMANCE_MODE:
+		return fastIncrement_( x )   # use shortcut
+
+	else:
+		return addN_( N, x, oneN )   # use fullAdder_
 
 
 def fastIncrement_( x ):
 
-	''' is this implementable with logic gates? See vid 2.3
-	    Doubt it atm due to break-statement '''
-	# special case, keep flipping RtoL till flip a zero
+	''' Keep flipping RtoL till flip a zero '''
+
+	# Is this implementable with logic gates? See vid 2.3
+	#  Doubt it atm due to break-statement
 
 	summ = list( x ) # mutable
 	for i in range ( len( summ ) - 1, -1, -1 ): # RtoL
 		summ[i] = not_( summ[i] )
-		if summ[i]: break # flipped a zero
+		if summ[i] == 1: break # flipped a zero
 	return summ
 
 
@@ -74,7 +77,7 @@ def fastIncrement_( x ):
 
 
 
-''''''''''''''''''''''''''''' subtractors '''''''''''''''''''''''''''''
+'''--------------------------- Subtractors ---------------------------'''
 
 # MSB to LSB
 
@@ -117,7 +120,7 @@ def subtractN_v2_( N, a, b ):
 
 
 
-''''''''''''''''''''''''''''' negation '''''''''''''''''''''''''''''
+'''--------------------------- Negation ---------------------------'''
 
 # MSB to LSB
 
@@ -129,8 +132,7 @@ def negateN_( N, x ):
 	temp = tuple( not_( b ) for b in x )
 
 	## Add 1
-	return fastIncrement_( temp )     # uses shortcut
-	# return incrementN_( N, temp )   # uses fullAdder_
+	return incrementN_( N, temp )
 
 
 def isNegative_( x ):
@@ -140,7 +142,7 @@ def isNegative_( x ):
 
 
 
-''''''''''''''''''''''''''' shift registers '''''''''''''''''''''''''''
+'''------------------------- Shift Register -------------------------'''
 
 # MSB to LSB
 
@@ -255,7 +257,7 @@ def shiftLeftN_( N, x, y ):
 
 
 
-''''''''''''''''''''''' Arithmetic Logic Unit '''''''''''''''''''''''
+'''--------------------- Arithmetic Logic Unit ---------------------'''
 
 # MSB to LSB
 
@@ -288,11 +290,14 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	 return ( out, zr, ng ) 
 	'''
 
-	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
+	if PERFORMANCE_MODE:
 
-	x0 = muxN_( N,  zeroN_( N )       ,  x                 ,  zx )
+		return ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no )
+
+
+	x0 = muxN_( N,  zeroN             ,  x                 ,  zx )
 	x0 = muxN_( N,  notN_( N, x0 )    ,  x0                ,  nx )
-	y0 = muxN_( N,  zeroN_( N )       ,  y                 ,  zy )
+	y0 = muxN_( N,  zeroN             ,  y                 ,  zy )
 	y0 = muxN_( N,  notN_( N, y0 )    ,  y0                ,  ny )
 	t2 = muxN_( N,  addN_( N, x0, y0 ),  andN_( N, x0, y0 ),  f  )
 	t2 = muxN_( N,  notN_( N, t2 )    ,  t2                ,  no )
@@ -312,6 +317,36 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	)
 
 	out = muxN_( N, t1, t0, fub1 )
+	zr =  mux_( 1, 0, isZero_( out ) )
+	ng =  mux_( 1, 0, isNegative_( out ) )
+
+	return ( out, zr, ng )
+
+
+def ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
+
+	x0 = muxN_performance_( N,  zeroN                   ,  x                       ,  zx )
+	x0 = muxN_performance_( N,  ( notN_, ( N, x0 ) )    ,  x0                      ,  nx )
+	y0 = muxN_performance_( N,  zeroN                   ,  y                       ,  zy )
+	y0 = muxN_performance_( N,  ( notN_, ( N, y0 ) )    ,  y0                      ,  ny )
+	t2 = muxN_performance_( N,  ( addN_, ( N, x0, y0 ) ),  ( andN_, ( N, x0, y0 ) ),  f  )
+	t2 = muxN_performance_( N,  ( notN_, ( N, t2 ) )    ,  t2                      ,  no )
+
+	t1 = muxN_performance_( N,
+
+		t2,
+		( xorN_, ( N, x, y ) ),
+		fub0
+	)
+
+	t0 = muxN_performance_( N,
+
+		( shiftLeftN_, ( N, x, y ) ),
+		( shiftRightN_, ( N, x, y ) ),
+		fub0
+	)
+
+	out = muxN_performance_( N, t1, t0, fub1 )
 	zr =  mux_( 1, 0, isZero_( out ) )
 	ng =  mux_( 1, 0, isNegative_( out ) )
 
