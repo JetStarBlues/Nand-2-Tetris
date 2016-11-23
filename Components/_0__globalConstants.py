@@ -24,7 +24,7 @@ MOUSEY_MEMORY_MAP = 24578
 
 
 # Performance mode --
-#  Uses Python iterables instead of flip flops for memory. 
+#  Uses Python lists instead of flip flops for memory. 
 #  Can get away with exponentially slower clock periods.
 PERFORMANCE_MODE = True
 if PERFORMANCE_MODE : 
