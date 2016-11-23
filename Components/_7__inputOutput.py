@@ -132,10 +132,6 @@ class Screen():
 		# 1Bit color mode (default)
 		self.fgColor = SCREEN_FOREGROUND_COLOR + ' '
 		self.bgColor = SCREEN_BACKGROUND_COLOR + ' '
-		self.colors = {
-			'1' : self.fgColor,
-			'0' : self.bgColor,
-		}
 
 		# 4Bit color mode
 		if COLOR_MODE_4BIT:
@@ -190,7 +186,9 @@ class Screen():
 
 	def get1BitColor( self, colorCode ):
 
-		return self.colors[ str( colorCode ) ]  # look up corresponding color
+		if colorCode == 1 : return self.fgColor
+
+		else: return self.bgColor
 
 
 	def update_4BitMode( self ):
