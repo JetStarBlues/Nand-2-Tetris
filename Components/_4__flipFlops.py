@@ -31,19 +31,19 @@ class JKFlipFlop():
 	def doTheThing( self, e, j, k ):
 		
 		# https://pymotw.com/2/threading/
-		threading.Thread(
-			target = self.doTheThing_, 
-			args = ( e, j, k ),
-			name = 'ff_thread' 
-		).start()
+
+		# execute only after delay...
+		t = threading.Timer(
+
+			self.propogationDelay,
+			self.doTheThing_,
+			args = ( e, j, k )
+		)
+		t.setName( 'jkff_thread' )
+		t.start()
 
 
 	def doTheThing_( self, e, j, k ):
-
-		# print( "called ", threading.currentThread().getName() )
-
-		# execute only after delay...
-		time.sleep( self.propogationDelay )
 
 		# print( "executing ", threading.currentThread().getName() )
 
@@ -102,18 +102,18 @@ class DFlipFlop():
 
 	def doTheThing( self, e, d ):
 		
-		# https://pymotw.com/2/threading/
-		threading.Thread(
-			target = self.doTheThing_, 
-			args = ( e, d ),
-			name = 'ff_thread'
-		).start()
+		# execute only after delay...
+		t = threading.Timer(
+
+			self.propogationDelay,
+			self.doTheThing_,
+			args = ( e, d )
+		)
+		t.setName( 'dff_thread' )
+		t.start()
 
 
 	def doTheThing_( self, e, d ):
-
-		# execute only after delay...
-		time.sleep( self.propogationDelay )
 
 		#
 		r = and_( e, not_( d ) )

@@ -1,1 +1,1 @@
-from .assembler import *
+from .asm2bin import *

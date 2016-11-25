@@ -83,7 +83,9 @@ class Clock():
 
 			# possible problem in future, each time timer is called new thread created
 			# print( threading.currentThread().getName() )
-			threading.Timer( 
+			t = threading.Timer( 
 				self.halfPeriod, 
 				self.run_ 
-			).start()
+			)
+			t.setName( 'clock_thread' )
+			t.start()

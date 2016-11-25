@@ -98,16 +98,16 @@ class CPU_():
 
 	''' Fetches and executes program instructions '''
 
-	def __init__( self, N, pC_size ):
+	def __init__( self, N ):
 		
 		self.N = N
 
 		if PERFORMANCE_MODE:
-			self.programCounter = ProgramCounterN_performance_( pC_size )
+			self.programCounter = ProgramCounterN_performance_( N )
 			self.A_register = RegisterN_performance_( N )
 			self.D_register = RegisterN_performance_( N )
 		else:
-			self.programCounter = ProgramCounterN_( pC_size )
+			self.programCounter = ProgramCounterN_( N )
 			self.A_register = RegisterN_( N )
 			self.D_register = RegisterN_( N )
 
@@ -250,9 +250,7 @@ class ComputerN_():
 
 	def __init__( self, N, RAM_size, ROM_size ):
 
-		programCounter_size = int( math.log( ROM_size, 2 ) )  # hmmm....
-		self.CPU = CPU_( N, programCounter_size )
-
+		self.CPU = CPU_( N )
 		self.main_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
 
