@@ -80,7 +80,6 @@ class Clock():
 			# time.sleep( self.halfPeriod )
 			# self.run_()
 
-
 			# possible problem in future, each time timer is called new thread created
 			# print( threading.currentThread().getName() )
 			t = threading.Timer( 

@@ -25,11 +25,10 @@ MOUSEY_MEMORY_MAP = 24578
 
 # Performance mode --
 #  Uses Python lists instead of flip flops for memory. 
-#  Can get away with exponentially slower clock periods.
+#   Can get away with no clock period.
 PERFORMANCE_MODE = False
-if PERFORMANCE_MODE : 
-	CLOCK_HALF_PERIOD = 0.00001 # conservative
-	CLOCK_HALF_PERIOD = 0 # aggressive
+if PERFORMANCE_MODE :
+	CLOCK_HALF_PERIOD = 0
 
 
 # Wishlist --
