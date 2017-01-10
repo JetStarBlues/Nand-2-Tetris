@@ -1,6 +1,7 @@
 # The various components of the Hack computer
 
 from ._0__globalConstants import *
+from ._99__parallelHelpers import *
 from ._1__elementaryGates import *
 from ._2__arithmeticGates import *
 from ._3__clock import *

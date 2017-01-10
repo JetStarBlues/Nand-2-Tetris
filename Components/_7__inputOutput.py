@@ -77,7 +77,7 @@ class IO():
 
 	def _handleKeyPress( self, ev = None ):
 
-		if ev.keysym == 'Escape':
+		if ev.keysym == 'escape':
 			self._quitTkinter()
 
 		else:
@@ -285,6 +285,8 @@ lookup_keyboard = {
 
 	# Tkinter_keySym : [ Hack_keyCode, character ],
 	     'null_key' : [   0 ,         None ],
+	      'newline' : [  10 ,         None ],  # \n
+   'carriageReturn' : [  13 ,         None ],  # \r
 	        'space' : [  32 ,          ' ' ],
 	       'exclam' : [  33 ,          '!' ],
 	     'quotedbl' : [  34 ,          '"' ],
@@ -293,8 +295,8 @@ lookup_keyboard = {
 	      'percent' : [  37 ,          '%' ],
 	    'ampersand' : [  38 ,          '&' ],
 	   'quoteright' : [  39 ,          "'" ],
-	    'parenleft' : [  40 ,          '(' ],
-	   'parenright' : [  41 ,          ')' ],
+	    'parenLeft' : [  40 ,          '(' ],
+	   'parenRight' : [  41 ,          ')' ],
 	     'asterisk' : [  42 ,          '*' ],
 	         'plus' : [  43 ,          '+' ],
 	        'comma' : [  44 ,          ',' ],
@@ -344,9 +346,9 @@ lookup_keyboard = {
 	            'X' : [  88 ,          'X' ],
 	            'Y' : [  89 ,          'Y' ],
 	            'Z' : [  90 ,          'Z' ],
-	  'bracketleft' : [  91 ,          '[' ],
+	  'bracketLeft' : [  91 ,          '[' ],
 	    'backslash' : [  92 ,         '\\' ],
-	 'bracketright' : [  93 ,          ']' ],
+	 'bracketRight' : [  93 ,          ']' ],
 	  'asciicircum' : [  94 ,          '^' ],
 	   'underscore' : [  95 ,          '_' ],
 	    'quoteleft' : [  96 ,          '`' ],
@@ -376,24 +378,24 @@ lookup_keyboard = {
 	            'x' : [ 120 ,          'x' ],
 	            'y' : [ 121 ,          'y' ],
 	            'z' : [ 122 ,          'z' ],
-	    'braceleft' : [ 123 ,          '{' ],
+	    'braceLeft' : [ 123 ,          '{' ],
 	          'bar' : [ 124 ,          '|' ],
-	   'braceright' : [ 125 ,          '}' ],
-	   'asciitilde' : [ 126 ,          '~' ],
-	          'Tab' : [ 127 ,         None ],
-	       'Return' : [ 128 ,         None ],  # Enter
-	    'BackSpace' : [ 129 ,         None ],
-	         'Left' : [ 130 ,         None ],
-	           'Up' : [ 131 ,         None ],
-	        'Right' : [ 132 ,         None ],
-	         'Down' : [ 133 ,         None ],
-	         'Home' : [ 134 ,         None ],
-	          'End' : [ 135 ,         None ],
-	        'Prior' : [ 136 ,         None ],  # Page up
-	         'Next' : [ 137 ,         None ],  # Page down
-	       'Insert' : [ 138 ,         None ],
-	       'Delete' : [ 139 ,         None ],
-	       'Escape' : [ 140 ,         None ],
+	   'braceRight' : [ 125 ,          '}' ],
+	        'tilde' : [ 126 ,          '~' ],
+	          'tab' : [ 127 ,         None ],
+	       'return' : [ 128 ,         None ],  # Enter
+	    'backSpace' : [ 129 ,         None ],
+	         'left' : [ 130 ,         None ],
+	           'up' : [ 131 ,         None ],
+	        'right' : [ 132 ,         None ],
+	         'down' : [ 133 ,         None ],
+	         'home' : [ 134 ,         None ],
+	          'end' : [ 135 ,         None ],
+	        'prior' : [ 136 ,         None ],  # Page up
+	         'next' : [ 137 ,         None ],  # Page down
+	       'insert' : [ 138 ,         None ],
+	       'delete' : [ 139 ,         None ],
+	       'escape' : [ 140 ,         None ],
 	           'F1' : [ 141 ,         None ],
 	           'F2' : [ 142 ,         None ],
 	           'F3' : [ 143 ,         None ],
@@ -406,12 +408,12 @@ lookup_keyboard = {
 	          'F10' : [ 150 ,         None ],
 	          'F11' : [ 151 ,         None ],
 	          'F12' : [ 152 ,         None ],
-	      'Shift_L' : [ 153 ,         None ],
-	      'Shift_R' : [ 154 ,         None ],
-	    'Control_L' : [ 155 ,         None ],
-	    'Control_R' : [ 156 ,         None ],
-	        'Alt_L' : [ 157 ,         None ],
-	        'Alt_R' : [ 158 ,         None ],
+	    'shiftLeft' : [ 153 ,         None ],
+	   'shiftRight' : [ 154 ,         None ],
+	  'controlLeft' : [ 155 ,         None ],
+	 'controlRight' : [ 156 ,         None ],
+	      'altLeft' : [ 157 ,         None ],
+	     'altRight' : [ 158 ,         None ],
 }
 
 

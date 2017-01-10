@@ -29,11 +29,20 @@ def halfAdder_( a, b ):
 
 def fullAdder_( a, b, c ):
 
-	# c is the carry bit from the previous circuit
-	summ1, carry1 = halfAdder_( a, b )
-	summ2, carry2 = halfAdder_( summ1, c )
-	carry = or_( carry1, carry2 )
-	return ( summ2, carry )
+	if PERFORMANCE_MODE:
+
+		sm = int(a) + int(b) + int(c)
+		summ  = sm % 2
+		carry = sm // 2
+		return( summ, carry )
+
+	else:
+
+		# c is the carry bit from the previous circuit
+		summ1, carry1 = halfAdder_( a, b )
+		summ2, carry2 = halfAdder_( summ1, c )
+		carry = or_( carry1, carry2 )
+		return ( summ2, carry )
 
 
 def addN_( N, a, b ):

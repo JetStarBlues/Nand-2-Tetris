@@ -8,7 +8,7 @@ N_BITS = 16
 
 CLOCK_HALF_PERIOD = 0.018  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
-SCREEN_REFRESH_RATE = 100  # ms
+SCREEN_REFRESH_RATE = 3000 #100  # ms
 
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
@@ -26,7 +26,7 @@ MOUSEY_MEMORY_MAP = 24578
 # Performance mode --
 #  Uses Python lists instead of flip flops for memory. 
 #   Can get away with no clock period.
-PERFORMANCE_MODE = False
+PERFORMANCE_MODE = True
 if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0
 

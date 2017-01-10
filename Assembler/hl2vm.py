@@ -2,36 +2,44 @@ keywords = [
 
 	'class',
 	'constructor',
-	'function',
 	'method',
+	'this',
 	'field',
 	'static',
+	
+	'function',
 	'var',
-	'int',
-	'char',
-	'boolean',
-	'void',
-	'true',
-	'false',
-	'null',
-	'this',
 	'let',
 	'do',
 	'if',
 	'else',
 	'while',
 	'return',
+
+	'int',
+	'char',
+	'boolean',
+	'void',
+	
+	'true',
+	'false',
+	'null',
 ]
 
-general_symbols = [
+seperator_symbols = [
 
 	'{', '}', '(', ')', '[', ']', '.', ',', ';'
 ]
 
 operator_symbols = {
 
-	'binary' : [ '+', '-', '*', '/', '&', '|', '<', '>', '=', '>>', '<<' ],
-	 'unary' : [ '-', '~' ]
+	'unary'  : [ '-', '~' ],
+	'binary' : [ 
+
+		'+', '-', '*', '/', '%',
+	    '&', '|', '>>', '<<', '^',
+	    '<', '>', '==', '>=', '<=',
+	]
 }
 
 types = [
@@ -187,6 +195,65 @@ r_className = '''
 '''
 
 
+####################
+
+grammar_js = [
+
+	( 'js', [ 'element', 'js' ] ),
+	( 'js', [ ''              ] ),
+
+	( 'element', [ 'function', 'identifier', '(', 'optParams', ')', 'compoundStmt' ] ),
+	( 'element', [ 'stmt',     ';'                                                 ] ),
+
+	( 'optParams', [ 'params' ] ),
+	( 'optParams', [ ''       ] ),
+
+	( 'params', [ 'identifier', ',', 'params' ] ),
+	( 'params', [ 'identifier'                ] ),
+
+	( 'optArgs', [ 'args' ] ),
+	( 'optArgs', [ ''     ] ),
+
+	( 'args', [ 'exp', ',', 'args' ] ),
+	( 'args', [ 'exp'              ] ),
+
+	( 'stmt', [ 'identifier', '=',   'exp'                                  ] ),
+	( 'stmt', [ 'return',     'exp'                                         ] ),
+	( 'stmt', [ 'if',         'exp', 'compoundStmt'                         ] ),
+	( 'stmt', [ 'if',         'exp', 'compoundStmt', 'else', 'compoundStmt' ] ),
+
+	( 'compoundStmt', [ '{', 'stmts', '}' ] ), 
+
+	( 'stmts', [ 'stmt', ';', 'stmts' ] ),
+	( 'stmts', [ ''                   ] ),
+
+	( 'exp', [ 'identifier', '(',   'optArgs', ')' ] ),  
+	( 'exp', [ '(',          'exp', ')'            ] ),
+	( 'exp', [ 'exp',        '+',   'exp'          ] ),
+	( 'exp', [ 'exp',        '-',   'exp'          ] ),
+	( 'exp', [ 'exp',        '*',   'exp'          ] ),
+	( 'exp', [ 'exp',        '/',   'exp'          ] ),
+	( 'exp', [ 'exp',        '<',   'exp'          ] ),
+	( 'exp', [ 'exp',        '>',   'exp'          ] ),
+	( 'exp', [ 'exp',        '<=',  'exp'          ] ),
+	( 'exp', [ 'exp',        '>=',  'exp'          ] ),
+	( 'exp', [ 'exp',        '==',  'exp'          ] ),
+	( 'exp', [ 'exp',        '!=',  'exp'          ] ),
+	( 'exp', [ 'exp',        '&&',  'exp'          ] ),
+	( 'exp', [ 'exp',        '||',  'exp'          ] ),
+	( 'exp', [ 'number'                            ] ),
+	( 'exp', [ 'string'                            ] ),
+	( 'exp', [ 'true'                              ] ),
+	( 'exp', [ 'false'                             ] ),
+
+]
+
+
+'''
+ ? -> apeears 0 or 1 times
+ * -> appears 0+ times
+
+'''
 
 # className | variableName | subroutineName 
 # -> sequence of letters/digits/underscore not starting with a digit
