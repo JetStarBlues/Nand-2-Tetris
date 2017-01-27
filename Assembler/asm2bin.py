@@ -91,22 +91,22 @@ lookup_globalAddresses = {
 	'@SCREEN' : '@' + str( SCREEN_MEMORY_MAP ),
 	'@KBD'    : '@' + str( KBD_MEMORY_MAP ),
 
-	'@R0'     : '@0',
-	'@R1'     : '@1',
-	'@R2'     : '@2',
-	'@R3'     : '@3',
-	'@R4'     : '@4',
-	'@R5'     : '@5',
-	'@R6'     : '@6',
-	'@R7'     : '@7',
-	'@R8'     : '@8',
-	'@R9'     : '@9',
-	'@R10'    : '@10',
-	'@R11'    : '@11',
-	'@R12'    : '@12',
-	'@R13'    : '@13',
-	'@R14'    : '@14',
-	'@R15'    : '@15',
+	'@R0'     : '@0',   # SP
+	'@R1'     : '@1',   # ARG
+	'@R2'     : '@2',   # LCL
+	'@R3'     : '@3',   # THIS
+	'@R4'     : '@4',   # THAT
+	'@R5'     : '@5',   # TEMP
+	'@R6'     : '@6',   # TEMP
+	'@R7'     : '@7',   # TEMP
+	'@R8'     : '@8',   # TEMP
+	'@R9'     : '@9',   # TEMP
+	'@R10'    : '@10',  # TEMP
+	'@R11'    : '@11',  # TEMP
+	'@R12'    : '@12',  # TEMP
+	'@R13'    : '@13',  # GP
+	'@R14'    : '@14',  # GP
+	'@R15'    : '@15',  # GP
 
 	'@SP'     : '@0',
 	'@LCL'    : '@1',
@@ -115,9 +115,9 @@ lookup_globalAddresses = {
 	'@THAT'   : '@4',
 	'@TEMP'   : '@5',
 	'@GP'     : '@13',
-	'@STATIC' : '@16',
-	'@STACK'  : '@256',
-	'@HEAP'   : '@2048',
+	# '@STATIC' : '@16',
+	# '@STACK'  : '@256',
+	# '@HEAP'   : '@2048',
 }
 
 
@@ -205,7 +205,7 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 
 	''' Replace variable names with integer addresses '''
 
-	freeAddress = 16
+	freeAddress = 16  # 16..255 (static)
 
 	knownAddresses_RAM = {}
 	knownAddresses_RAM.update( lookup_globalAddresses )  # fill with global addresses

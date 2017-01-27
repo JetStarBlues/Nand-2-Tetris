@@ -8,7 +8,10 @@ uuid: c999c8ab-d574-47cc-84b5-c8b37244c331
 patterns:
 
 - name: constant.language.hasm
-  match: (NULL|JGT|JEQ|JGE|JLT|JNE|JLE|JMP|SCREEN|KBD|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|R10|R11|R12|R13|R14|R15|SP|LCL|ARG|THIS|THAT|TEMP|GP|STATIC|STACK|HEAP)($|\s+)
+  match: (?<=@)(SCREEN|KBD|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|R10|R11|R12|R13|R14|R15|SP|LCL|ARG|THIS|THAT|TEMP|GP)(?=$|\s)
+
+- name: constant.language.hasm
+  match: (?<=;|\s)(NULL|JGT|JEQ|JGE|JLT|JNE|JLE|JMP)(?=$|\s)
 
 - name: keyword.operator.hasm
   match: (@|\+|\-|=|&|\||!|\^|<<|>>|;)
