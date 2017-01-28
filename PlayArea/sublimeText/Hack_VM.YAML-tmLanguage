@@ -1,4 +1,5 @@
 # [PackageDev] target_format: plist, ext: tmLanguage
+# By github.com/jetstarblues
 ---
 name: Hack VM
 scopeName: source.vm
@@ -8,23 +9,23 @@ uuid: afa4a4db-8828-4240-a70d-8aa8291b06e1
 patterns:
 
 - name: constant.language.vm
-  match: (?<=\s)(argument|constant|local|static|temp|this|that|pointer)(?=\s)
+  match: (?i)(?<=\s)(argument|constant|local|static|temp|this|that|pointer)(?=\s)
 
 - name: keyword.operator.vm
-  match: (?<=^|\s)(push|pop|add|sub|neg|eq|gt|lt|and|or|not|goto|if-goto|return)(?=$|\s)
+  match: (?i)(?<=^|\s)(push|pop|add|sub|neg|eq|gt|lt|and|or|not|goto|if-goto|return)(?=$|\s)
 
 - name: comment.line.double-slash.vm
   match: //.*$
 
 - name: keyword.operator.vm
-  begin: label
+  begin: (?i)label
   end: $|(?=//)
   patterns:
     - name: entity.name.vm
       match: '[A-Za-z][A-Za-z0-9_]*'
 
 - name: keyword.operator.vm
-  begin: function
+  begin: (?i)function
   end: $|(?=//)
   patterns:
     - name: entity.name.vm
@@ -34,7 +35,7 @@ patterns:
       match: ' [0-9]+'
 
 - name: keyword.operator.vm
-  begin: call
+  begin: (?i)call
   end: $|(?=//)
   patterns:
     - name: entity.name.vm
