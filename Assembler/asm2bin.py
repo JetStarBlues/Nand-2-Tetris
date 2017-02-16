@@ -115,7 +115,7 @@ lookup_globalAddresses = {
 	'@THAT'   : '@4',
 	'@TEMP'   : '@5',
 	'@GP'     : '@13',
-	# '@STATIC' : '@16',
+	'@STATIC' : '@16',
 	# '@STACK'  : '@256',
 	# '@HEAP'   : '@2048',
 }

@@ -1,0 +1,80 @@
+%YAML 1.2
+---
+# By github.com/jetstarblues
+
+# See http://www.sublimetext.com/docs/3/syntax.html
+
+# Note - It's not uncommon for several regexes to have parts in common.
+# To avoid repetitious typing, you can use variables. Variables are 
+# referenced within regxes via {{varname}}.
+
+file_extensions:
+  - hasm
+scope: source.hasm
+
+variables:
+
+  identifier: '[A-Za-z_][A-Za-z_0-9]*'
+  address: \b(SCREEN|KBD|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|R10|R11|R12|R13|R14|R15|SP|LCL|ARG|THIS|THAT|TEMP|GP)\b
+  jump: \b(|JGT|JEQ|JGE|JLT|JNE|JLE|JMP)\b
+
+contexts:
+
+  main:
+
+    # Comments -----------------------------------------------
+    # Single line. Begin with a '//' and finish at the end of the line
+    - match: '//'
+      scope: punctuation.definition.comment.hasm
+      push: line_comment
+
+    # # Multiline. Begin with '/*' and finish with '*/'
+    # - match: '/\*'
+    #   scope: punctuation.definition.comment.hasm
+    #   push: multiline_comment   
+
+    # Addresses -----------------------------------------------
+    - match: ^|\s*(@)({{address}})\b
+      captures:
+        1: keyword.control.hasm
+        2: constant.language.hasm
+
+    - match: '^|\s*(@)'
+      captures:
+        1: keyword.control.hasm
+
+    # Labels ---------------------------------------------------
+    - match: ^|\s*\(\s*({{identifier}})\s*\)
+      captures:
+        1: entity.name.hasm
+
+    # Keywords ------------------------------------------------
+    - match: '{{jump}}'
+      scope: keyword.control.hasm
+
+    - match: (\-|\+|>>|<<)
+      scope: keyword.operator.arithmetic.hasm
+
+    - match: (!|&|\^|\|)
+      scope: keyword.operator.logical.hasm
+
+    - match: (=|;)
+      scope: keyword.operator.assignment.hasm
+
+    # Numbers --------------------------------------------------
+    - match: \b[0-9]+\b
+      scope: constant.numeric.hasm
+
+    # Constants ------------------------------------------------
+    - match: \b(NULL)\b
+      scope: constant.language.hasm
+
+  line_comment:
+    - meta_scope: comment.line.hasm
+    - match: $
+      pop: true
+
+  # multiline_comment:
+  #   - meta_scope: comment.block.hasm
+  #   - match: '\*/'
+  #     pop: true

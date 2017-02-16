@@ -1,0 +1,64 @@
+%YAML 1.2
+---
+# By github.com/jetstarblues
+
+# See http://www.sublimetext.com/docs/3/syntax.html
+
+# Note - It's not uncommon for several regexes to have parts in common.
+# To avoid repetitious typing, you can use variables. Variables are 
+# referenced within regxes via {{varname}}.
+
+file_extensions:
+  - vm
+scope: source.vm
+
+variables:
+
+  identifier: '[A-Za-z_][A-Za-z_0-9]*'
+  memorySegment: \b(argument|constant|local|static|temp|this|that|pointer)\b
+  action: \b(push|pop|goto|if-goto|return)\b
+  builtin: \b(add|sub|neg|eq|gt|lt|and|or|not)\b
+
+contexts:
+
+  main:
+
+    # Comments -----------------------------------------------
+    # Single line. Begin with a '//' and finish at the end of the line
+    - match: '//'
+      scope: punctuation.definition.comment.vm
+      push: line_comment
+
+    # # Multiline. Begin with '/*' and finish with '*/'
+    # - match: '/\*'
+    #   scope: punctuation.definition.comment.vm
+    #   push: multiline_comment   
+
+    # ?? -----------------------------------------------------
+    - match: ^|\s*(label|function|call)\s+({{identifier}}(\.{{identifier}})?)\s+
+      captures:
+        1: keyword.control.vm
+        2: entity.name.vm
+
+    - match: '{{action}}'
+      scope: keyword.control.vm
+
+    - match: '{{builtin}}'
+      scope: support.function.builtin.vm
+
+    - match: '{{memorySegment}}'
+      scope: storage.type.primitive.vm
+
+    # Numbers --------------------------------------------------
+    - match: \b[0-9]+\b
+      scope: constant.numeric.vm
+
+  line_comment:
+    - meta_scope: comment.line.vm
+    - match: $
+      pop: true
+
+  # multiline_comment:
+  #   - meta_scope: comment.block.vm
+  #   - match: '\*/'
+  #     pop: true

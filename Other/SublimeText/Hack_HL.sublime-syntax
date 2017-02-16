@@ -1,0 +1,107 @@
+%YAML 1.2
+---
+# By github.com/jetstarblues
+# Based on the sublime-syntax for Java that ships with Sublime Text
+
+# See http://www.sublimetext.com/docs/3/syntax.html
+
+# Note - It's not uncommon for several regexes to have parts in common.
+# To avoid repetitious typing, you can use variables. Variables are 
+# referenced within regxes via {{varname}}.
+
+file_extensions:
+  - jack
+scope: source.jack
+
+variables:
+  identifier: '[A-Za-z_][A-Za-z_0-9]*'
+
+contexts:
+
+  main:
+
+    # Strings -------------------------------------------------
+    # Begin and end with quotes, and use backslashes as an escape character
+
+    # Double quote enclosed
+    - match: '"'
+      scope: punctuation.definition.string.begin.jack
+      push: double_quoted_string
+
+    # Comments ------------------------------------------------
+    # Single line. Begin with a '//' and finish at the end of the line
+    - match: '//'
+      scope: punctuation.definition.comment.jack
+      push: line_comment
+
+    # Multiline. Begin with '/*' and finish with '*/'
+    - match: '/\*'
+      scope: punctuation.definition.comment.jack
+      push: multiline_comment   
+
+    # Keywords ------------------------------------------------
+    - match: '\b(if|else|while|let|do|return|for)\b'
+      scope: keyword.control.jack
+
+    - match: (=|==|<=|>=|<|>)
+      scope: keyword.operator.comparison.jack
+
+    - match: (\-|\+|\*|\/|%|>>|<<)
+      scope: keyword.operator.arithmetic.jack
+
+    - match: (!|~|&|\^|\|)
+      scope: keyword.operator.logical.jack
+
+    # - match: (=)
+    #   scope: keyword.operator.assignment.jack
+
+    - match: ;
+      scope: punctuation.terminator.jack
+
+    # Numbers --------------------------------------------------
+    - match: '\b[0-9]+\b'
+      scope: constant.numeric.jack
+
+    # Constants ------------------------------------------------
+    - match: \b(true|false|null)\b
+      scope: constant.language.jack
+
+    - match: \b(this)\b
+      scope: variable.language.jack
+
+    # Class ----------------------------------------------------
+    - match: '\b(class)\s+({{identifier}})\s*\{'
+      captures:
+        1: storage.modifier.jack
+        2: entity.name.class.jack
+
+    # Subroutines ----------------------------------------------
+    - match: '\b({{identifier}})\s+({{identifier}})\s*\('
+      captures:
+        1: storage.type.primitive.jack
+        2: entity.name.function.jack
+
+    # Types ----------------------------------------------------
+    - match: \b(void|boolean|char|int)\b
+      scope: storage.type.primitive.jack
+
+    - match: \b(class|field|static|constructor|method|function|var)\b
+      scope: storage.modifier.jack
+
+  double_quoted_string:
+    - meta_scope: string.quoted.double.jack
+    - match: '\\.'
+      scope: constant.character.escape.jack
+    - match: '"'
+      scope: punctuation.definition.string.end.jack
+      pop: true
+
+  line_comment:
+    - meta_scope: comment.line.jack
+    - match: $
+      pop: true
+
+  multiline_comment:
+    - meta_scope: comment.block.jack
+    - match: '\*/'
+      pop: true
