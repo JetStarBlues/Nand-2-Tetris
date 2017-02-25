@@ -24,7 +24,7 @@ contexts:
 
     # Comments -----------------------------------------------
     # Single line. Begin with a '//' and finish at the end of the line
-    - match: '//'
+    - match: //
       scope: punctuation.definition.comment.hasm
       push: line_comment
 
@@ -39,7 +39,7 @@ contexts:
         1: keyword.control.hasm
         2: constant.language.hasm
 
-    - match: '^|\s*(@)'
+    - match: ^|\s*(@)
       captures:
         1: keyword.control.hasm
 

@@ -24,43 +24,47 @@ contexts:
     # Begin and end with quotes, and use backslashes as an escape character
 
     # Double quote enclosed
-    - match: '"'
+    - match: \"
       scope: punctuation.definition.string.begin.jack
       push: double_quoted_string
 
     # Comments ------------------------------------------------
     # Single line. Begin with a '//' and finish at the end of the line
-    - match: '//'
+    - match: //
       scope: punctuation.definition.comment.jack
       push: line_comment
 
     # Multiline. Begin with '/*' and finish with '*/'
-    - match: '/\*'
+    - match: /\*
       scope: punctuation.definition.comment.jack
       push: multiline_comment   
 
     # Keywords ------------------------------------------------
-    - match: '\b(if|else|while|let|do|return|for)\b'
+    - match: \b(if|else|while|let|do|return|for)\b
       scope: keyword.control.jack
 
-    - match: (=|==|<=|>=|<|>)
+    - match: \s(=|==|<=|>=|<|>)\s
       scope: keyword.operator.comparison.jack
 
-    - match: (\-|\+|\*|\/|%|>>|<<)
+    - match: \s(\-|\+|\*|\/|%|>>|<<)\s
       scope: keyword.operator.arithmetic.jack
 
-    - match: (!|~|&|\^|\|)
+    - match: \s(!|~|&|\^|\|)\s
       scope: keyword.operator.logical.jack
 
-    # - match: (=)
-    #   scope: keyword.operator.assignment.jack
+    - match: \s(&=|\^=|\|=|\-=|\+=|\*=|\/=|%=|>>=|<<=)\s
+      scope: keyword.operator.assignment.jack
 
     - match: ;
       scope: punctuation.terminator.jack
 
     # Numbers --------------------------------------------------
-    - match: '\b[0-9]+\b'
+    - match: \b[0-9]+\b
       scope: constant.numeric.jack
+
+    # Chars ----------------------------------------------------
+    - match: \'\w\'
+      scope: string.quoted.single.jack
 
     # Constants ------------------------------------------------
     - match: \b(true|false|null)\b
@@ -70,13 +74,13 @@ contexts:
       scope: variable.language.jack
 
     # Class ----------------------------------------------------
-    - match: '\b(class)\s+({{identifier}})\s*\{'
+    - match: \b(class)\s+({{identifier}})\s*\{
       captures:
         1: storage.modifier.jack
         2: entity.name.class.jack
 
     # Subroutines ----------------------------------------------
-    - match: '\b({{identifier}})\s+({{identifier}})\s*\('
+    - match: \b({{identifier}})\s+({{identifier}})\s*\(
       captures:
         1: storage.type.primitive.jack
         2: entity.name.function.jack
@@ -90,9 +94,9 @@ contexts:
 
   double_quoted_string:
     - meta_scope: string.quoted.double.jack
-    - match: '\\.'
+    - match: \\.
       scope: constant.character.escape.jack
-    - match: '"'
+    - match: \"
       scope: punctuation.definition.string.end.jack
       pop: true
 
@@ -103,5 +107,5 @@ contexts:
 
   multiline_comment:
     - meta_scope: comment.block.jack
-    - match: '\*/'
+    - match: \*/
       pop: true

@@ -15,9 +15,9 @@ scope: source.vm
 variables:
 
   identifier: '[A-Za-z_][A-Za-z_0-9]*'
-  memorySegment: \b(argument|constant|local|static|temp|this|that|pointer)\b
   action: \b(push|pop|goto|if-goto|return)\b
   builtin: \b(add|sub|neg|eq|gt|lt|and|or|not)\b
+  memorySegment: \b(argument|constant|local|static|temp|this|that|pointer)\b
 
 contexts:
 
@@ -25,7 +25,7 @@ contexts:
 
     # Comments -----------------------------------------------
     # Single line. Begin with a '//' and finish at the end of the line
-    - match: '//'
+    - match: //
       scope: punctuation.definition.comment.vm
       push: line_comment
 
@@ -34,7 +34,7 @@ contexts:
     #   scope: punctuation.definition.comment.vm
     #   push: multiline_comment   
 
-    # ?? -----------------------------------------------------
+    # Keywords ------------------------------------------------
     - match: ^|\s*(label|function|call)\s+({{identifier}}(\.{{identifier}})?)\s+
       captures:
         1: keyword.control.vm

@@ -55,6 +55,7 @@ types = [
 	'int',
 	'char',
 	'boolean',
+	'void'
 ]
 
 
@@ -146,14 +147,14 @@ r_identifier = '[A-Za-z_][A-Za-z_0-9]*'
 
 	## expression_
 
-	( term_ ) (  ( binaryOp_ ) ( term_ )  )*
+	( terminal_ ) (  ( binaryOp_ ) ( terminal_ )  )*
 
-	## term_
+	## terminal_
 
 	( integerConstant_ | stringConstant_ | keywordConstant_ | subroutineCall_ | variableName_ |
-	  (  ( variableName_ ) ( '[' ) ( expression_ ) ( ']' )  ) |
-	  (  ( '(' ) ( expression_ ) ( ')' )                    ) |
-	  (  ( unaryOp_ ) ( term_ )                             )
+	  (  ( variableName_ ) ( '[' ) ( expression_ ) ( ']' )  ) | # array access
+	  (  ( '(' ) ( expression_ ) ( ')' )                    ) | # ? precedence? ex math / logic
+	  (  ( unaryOp_ ) ( terminal_ )                         )
 
 	## subroutineCall_
 
