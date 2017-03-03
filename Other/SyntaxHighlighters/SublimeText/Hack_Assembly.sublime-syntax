@@ -1,6 +1,6 @@
 %YAML 1.2
 ---
-# By github.com/jetstarblues
+# By www.jk-quantized.com
 
 # See http://www.sublimetext.com/docs/3/syntax.html
 
@@ -16,7 +16,7 @@ variables:
 
   identifier: '[A-Za-z_][A-Za-z_0-9]*'
   address: \b(SCREEN|KBD|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|R10|R11|R12|R13|R14|R15|SP|LCL|ARG|THIS|THAT|TEMP|GP)\b
-  jump: \b(|JGT|JEQ|JGE|JLT|JNE|JLE|JMP)\b
+  jump: \b(JGT|JEQ|JGE|JLT|JNE|JLE|JMP)\b
 
 contexts:
 
