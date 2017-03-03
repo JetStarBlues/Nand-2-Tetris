@@ -46,7 +46,7 @@ contexts:
     - match: \s(=|==|<=|>=|<|>)\s
       scope: keyword.operator.comparison.jack
 
-    - match: \s(\-|\+|\*|\/|%|>>|<<)\s
+    - match: \s(-|\+|\*|\/|%|>>|<<)\s
       scope: keyword.operator.arithmetic.jack
 
     - match: \s(!|~|&|\^|\|)\s

@@ -52,7 +52,7 @@ contexts:
     - match: '{{jump}}'
       scope: keyword.control.hasm
 
-    - match: (\-|\+|>>|<<)
+    - match: (-|\+|>>|<<)
       scope: keyword.operator.arithmetic.hasm
 
     - match: (!|&|\^|\|)
