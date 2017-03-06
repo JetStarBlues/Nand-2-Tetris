@@ -1,55 +1,73 @@
 '''
 	As shown in this tutorial by Sentdex,
 	 www.youtube.com/watch?v=NwH0HvMI4EA
+	And
+	 https://pymotw.com/3/queue/
 '''
 
 import threading
 from queue import Queue
 
+class execInParallel():
 
-def threader( q, fx, args ):
+	def run( self, nThreads, fx, args ):
 
-	while True:
+		self.q = Queue()
 
-		jobNumber = q.get()  # Worker commits to performing job
+		self.action = fx
 
-		j = ( jobNumber, )  # append to args...
+		self.createJobs( args )
 
-		fx( * ( args + j ) )  # Worker performs job
+		self.createThreads( nThreads )  # create workers
 
-		q.task_done() # Worker completed job, available to perform another
+		self.q.join()
+
+	def performJob( self ):
+
+		while True:
+
+			# Get job from queue
+			item = self.q.get()
+
+			# Perform job
+			self.action( item )
+
+			# Job completed, indicate available to perform another
+			self.q.task_done()
+
+	def createThreads( self, nThreads ):
+
+		for _ in range( nThreads ):
+
+			# Worker
+			t = threading.Thread( 
+
+				# name = 'worker-{}'.format( _ ),
+				target = self.performJob
+			)
+
+			t.daemon = True  # die when main thread dies
+
+			t.start()
+
+	def createJobs( self, jobs ):
+
+		for job in jobs:
+
+			self.q.put( job )
 
 
-def createThreads( q, nThreads, fx, args ):
+# --------------------------------------------------------
 
-	for _ in range( nThreads ):
+# Example...
+'''
+s = list( "hello_ryden" )
 
-		# Worker
-		t = threading.Thread( 
+def printChar( c ): print( c )
 
-			target = threader,
-			args = ( q, fx, args )
+def printChar2( c ): print( c * 3 )
 
-		)
-
-		t.daemon = True  # die when main thread dies
-
-		t.start()
-
-
-def createJobs( q, nJobs ):
-
-	for jobNumber in range(nJobs):
-
-		q.put( jobNumber )
-
-	q.join()
-
-
-def execInParallel( nThreads, fx, args ):
-
-	q = Queue()
-
-	createThreads( q, nThreads, fx, args )
-
-	createJobs( q, nThreads )  # one job per thread
+e = execInParallel()
+e.run( 2, printChar, s )
+e.run( 5, printChar2, s )
+'''
