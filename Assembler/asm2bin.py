@@ -1,4 +1,4 @@
-''''''''''''''''''''''''' imports '''''''''''''''''''''''''''
+# == Imports =================================================
 
 # Built ins
 import re
@@ -7,16 +7,16 @@ import re
 from Components._0__globalConstants import *
 
 
-''''''''''''''''''''''''' helpers '''''''''''''''''''''''''
+# == Helpers =================================================
 
 def _toBinary(N, x):
 	return bin(x)[2:].zfill(N)
 
 
-''''''''''''''''''''''''''' main '''''''''''''''''''''''''''''
+# == Main ====================================================
 
 
-### --- Lookup tables ------------------------------
+# -- Lookup tables ---------------------------------
 
 lookup_comp = {
 
@@ -122,7 +122,7 @@ lookup_globalAddresses = {
 
 
 
-### --- Extraction ---------------------------------
+# -- Extraction -------------------------------------
 
 
 # select everything that is not a comment
@@ -172,7 +172,7 @@ def extractCmds( inputFile ):
 
 
 
-### --- Translation ---------------------------------
+# -- Translation -------------------------------------
 
 
 def handle_Labels( cmdList ):
@@ -319,7 +319,7 @@ def translateCmds( cmdList ):
 
 
 
-### --- Output -----------------------------------
+# -- Output --------------------------------------
 
 
 def writeToOutputFile( binCmdList, outputFile ):
@@ -339,7 +339,7 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 
 
-## --- Run -------------------------------------
+# -- Run ------------------------------------------
 
 
 def asm_to_bin( inputFile, outputFile ):
