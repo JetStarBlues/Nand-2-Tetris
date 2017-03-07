@@ -89,6 +89,7 @@ def carryLookAheadAdder4_( a, b, c0 ):
 		c4 = g3 + p3g2 + p3p2g1 + p3p2p1g0 + p3p2p1p0c0
 	'''
 
+	'''
 	_, p0, g0 = fullAdderCLA_( a[3], b[3], '0' )
 	_, p1, g1 = fullAdderCLA_( a[2], b[2], '0' )
 	_, p2, g2 = fullAdderCLA_( a[1], b[1], '0' )
@@ -111,6 +112,46 @@ def carryLookAheadAdder4_( a, b, c0 ):
 	g = orNto1_( ( g3, and_( p3, g2 ), and3_( p3, p2, g1 ), andNto1_( ( p3, p2, p1, g0 ) ) ) )
 
 	return ( summ, cOut, p, g )
+	'''
+
+	e = execInParallel()
+
+	p = [ None ] * 4
+	g = [ None ] * 4
+	s = [ None ] * 4
+	c = [ c0 ] + [ None ] * 4
+	idx = list( range( 4 ) )
+
+	def fx( i ):
+
+		j = 3 - i
+		_, p[i], g[i] = fullAdderCLA_( a[j], b[j], '0' )
+
+	e.run( 4, fx, idx )
+
+	# print( "huh", p, g )
+
+	c[1] = or_(       g[0], and_( p[0], c[0] ) )
+	c[2] = or3_(      g[1], and_( p[1], g[0] ), and3_( p[1], p[0], c[0] ) )
+	c[3] = orNto1_( ( g[2], and_( p[2], g[1] ), and3_( p[2], p[1], g[0] ), andNto1_( ( p[2], p[1], p[0], c[0] ) ) ) )
+	c[4] = orNto1_( ( g[3], and_( p[3], g[2] ), and3_( p[3], p[2], g[1] ), andNto1_( ( p[3], p[2], p[1], g[0] ) ), andNto1_( ( p[3], p[2], p[1], p[0], c[0] ) ) ) )
+
+	def fx2( i ):
+
+		j = 3 - i
+		s[i], _, _ = fullAdderCLA_( a[j], b[j], c[i] )
+
+	e.run( 4, fx2, idx )
+
+	summ = tuple( s )
+	cOut = c[4]
+
+	pp = andNto1_( p )
+	gg = orNto1_( ( g[3], and_( p[3], g[2] ), and3_( p[3], p[2], g[1] ), andNto1_( ( p[3], p[2], p[1], g[0] ) ) ) )
+
+	# print( "hmm", summ, cOut, pp, gg )
+
+	return ( summ, cOut, pp, gg )
 
 
 def carryLookAheadAdder16_( a, b, c0 ):
