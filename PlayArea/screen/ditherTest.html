@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dither Test</title>
+</head>
+
+<style></style>
+
+<body>
+
+<canvas id="canvas" style="display:none"></canvas>
+<canvas id="canvas2"></canvas>
+
+<img id="img" style="display:none" src="../Pictures/gordon_parks.jpg">
+
+<script>
+
+var width = 948;
+var height = 1000;
+
+var canvas = document.getElementById( 'canvas' );
+canvas.width = width;
+canvas.height = height;
+
+var canvas2 = document.getElementById( 'canvas2' );
+canvas2.width = width;
+canvas2.height = height;
+
+var ctx = canvas.getContext( '2d' );
+var ctx2 = canvas2.getContext( '2d' );
+
+var img = document.getElementById( 'img' );
+
+var col2bw = function( col ){
+
+	return 0.21 * col[0] + 0.72 * col[1] + 0.07 * col[2];
+	// return 0.21 * r + 0.72 * g + 0.07 * b;
+	// return ( r + g + b ) / 3;
+	// return ( Math.max( r, g, b ) + Math.min( r, g, b ) ) / 2;
+}
+
+var rgb2lab = function( col ){
+
+	// www.easyrgb.com/index.php?X=MATH
+	// https://github.com/antimatter15/rgb-lab/blob/master/color.js
+
+	var r = col[0] / 255;
+	var g = col[1] / 255;
+	var b = col[2] / 255;
+ 
+	r = (r > 0.04045) ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+	g = (g > 0.04045) ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+	b = (b > 0.04045) ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+	r = r * 100;
+	g = g * 100;
+	b = b * 100;
+
+	//Observer. = 2°, Illuminant = D65
+	var x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+	var y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+	var z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+	var refX =  95.047;
+	var refY = 100.000;
+	var refZ = 108.883;
+
+	x /= refX;
+	y /= refY;
+	z /= refZ;
+
+	x = (x > 0.008856) ? Math.pow(x, 1/3) : (7.787 * x) + 16/116;
+	y = (y > 0.008856) ? Math.pow(y, 1/3) : (7.787 * y) + 16/116;
+	z = (z > 0.008856) ? Math.pow(z, 1/3) : (7.787 * z) + 16/116;
+
+	L = ( 116 * y ) - 16;
+	a = 500 * ( x - y );
+	b = 200 * ( y - z );
+
+	return [ L, a, b ];
+}
+
+var dist = function( p1, p2 ){
+
+	var dx = p2[0] - p1[0];
+	var dy = p2[1] - p1[1];
+	var dz = p2[2] - p1[2];
+
+	var d = Math.sqrt( dx * dx + dy * dy + dz * dz );
+
+	return d;
+}
+
+var palette = [
+	'FFF1E8','1D2B53','7E2553','008751','AB5236','5F574F',
+	'C2C3C7','000000','FF004D','FFA300','FFEC27','00E436',
+	'29ADFF','83769C','FF77A8','FFCCAA'
+];
+
+var hex2rgb = function( h ){
+
+	var r = parseInt( h.slice( 0, 2 ), 16 );
+	var g = parseInt( h.slice( 2, 4 ), 16 );
+	var b = parseInt( h.slice( 4, 6 ), 16 );
+
+	return [ r, g, b ];
+}
+
+palette = palette.map( function( x ) { return hex2rgb( x ); } );
+
+paletteComp = palette.map( function( x ){ return rgb2lab( x ); } );
+
+var matchCol = function( col ){
+
+	comp = rgb2lab( col );
+
+	// Find nearest
+	closestIdx = 0;
+	smallestDelta = 1e9;
+	for( var i = 0; i < palette.length; i++ ){
+
+		// var delta = dist( col, palette[i] );
+		var delta = dist( comp, paletteComp[i] );
+
+		if( delta < smallestDelta ){
+
+			closestIdx = i;
+			smallestDelta = delta;
+		}
+	}
+
+	return palette[ closestIdx ];
+}
+
+var main = function(){
+
+	// ctx.drawImage( img, -400, -120 );
+	ctx.drawImage( img, 0, 0 );
+
+	var imageData = ctx.getImageData( 0, 0, width, height );
+	var data = imageData.data;
+
+	var imageData2 = ctx2.createImageData( width, height );
+	var data2 = imageData2.data;
+
+	for( var x = 0; x < width; x += 1 ) {
+
+		for( var y = 0; y < height; y += 1 ) {
+
+			var idx = 4 * ( y * width + x );
+
+			var r = data[ idx + 0 ];
+			var g = data[ idx + 1 ];
+			var b = data[ idx + 2 ];
+
+		/*
+			var curCol = col2bw( [ r, g, b ] );
+
+			var newCol = curCol < 127 ? 0 : 255;
+
+			var quantError = curCol - newCol;
+
+			data2[ idx + 0 ] = newCol;  // r
+			data2[ idx + 1 ] = newCol;  // g
+			data2[ idx + 2 ] = newCol;  // b
+			data2[ idx + 3 ] = 255; // alpha preset to 0 for createImageData()
+		*/
+			var curCol = [ r, g, b ];
+
+			// var newCol = curCol.map( function( c ) { return c < 127 ? 0 : 255; } );
+
+			var newCol = matchCol( curCol );
+
+			var quantError = curCol.map( function( c, i ) { return c - newCol[i]; } );
+
+			data2[ idx + 0 ] = newCol[0];  // r
+			data2[ idx + 1 ] = newCol[1];  // g
+			data2[ idx + 2 ] = newCol[2];  // b
+			data2[ idx + 3 ] = 255; // alpha preset to 0 for createImageData()
+
+			// Neighbours...
+			var leftmost  = x == 0;
+			var rightmost = x == width - 1;
+			var bottom    = y == height - 1;
+			var right    = rightmost ? null : 4 * (   y       * width + x + 1 );
+			var btm      = bottom    ? null : 4 * ( ( y + 1 ) * width + x     );
+			var btmLeft  = bottom || leftmost ? null  : 4 * ( ( y + 1 ) * width + x - 1 );
+			var btmRight = bottom || rightmost ? null : 4 * ( ( y + 1 ) * width + x + 1 );
+
+			var neighbours = [ right, btmRight, btm, btmLeft ];
+			var weights = [ 7/16, 1/16, 5/16, 6/16 ];
+
+			for( var i = 0; i < neighbours.length; i += 1 ){
+
+				if( neighbours[i] ) {
+
+					var idx = neighbours[i];
+				/*
+					data[ idx + 0 ] += quantError * weights[i];  //r
+					data[ idx + 1 ] += quantError * weights[i];  //g
+					data[ idx + 2 ] += quantError * weights[i];  //b
+				*/
+					data[ idx + 0 ] += quantError[0] * weights[i];  //r
+					data[ idx + 1 ] += quantError[1] * weights[i];  //g
+					data[ idx + 2 ] += quantError[2] * weights[i];  //b
+				}
+			}
+		}
+	}
+
+	ctx2.putImageData( imageData2, 0, 0 );
+}
+
+window.onload = function() {
+
+	main();
+}
+
+</script>
+
+</body>
+</html>

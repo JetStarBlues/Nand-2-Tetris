@@ -1,11 +1,4 @@
 __pycache__/
 
-PlayArea/test.py
-PlayArea/assembler/
-PlayArea/kbd/
-PlayArea/logo/
-PlayArea/vm/
-
-
-Other/output.txt
-Other/Notes/
+PlayArea/screen/frames.py
+PlayArea/screen/frames2.py
