@@ -16,6 +16,7 @@
 
 # Built ins
 import re
+import os
 
 # Hack computer
 from Components._0__globalConstants import *
@@ -375,4 +376,20 @@ def asm_to_bin( inputFile, outputFile ):
 	cmds_binary = translateCmds( cmds_assembly )
 	writeToOutputFile( cmds_binary, outputFile )
 
-	print( 'Done' )
+	# print( 'Done' )
+
+def genBINFile( inputDirPath ):
+
+	fileNames = os.listdir( inputDirPath )
+
+	for fileName in fileNames:
+
+		if fileName[ -3 : ] == 'asm' or fileName[ -4 : ] == 'hasm':
+
+			inputFilePath = inputDirPath + '/' + fileName
+
+			break  # Translate only first encountered in directory
+
+	outputFilePath = inputDirPath + '/Main.bin'
+
+	asm_to_bin( inputFilePath, outputFilePath )
