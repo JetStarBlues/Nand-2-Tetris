@@ -15,6 +15,9 @@ pygame.init()
 
 pygame.display.set_caption( 'Hack Computer' )  # title
 
+icon = pygame.image.load( 'favicon.png' )
+pygame.display.set_icon( icon )
+
 w = 512
 h = 256
 

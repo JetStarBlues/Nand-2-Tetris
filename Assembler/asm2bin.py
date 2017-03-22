@@ -1,3 +1,17 @@
+# ========================================================================================
+#
+# Description:
+#	Compiles Hack ASM (assembly) code to Hack BIN (binary) code
+#
+# Attribution:
+# 	Code by www.jk-quantized.com
+#
+# Redistributions and use of this code in source and binary forms must retain
+# the above attribution notice and this condition.
+#
+# ========================================================================================
+
+
 # == Imports =================================================
 
 # Built ins
@@ -35,29 +49,35 @@ lookup_comp = {
 	'D-1'  : '110001110',
 	'A-1'  : '110110010',
 	'D+A'  : '110000010',
-	'A+D'  : '110000010',  #hmm..., can I add this?
+	'A+D'  : '110000010',  # hmm..., can I add this?
 	'D-A'  : '110010011',
 	'A-D'  : '110000111',
 	'D&A'  : '110000000',
+	'A&D'  : '110000000',  # hmm..., can I add this?
 	'D|A'  : '110010101',
+	'A|D'  : '110010101',  # hmm..., can I add this?
 	'M'    : '111110000',
 	'!M'   : '111110001',
 	'-M'   : '111110011',
 	'M+1'  : '111110111',
 	'M-1'  : '111110010',
 	'D+M'  : '111000010',
-	'M+D'  : '111000010',  #hmm..., can I add this?
+	'M+D'  : '111000010',  # hmm..., can I add this?
 	'D-M'  : '111010011',
 	'M-D'  : '111000111',
 	'D&M'  : '111000000',
+	'M&D'  : '111000000',  # hmm..., can I add this?
 	'D|M'  : '111010101',
+	'M|D'  : '111010101',  # hmm..., can I add this?
 
 	'D<<A' : '010000000',
 	'D<<M' : '011000000',
 	'D>>A' : '000000000',
 	'D>>M' : '001000000',
 	'D^A'  : '100000000',
-	'D^M'  : '101000000'	
+	'A^D'  : '100000000',  # hmm..., can I add this?
+	'D^M'  : '101000000',	
+	'M^D'  : '101000000'   # hmm..., can I add this?	
 }
 
 lookup_dest = {
@@ -115,22 +135,24 @@ lookup_globalAddresses = {
 	'@THAT'   : '@4',
 	'@TEMP'   : '@5',
 	'@GP'     : '@13',
-	'@STATIC' : '@16',
+	# '@STATIC' : '@16',
 	# '@STACK'  : '@256',
 	# '@HEAP'   : '@2048',
 }
+
+static_segment_end = 255  # 16..255
 
 
 
 # -- Extraction -------------------------------------
 
 
-# select everything that is not a comment
+# Select everything that is not a comment
 cmdPattern = '''
-	^   		# from beginning of string
-	[^\/]   	# that does not start with a comment
-	.*?  		# select all characters until,
-	(?=\/\/|$)  # reach start of a comment or the string's end
+	^                # from beginning of string
+	[^\/]            # that does not start with a comment
+	.*?              # select all characters until,
+	(?=\/\/|[\r\n])  # reach start of a comment or the string's end
 '''
 cmdPattern = re.compile( cmdPattern, re.X )
 
@@ -139,15 +161,18 @@ def extractCmd( line ):
 	
 	''' Extract symbolic command from line of source code '''
 
-	line = line.replace(' ', '')   # remove whitespaces
-	line = line.replace('\t', '')  # remove tabs
-	line = line.upper()            # upper case everything
+	line = line.replace( ' ', '' )   # remove whitespaces
+	line = line.replace( '\t', '' )  # remove tabs
+	line = line.upper()              # upper case everything
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
 	if found != None:
+
 		return found.group(0)
+
 	else:
+
 		return None
 
 
@@ -157,16 +182,15 @@ def extractCmds( inputFile ):
 
 	commands = []
 
-	with open( inputFile, encoding='utf-8' ) as input_file:
+	with open( inputFile, 'r' ) as input_file:
 		
-		for a_line in input_file:
+		for line in input_file:
 
-			a_line = a_line.rstrip()   # remove trailing whitespace and carriage return
+			cmd = extractCmd( line )
 
-			cmd_symbolic = extractCmd( a_line )
+			if cmd:
 
-			if cmd_symbolic:
-				commands.append( cmd_symbolic )
+				commands.append( cmd )
 
 	return commands
 
@@ -196,7 +220,6 @@ def handle_Labels( cmdList ):
 		else:
 
 			trimmedCmdList.append( cmdList[i] )   # not a label so include it
-
 
 	return( trimmedCmdList, knownAddresses_ROM )
 
@@ -240,6 +263,9 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 					
 					except KeyError:					
 					
+						if freeAddress > static_segment_end:
+
+							raise Exception( 'Ran out of static memory' )
 
 						newAddr = '@' + str( freeAddress )          # create new address
 
@@ -248,7 +274,6 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 						cmdList[i] = newAddr                        # and set it
 
 						freeAddress += 1 	# register is no longer unallocated
-
 
 	return cmdList
 
@@ -303,7 +328,6 @@ def translate_Instructions( cmdList ):
 		#
 		cmdList[i] = cmd_b
 
-
 	return cmdList
 
 
@@ -326,16 +350,16 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 	''' generate an output file containing the binary commands '''
 
-	with open( outputFile, mode='w', encoding='utf-8' ) as output_file:
+	with open( outputFile, 'w' ) as output_file:
 
-			firstLine = True # workaround to avoid extra blank line at end of output file, http://stackoverflow.com/a/18139440
-			
-			for cmd_binary in binCmdList:
-					
-				if firstLine: firstLine = False
-				else: output_file.write( '\n' )
+		firstLine = True # workaround to avoid extra blank line at end of output file, http://stackoverflow.com/a/18139440
+		
+		for cmd_binary in binCmdList:
+				
+			if firstLine: firstLine = False
+			else: output_file.write( '\n' )
 
-				output_file.write( cmd_binary )
+			output_file.write( cmd_binary )
 
 
 
@@ -347,6 +371,8 @@ def asm_to_bin( inputFile, outputFile ):
 	''' Translate the symbolic code in inputFile to binary code,
 	     and generate an outputFile containing the translated code '''
 
-	cmds_symbolic = extractCmds( inputFile )
-	cmds_binary = translateCmds( cmds_symbolic )
+	cmds_assembly = extractCmds( inputFile )
+	cmds_binary = translateCmds( cmds_assembly )
 	writeToOutputFile( cmds_binary, outputFile )
+
+	print( 'Done' )

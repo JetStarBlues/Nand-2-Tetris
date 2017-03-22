@@ -1,8 +1,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Built ins
-import threading
-import pygame, numpy
+import tkinter, threading
 
 # Hack computer
 from ._x__components import *
