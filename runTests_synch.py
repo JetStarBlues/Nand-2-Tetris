@@ -1,6 +1,6 @@
 '''------------------------------ Imports ------------------------------'''
 
-from Tests import *
+import Tests
 
 import multiprocessing
 
