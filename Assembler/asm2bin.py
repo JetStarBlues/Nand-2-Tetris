@@ -170,7 +170,7 @@ def extractCmd( line ):
 
 	if found != None:
 
-		return found.group(0)
+		return found.group( 0 )
 
 	else:
 
@@ -221,6 +221,10 @@ def handle_Labels( cmdList ):
 		else:
 
 			trimmedCmdList.append( cmdList[i] )   # not a label so include it
+
+	# print( len( 'knownAddresses_ROM') )
+	# print( knownAddresses_ROM[ '@SYS.INIT' ] )
+	# print( knownAddresses_ROM )
 
 	return( trimmedCmdList, knownAddresses_ROM )
 
@@ -372,8 +376,19 @@ def asm_to_bin( inputFile, outputFile ):
 	''' Translate the symbolic code in inputFile to binary code,
 	     and generate an outputFile containing the translated code '''
 
+	# Read
 	cmds_assembly = extractCmds( inputFile )
+
+	# Check size
+	exceedsSizeLimit = len( cmds_assembly ) - 2 ** ( N_BITS - 1 )
+	if exceedsSizeLimit > 0:
+
+		raise Exception( 'Assembled program exceeds maximum length by {} lines'.format( exceedsSizeLimit ) )
+
+	# Translate
 	cmds_binary = translateCmds( cmds_assembly )
+
+	# Write
 	writeToOutputFile( cmds_binary, outputFile )
 
 	# print( 'Done' )
