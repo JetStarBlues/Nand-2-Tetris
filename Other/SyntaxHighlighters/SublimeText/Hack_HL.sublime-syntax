@@ -40,7 +40,7 @@ contexts:
       push: multiline_comment   
 
     # Keywords ------------------------------------------------
-    - match: \b(if|else|while|let|do|return|for)\b
+    - match: \b(if|else|while|let|do|return|for|include)\b
       scope: keyword.control.jack
 
     - match: \s(=|==|<=|>=|<|>)\s
@@ -63,7 +63,7 @@ contexts:
       scope: constant.numeric.jack
 
     # Chars ----------------------------------------------------
-    - match: \'\w\'
+    - match: \'.\'
       scope: string.quoted.single.jack
 
     # Constants ------------------------------------------------
@@ -89,7 +89,7 @@ contexts:
     - match: \b(void|boolean|char|int)\b
       scope: storage.type.primitive.jack
 
-    - match: \b(class|field|static|constructor|method|function|var)\b
+    - match: \b(class|field|static|constructor|method|function|var|const)\b
       scope: storage.modifier.jack
 
   double_quoted_string:

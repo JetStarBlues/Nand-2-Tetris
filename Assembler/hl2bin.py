@@ -26,13 +26,26 @@ import Assembler.asm2bin as asm2bin
 
 # == Main ==========================================================
 
-def hl_to_bin( inputDirPath, vmLibraryPaths = None ):
+def hl_to_bin( inputDirPath ):
 
-	# Generate VM files
-	hl2vm.genVMFiles( inputDirPath )
+	includes = [
+
+		# OS files
+		# 'Programs/Libraries/OS/Array.vm',
+		# 'Programs/Libraries/OS/Keyboard.vm',
+		# 'Programs/Libraries/OS/Math.vm',
+		# 'Programs/Libraries/OS/Memory.vm',
+		# 'Programs/Libraries/OS/Output.vm',
+		# 'Programs/Libraries/OS/Screen.vm',
+		# 'Programs/Libraries/OS/String.vm',
+		# 'Programs/Libraries/OS/Sys.vm',
+	]
+
+	# Generate VM files and return includes
+	includes.extend( hl2vm.genVMFiles( inputDirPath ) )
 
 	# Generate ASM file
-	vm2asm.genASMFile( inputDirPath, vmLibraryPaths = vmLibraryPaths )
+	vm2asm.genASMFile( inputDirPath, libraryPaths = includes, debug = True )
 
 	# Generate BIN file
 	asm2bin.genBINFile( inputDirPath )
