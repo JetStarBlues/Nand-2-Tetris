@@ -31,8 +31,7 @@ def update():
 
 	computer.run( clock.value )
 
-	# if io.hasExited: 
-	if io.hasNotExited: 
+	if io.hasExited: 
 		clock.stop()
 		print( 'See you later!' )
 

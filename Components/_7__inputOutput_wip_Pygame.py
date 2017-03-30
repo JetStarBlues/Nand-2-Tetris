@@ -34,11 +34,10 @@ class IO():
 		# General ---
 		self.N = N
 		self.main_memory = main_memory
-		self.hasNotExited = True
+		self.hasExited = False
 
 		# Pygame ---
-		self.fps = 1000 // SCREEN_REFRESH_RATE  # SCREEN_REFRESH_RATE in ms
-		print( self.fps )
+		self.fps = SCREEN_FPS
 		self.display = None
 		self.clock = None
 
@@ -63,8 +62,6 @@ class IO():
 			self.nRegistersPerRow *= 4
 
 		# Initialize Pygame ---
-		# self.initPygame()
-
 		threading.Thread(
 			target = self.initPygame,
 			name = 'io_thread'
@@ -84,8 +81,8 @@ class IO():
 
 		pygame.display.set_caption( 'Hack Computer' )
 
-		# icon = pygame.image.load( 'favicon.png' )
-		# pygame.display.set_icon( icon )
+		icon = pygame.image.load( 'Components/favicon.png' )
+		pygame.display.set_icon( icon )
 
 		self.display = pygame.display.set_mode( ( self.width, self.height ) )
 
@@ -98,13 +95,13 @@ class IO():
 
 		pygame.quit()
 
-		self.hasNotExited = False
+		self.hasExited = True
 
 		print( 'Exited Pygame' )
 
 	def run( self ):
 
-		while self.hasNotExited:
+		while not self.hasExited:
 
 			# Poll input devices (mouse, keyboard)
 			for event in pygame.event.get():
@@ -113,11 +110,21 @@ class IO():
 
 					self.quitPygame()
 
+					return
+
 				if event.type == pygame.KEYDOWN:
 
-					modifier = pygame.key.get_mods()
+					if event.key == 27:  # Escape
 
-					self.handleKeyPressed( event.key, modifier )
+						self.quitPygame()
+
+						return
+
+					else:
+
+						modifier = pygame.key.get_mods()
+
+						self.handleKeyPressed( event.key, modifier )
 
 				if event.type == pygame.KEYUP:
 
@@ -135,8 +142,7 @@ class IO():
 			self.updateScreen()
 
 			# Tick
-			self.clock.tick( 15 )
-			# self.clock.tick( self.fps )
+			self.clock.tick( self.fps )
 
 
 	# Screen ----------------------------------------------------
@@ -273,20 +279,14 @@ class IO():
 
 		''' If key is pressed, write keyCode '''
 
-		if key == 27:  # Escape
+		# Lookup keyCode
+		keyCode = lookupKey( key )
 
-			self.quitPygame()
+		# Convert to binary
+		keyCode = ( keyCode )[2:].zfill( self.N )
 
-		else:
-
-			# Lookup keyCode
-			keyCode = lookupKey( key )
-
-			# Convert to binary
-			keyCode = ( keyCode )[2:].zfill( self.N )
-
-			# Write to memory
-			self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
+		# Write to memory
+		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
 
 	def handleKeyReleased( self ):
 
