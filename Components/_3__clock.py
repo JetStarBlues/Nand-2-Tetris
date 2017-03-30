@@ -66,25 +66,14 @@ class Clock():
 
 	def run_( self ):	
 
-		self.halfTick()
+		while time.clock() < self.duration:
 
-		if self.isRising and self.callbackRising:
-			self.callbackRising()
+			self.halfTick()
 
-		elif self.isFalling and self.callbackFalling:
-			self.callbackFalling()
+			if self.isRising and self.callbackRising:
+				self.callbackRising()
 
-		if time.clock() < self.duration:
+			elif self.isFalling and self.callbackFalling:
+				self.callbackFalling()
 
-			# gives a 'maximum recursion depth exceeded' error
-			# time.sleep( self.halfPeriod )
-			# self.run_()
-
-			# possible problem in future, each time timer is called new thread created
-			# print( threading.currentThread().getName() )
-			t = threading.Timer( 
-				self.halfPeriod, 
-				self.run_ 
-			)
-			t.setName( 'clock_thread' )
-			t.start()
+			time.sleep( self.halfPeriod )
