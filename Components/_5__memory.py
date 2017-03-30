@@ -25,6 +25,7 @@ class Register_():
 		
 
 	def read( self ):
+
 		# as fx cause have to wait for values to 'settle'
 		return self.ff.q1
 
@@ -44,7 +45,7 @@ class RegisterN_():
 
 		for i in range( self.N ):
 
-			self.registers[i].write( clk, x[i], write )
+			self.registers[ i ].write( clk, x[ i ], write )
 
 
 	def read( self ):
@@ -83,12 +84,12 @@ class RAM8_():
 		 Unable atm to represent z-state of tristate buffer in this emulator.
 		'''
 		
-		self.registers[address].write( clk, x, write )
+		self.registers[ address ].write( clk, x, write )
 
 
 	def read( self, address ):
 
-		return self.registers[address].read()
+		return self.registers[ address ].read()
 
 
 class RAM8N_():
@@ -102,12 +103,12 @@ class RAM8N_():
 
 	def write( self, clk, x, write, address ):
 		
-		self.registers[address].write( clk, x, write )
+		self.registers[ address ].write( clk, x, write )
 
 
 	def read( self, address ):
 
-		return self.registers[address].read()
+		return self.registers[ address ].read()
 
 
 class RAMXN_():
@@ -121,12 +122,12 @@ class RAMXN_():
 
 	def write( self, clk, x, write, address ):
 		
-		self.registers[address].write( clk, x, write )
+		self.registers[ address ].write( clk, x, write )
 
 
 	def read( self, address ):
 
-		return self.registers[address].read()
+		return self.registers[ address ].read()
 
 
 

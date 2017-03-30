@@ -6,7 +6,7 @@
 
 N_BITS = 16
 
-CLOCK_HALF_PERIOD = 0.018  # seconds   ( clock rate = 1 / (2 * halfperiod) )
+CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
 # SCREEN_REFRESH_RATE = 100  # ms
 SCREEN_FPS = 30
@@ -30,7 +30,7 @@ IO_BANK2_MEMORY_MAP = 24581  # 31 downto 16
 # Performance mode --
 #  Uses Python lists instead of flip flops for memory. 
 #   Can get away with no clock period.
-PERFORMANCE_MODE = True
+PERFORMANCE_MODE = False
 if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0
 
@@ -42,15 +42,10 @@ if COLOR_MODE_4BIT :
 	N_BITS = 17  # first bit reserved ( used to decide if A or C instruction )
 	RAM_SIZE = 2**16
 	KBD_MEMORY_MAP    = 16384
-	MOUSEX_MEMORY_MAP = 16385
-	MOUSEY_MEMORY_MAP = 16386
-	SCREEN_MEMORY_MAP = 16387
-
-
-
-# --- Hack Software ---------------------------------
-
-
+	MOUSE_MEMORY_MAP  = 16385
+	MOUSEX_MEMORY_MAP = 16386
+	MOUSEY_MEMORY_MAP = 16387
+	SCREEN_MEMORY_MAP = 16388
 
 
 # --- Simulator UI -----------------------------------

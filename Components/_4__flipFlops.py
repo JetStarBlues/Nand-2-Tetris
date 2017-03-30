@@ -17,11 +17,11 @@ class JKFlipFlop():
 		# Assign random start values
 		#  Truer to indeterminate startup state
 		#  http://forum.allaboutcircuits.com/threads/sr-latch-initial-output-values.80855/
-		self.q0 = 0 if random() >= 0.5 else 1
+		self.q0  = 0 if random() >= 0.5 else 1
 		self._q0 = not_( self.q0 )
 
 		# Output. Initialize with random value
-		self.q1 = 0 if random() >= 0.5 else 1
+		self.q1  = 0 if random() >= 0.5 else 1
 		self._q1 = not_( self.q1 )
 
 		# Faux mechanical delay
@@ -55,30 +55,30 @@ class JKFlipFlop():
 		s = and_( s, self._q0 )
 
 		#
-		self.q1 =  nor_( r, self._q0 )
+		self.q1  = nor_( r, self._q0 )
 		self._q1 = nor_( s, self.q0 )
 
 		# do it twice (write requires twice)
 		#  see math/logic here https://youtu.be/XETZoRYdtkw
-		self.q0 =  self.q1;
+		self.q0  = self.q1;
 		self._q0 = self._q1;
-		self.q1 =  nor_( r, self._q0 );
+		self.q1  = nor_( r, self._q0 );
 		self._q1 = nor_( s, self.q0 );
 
 		# Set cur to prev in prep for next call
-		self.q0 =  self.q1
+		self.q0  = self.q1
 		self._q0 = self._q1
 
 
 	def clear( self ):
 
-		self.q1 = 0
+		self.q1  = 0
 		self._q1 = 1
 
 
 	def preset( self ):
 
-		self.q1 = 1
+		self.q1  = 1
 		self._q1 = 0
 
 
@@ -89,11 +89,11 @@ class DFlipFlop():
 		# Assign random start values
 		#  Truer to indeterminate startup state
 		#  http://forum.allaboutcircuits.com/threads/sr-latch-initial-output-values.80855/
-		self.q0 = 0 if random() >= 0.5 else 1
+		self.q0  = 0 if random() >= 0.5 else 1
 		self._q0 = not_( self.q0 )
 
 		# Output. Initialize with random value
-		self.q1 = 0 if random() >= 0.5 else 1
+		self.q1  = 0 if random() >= 0.5 else 1
 		self._q1 = not_( self.q1 )
 
 		# Faux mechanical delay
@@ -120,28 +120,28 @@ class DFlipFlop():
 		s = and_( e, d )
 
 		#
-		self.q1 =  nor_( r, self._q0 )
+		self.q1  = nor_( r, self._q0 )
 		self._q1 = nor_( s, self.q0 )
 
 		# do it twice (write requires twice)
 		#  see math/logic here https://youtu.be/XETZoRYdtkw
-		self.q0 =  self.q1;
+		self.q0  = self.q1;
 		self._q0 = self._q1;
-		self.q1 =  nor_( r, self._q0 );
+		self.q1  = nor_( r, self._q0 );
 		self._q1 = nor_( s, self.q0 );
 
 		# Set cur to prev in prep for next call
-		self.q0 =  self.q1
+		self.q0  = self.q1
 		self._q0 = self._q1
 
 
 	def clear( self ):
 
-		self.q1 = 0
+		self.q1  = 0
 		self._q1 = 1
 
 
 	def preset( self ):
 
-		self.q1 = 1
+		self.q1  = 1
 		self._q1 = 0

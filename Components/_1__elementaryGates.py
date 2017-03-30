@@ -93,18 +93,11 @@ def mux_( d1, d0, sel ):
 			out = ( !s * d0 ) + ( s * d1 )
 	''' 
 
-	if PERFORMANCE_MODE:
-
-		if int( sel ) == 1 : return d1
-		else: return d0
-
-	else:
-
-		out = or_( 
-			and_( not_( sel ), d0 ),
-			and_( sel, d1 )
-		)
-		return out
+	out = or_(
+		and_( not_( sel ), d0 ),
+		and_( sel, d1 )
+	)
+	return out
 
 
 def mux4to1_( d3, d2, d1, d0, s1, s0 ):
@@ -246,24 +239,24 @@ def xorN_( N, a, b ):
 def muxN_( N, d1, d0, sel ):
 	return tuple( mux_( d1[i], d0[i], sel ) for i in range( N ) )
 
-def muxN_performance_( N, f1, f0, sel ):
+# def muxN_performance_( N, f1, f0, sel ):
 
-	''' Pass in functions so that execute only for the conditional branch that is true
-	     ( instead of executing both branches and passing in their results ).
-	'''
-	if int( sel ) == 1:
+# 	''' Pass in functions so that execute only for the conditional branch that is true
+# 	     ( instead of executing both branches and passing in their results ).
+# 	'''
+# 	if int( sel ) == 1:
 
-		if isinstance( f1[1], tuple ):
-			return f1[0]( * f1[1] )  # f1 is a function, return result of call
-		else:
-			return f1  # f1 is a value
+# 		if isinstance( f1[1], tuple ):
+# 			return f1[0]( * f1[1] )  # f1 is a function, return result of call
+# 		else:
+# 			return f1  # f1 is a value
 	
-	else:
+# 	else:
 
-		if isinstance( f0[1], tuple ):
-			return f0[0]( * f0[1] )
-		else:
-			return f0
+# 		if isinstance( f0[1], tuple ):
+# 			return f0[0]( * f0[1] )
+# 		else:
+# 			return f0
 
 def muxN4to1_( N, d3, d2, d1, d0, s1, s0 ):
 	return tuple( mux4to1_( d3[i], d2[i], d1[i], d0[i], s1, s0 ) for i in range( N ) )
@@ -280,20 +273,20 @@ def or3_( a, b, c ):
 
 def orNto1_( x ):
 
-	if PERFORMANCE_MODE:
+	# if PERFORMANCE_MODE:
 
-		# Break once reach a one ...
-		for bit in x:
-			if int( bit ) == 1: return 1
-		return 0
+	# 	# Break once reach a one ...
+	# 	for bit in x:
+	# 		if int( bit ) == 1: return 1
+	# 	return 0
 
-	else:
+	# else:
 
-		# Cascaded or gates
-		out = x[0]
-		for i in range( 1, len( x ) ):
-			out = or_( out, x[i] )
-		return out
+	# Cascaded or gates
+	out = x[0]
+	for i in range( 1, len( x ) ):
+		out = or_( out, x[i] )
+	return out
 
 	''' alternate way, takes advantage of using gates in parallel 
 	    > speed savings if physical implementation

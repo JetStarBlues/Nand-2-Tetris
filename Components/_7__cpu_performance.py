@@ -1,95 +1,7 @@
 '''----------------------------- Imports -----------------------------'''
 
-# Built ins
-import time, math
-
 # Hack computer
 from ._x__components import *
-
-
-'''---------------------------- MemoryROM ----------------------------'''
-
-class MemoryROMXN_():
-
-	''' Holds program instructions '''
-
-	def __init__( self, X, N ):
-
-		self.isReady = False
-
-		self.X = X
-		self.N = N		
-
-		if PERFORMANCE_MODE:
-			self.ROM = RAMXN_performance_( X, N )
-		else:
-			self.ROM = RAMXN_( X, N )
-
-	
-	def flash( self, binary_file ):
-
-		''' 
-		 Write contents of binary file to ROM 
-		  (uses Python logic)
-		'''
-
-		startTime = time.time()
-		
-		print( '\nStarting ROM flash' )
-
-		if self.isReady:                        # if previously written to,
-			self.ROM = RAMXN_( self.X, self.N ) #  cheap way to clear all registers
-		
-		self.isReady = False		
-
-		address = 0
-
-		with open( binary_file, encoding='utf-8' ) as input_file:
-				
-			for instruction in input_file:
-
-				instruction = instruction.rstrip()  # remove newline characters
-
-				self.ROM.write( 1, instruction, 1, address )  # write
-
-				address += 1
-
-		print( 'Completed ROM flash. Took {} seconds for {} lines'.format( time.time() - startTime, address ) )
-
-		self.isReady = True
-
-		# print( 'E.g. the value stored at register {} is {}'.format( 0, ''.join( map(str, self.ROM.read( 0 ) ) ) ) )
-
-
-	def read( self, address ):
-
-		return self.ROM.read( address )
-
-
-
-'''---------------------------- MemoryRAM ----------------------------'''
-
-class MemoryRAMXN_():
-
-	''' Holds generated data '''
-
-	def __init__( self, X, N ):
-
-		if PERFORMANCE_MODE:
-			self.RAM = RAMXN_performance_( X, N )
-		else:
-			self.RAM = RAMXN_( X, N )
-
-
-	def write( self, clk, x, write, address ):
-
-		self.RAM.write( clk, x, write, address )
-
-
-	def read( self, address ):
-
-		return self.RAM.read( address )
-
 
 
 '''------------------------------- CPU -------------------------------'''
@@ -100,12 +12,12 @@ class MemoryRAMXN_():
     0   -> opCode
     1   -> comp, xor
     2   -> comp, bitshift
-    3   -> comp, y = M or A
+    3   -> comp, y = A (0) | M (1)
     4   -> comp, zero_x  
     5   -> comp, not_x  
     6   -> comp, zero_y  
     7   -> comp, not_y  
-    8   -> comp, and (0) / add (1)  
+    8   -> comp, and (0) | add (1)  
     9   -> comp, negate_out
     ABC -> destination
     DEF -> jump
@@ -121,14 +33,9 @@ class CPU_():
 		
 		self.N = N
 
-		if PERFORMANCE_MODE:
-			self.programCounter = ProgramCounterN_performance_( N )
-			self.A_register = RegisterN_performance_( N )
-			self.D_register = RegisterN_performance_( N )
-		else:
-			self.programCounter = ProgramCounterN_( N )
-			self.A_register = RegisterN_( N )
-			self.D_register = RegisterN_( N )
+		self.programCounter = ProgramCounterN_( N )
+		self.A_register = RegisterN_( N )
+		self.D_register = RegisterN_( N )
 
 		# n_bit instruction support
 		nUnusedBits = N - 16  # shoved between opcode and ysel
@@ -172,26 +79,12 @@ class CPU_():
 			 
 			x = self.D_register.read()
 
-			y = None
-
-			if PERFORMANCE_MODE:
-
-				y = muxN_performance_(
-					self.N,
-					main_memory.read( self.A_register.readDecimal() ),
-					# ( main_memory.read, ( self.A_register.readDecimal() ) ),  # dnw
-					( self.A_register.read, () ),
-					instruction[ self.ysel ]
-				)
-
-			else:
-
-				y = muxN_(
-					self.N,
-					main_memory.read( self.A_register.readDecimal() ),
-					self.A_register.read(),
-					instruction[ self.ysel ]
-				)
+			y = muxN_(
+				self.N,
+				main_memory.read( self.A_register.readDecimal() ),
+				self.A_register.read(),
+				instruction[ self.ysel ]
+			)
 
 			ALU_out = ALU_( 
 				self.N,
@@ -258,38 +151,3 @@ class CPU_():
 
 	def out( self ):
 		pass
-
-
-
-'''----------------------------- Computer -----------------------------'''
-
-class ComputerN_():
-
-	''' N bit CPU + RAM + ROM '''
-
-	def __init__( self, N, RAM_size, ROM_size ):
-
-		self.CPU = CPU_( N )
-		self.main_memory = MemoryRAMXN_( RAM_size, N )
-		self.program_memory = MemoryROMXN_( ROM_size, N )
-
-		self.reset = 0
-
-
-	def load( self, binary_file ):
-
-		self.program_memory.flash( binary_file )
-
-
-	def run( self, clk ):
-
-		self.CPU.doTheThing( clk, self.reset, self.main_memory, self.program_memory )
-
-		# reset the reset ...
-		if self.reset == 1: self.reset = 0
-
-	
-	def reset( self ):
-
-		self.reset = 1
-

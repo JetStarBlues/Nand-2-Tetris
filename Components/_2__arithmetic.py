@@ -6,7 +6,6 @@ from ._x__components import *
 
 '''----------------------------- Helpers -----------------------------'''
 
-
 zeroN = [0] * N_BITS
 
 oneN  = [0] * ( N_BITS - 1 ) + [1]
@@ -29,19 +28,19 @@ def halfAdder_( a, b ):
 
 def fullAdder_( a, b, cIn ):
 
-	if PERFORMANCE_MODE:
+	# if PERFORMANCE_MODE:
 
-		sm = int( a ) + int( b ) + int( cIn )
-		summ  = sm % 2
-		cOut = sm // 2
-		return( summ, cOut )
+	# 	sm = int( a ) + int( b ) + int( cIn )
+	# 	summ  = sm % 2
+	# 	cOut = sm // 2
+	# 	return( summ, cOut )
 
-	else:
+	# else:
 
-		summ1, carry1 = halfAdder_( a, b )
-		summ2, carry2 = halfAdder_( summ1, cIn )
-		cOut = or_( carry1, carry2 )
-		return ( summ2, cOut )
+	summ1, carry1 = halfAdder_( a, b )
+	summ2, carry2 = halfAdder_( summ1, cIn )
+	cOut = or_( carry1, carry2 )
+	return ( summ2, cOut )
 
 
 def rippleCarryAdderN_( N, a, b ):
@@ -63,11 +62,8 @@ def addN_( N, a, b ):
 def incrementN_( N, x ):
 
 	''' add one '''
-	if PERFORMANCE_MODE:
-		return fastIncrement_( x )   # use shortcut
-
-	else:
-		return addN_( N, x, oneN )   # use addN_
+	return addN_( N, x, oneN )   # use addN_
+	# return fastIncrement_( x )   # use shortcut
 
 
 def fastIncrement_( x ):
@@ -161,12 +157,14 @@ def isNegative_( x ):
 	  could be stdlib fx that does this...
 
 	If want to do shift(16) in one cycle, can add s4 support
-	(and correspoinding 16muxes) to hardware... revusit as needed
+	(and correspoinding 16muxes) to hardware... revisit as needed
 '''
 
-def shiftRightN_( N, x, y ):
+def shiftRight16_( x, y ):
 
-	''' Barrel shifter '''
+	''' 16 bit barrel shifter (right) '''
+
+	N = 16
 
 	t0 = [None] * N
 	t1 = [None] * N
@@ -214,9 +212,11 @@ def shiftRightN_( N, x, y ):
 	return t3
 
 
-def shiftLeftN_( N, x, y ):
+def shiftLeft16_( x, y ):
 
-	''' Barrel shifter '''
+	''' 16 bit barrel shifter (left) '''
+
+	N = 16
 
 	t0 = [None] * N
 	t1 = [None] * N
@@ -298,9 +298,9 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	 return ( out, zr, ng ) 
 	'''
 
-	if PERFORMANCE_MODE:
+# if PERFORMANCE_MODE:
 
-		return ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no )
+# 	return ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no )
 
 
 	x0 = muxN_( N,  zeroN             ,  x                 ,  zx )
@@ -319,8 +319,8 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
 	t0 = muxN_( N,
 
-		shiftLeftN_( N, x, y ),
-		shiftRightN_( N, x, y ),
+		shiftLeft16_( x, y ),
+		shiftRight16_( x, y ),
 		fub0
 	)
 
@@ -331,34 +331,34 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	return ( out, zr, ng )
 
 
-def ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
+# def ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
-	x0 = muxN_performance_( N,  zeroN                   ,  x                       ,  zx )
-	x0 = muxN_performance_( N,  ( notN_, ( N, x0 ) )    ,  x0                      ,  nx )
-	y0 = muxN_performance_( N,  zeroN                   ,  y                       ,  zy )
-	y0 = muxN_performance_( N,  ( notN_, ( N, y0 ) )    ,  y0                      ,  ny )
-	t2 = muxN_performance_( N,  ( addN_, ( N, x0, y0 ) ),  ( andN_, ( N, x0, y0 ) ),  f  )
-	t2 = muxN_performance_( N,  ( notN_, ( N, t2 ) )    ,  t2                      ,  no )
+# 	x0 = muxN_performance_( N,  zeroN                   ,  x                       ,  zx )
+# 	x0 = muxN_performance_( N,  ( notN_, ( N, x0 ) )    ,  x0                      ,  nx )
+# 	y0 = muxN_performance_( N,  zeroN                   ,  y                       ,  zy )
+# 	y0 = muxN_performance_( N,  ( notN_, ( N, y0 ) )    ,  y0                      ,  ny )
+# 	t2 = muxN_performance_( N,  ( addN_, ( N, x0, y0 ) ),  ( andN_, ( N, x0, y0 ) ),  f  )
+# 	t2 = muxN_performance_( N,  ( notN_, ( N, t2 ) )    ,  t2                      ,  no )
 
-	t1 = muxN_performance_( N,
+# 	t1 = muxN_performance_( N,
 
-		t2,
-		( xorN_, ( N, x, y ) ),
-		fub0
-	)
+# 		t2,
+# 		( xorN_, ( N, x, y ) ),
+# 		fub0
+# 	)
 
-	t0 = muxN_performance_( N,
+# 	t0 = muxN_performance_( N,
 
-		( shiftLeftN_, ( N, x, y ) ),
-		( shiftRightN_, ( N, x, y ) ),
-		fub0
-	)
+# 		( shiftLeftN_, ( N, x, y ) ),
+# 		( shiftRightN_, ( N, x, y ) ),
+# 		fub0
+# 	)
 
-	out = muxN_performance_( N, t1, t0, fub1 )
-	zr =  mux_( 1, 0, isZero_( out ) )
-	ng =  mux_( 1, 0, isNegative_( out ) )
+# 	out = muxN_performance_( N, t1, t0, fub1 )
+# 	zr =  mux_( 1, 0, isZero_( out ) )
+# 	ng =  mux_( 1, 0, isNegative_( out ) )
 
-	return ( out, zr, ng )
+# 	return ( out, zr, ng )
 
 
 # def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
