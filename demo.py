@@ -13,6 +13,9 @@ io = IO( N_BITS, computer.main_memory )
 
 
 # Load program
+# computer.program_memory.flash( 'Programs/Tests/Chapter_12/Main.bin' )
+# computer.program_memory.flash( 'Programs/ByOthers/MarkArmbrust/Creature/Main.bin' )
+# computer.program_memory.flash( 'Programs/ByOthers/GavinStewart/GASchunky/Main.bin' )
 computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6.bin' )
 # computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6_color.bin' )
 
@@ -28,7 +31,8 @@ def update():
 
 	computer.run( clock.value )
 
-	if io.hasExited: 
+	# if io.hasExited: 
+	if io.hasNotExited: 
 		clock.stop()
 		print( 'See you later!' )
 
