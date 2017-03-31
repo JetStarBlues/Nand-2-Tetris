@@ -14,7 +14,7 @@ from ._x__components import *
     0   -> opCode
     1   -> comp, xor
     2   -> comp, bitshift
-    3   -> comp, y = A (0) | M (1)
+    3   -> y = A (0) | M (1)
     4   -> comp, zero_x  
     5   -> comp, not_x  
     6   -> comp, zero_y  
@@ -54,7 +54,6 @@ class CPU_():
 		# --- Fetch instruction ---
 		instruction_address = self.programCounter.read()
 		instruction = program_memory.read( instruction_address )
-		instruction = bin( instruction )[ 2 : ].zfill( N_BITS )  # Convert representation from integer to binary (N_BITS)
 		# print( instruction_address, instruction )
 
 
@@ -68,10 +67,11 @@ class CPU_():
 		if int( instruction[ self.opcode ] ) == 0:
 
 			# --- Execute A instruction ---
-			self.A_register.write( clk, instruction, 1 ) # write
+			instruction = int( instruction, 2 )  # convert from binary to integer representation
+			self.A_register.write( clk, instruction, 1 )  # write
 
 			jump, increment = 0, 1
-			self.programCounter.doTheThing( clk, zeroN, RESET, jump, increment ) # increment
+			self.programCounter.doTheThing( clk, None, RESET, jump, increment ) # increment
 
 
 		else:
@@ -94,9 +94,9 @@ class CPU_():
 
 				self.N,
 				x, y,
-				instruction[ self.fub + 0 ], instruction[ self.fub + 1 ],
-				instruction[ self.cmp + 0 ], instruction[ self.cmp + 1 ], instruction[ self.cmp + 2 ], 
-				instruction[ self.cmp + 3 ], instruction[ self.cmp + 4 ], instruction[ self.cmp + 5 ] 
+				int( instruction[ self.fub + 0 ] ), int( instruction[ self.fub + 1 ] ),
+				int( instruction[ self.cmp + 0 ] ), int( instruction[ self.cmp + 1 ] ), int( instruction[ self.cmp + 2 ] ), 
+				int( instruction[ self.cmp + 3 ] ), int( instruction[ self.cmp + 4 ] ), int( instruction[ self.cmp + 5 ] ) 
 			)
 
 

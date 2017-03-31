@@ -42,7 +42,7 @@ class MemoryROMXN_():
 
 		address = 0
 
-		with open( binary_file, encoding='utf-8' ) as input_file:
+		with open( binary_file, encoding = 'utf-8' ) as input_file:
 				
 			for instruction in input_file:
 

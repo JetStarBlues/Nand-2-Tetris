@@ -2,7 +2,6 @@
 
 from ._0__globalConstants import *
 from ._3__clock import *
-from ._8__computer import *
 
 if PERFORMANCE_MODE:
 
@@ -22,3 +21,5 @@ else:
 	from ._6__programCounter import *
 	from ._7__cpu import *
 	from ._9__inputOutput import *
+
+from ._8__computer import *

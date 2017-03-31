@@ -24,8 +24,8 @@ from Components._0__globalConstants import *
 
 # == Helpers =================================================
 
-def _toBinary(N, x):
-	return bin(x)[2:].zfill(N)
+def _toBinary( N, x ):
+	return bin( x )[ 2 : ].zfill( N )
 
 
 # == Main ====================================================
@@ -35,7 +35,7 @@ def _toBinary(N, x):
 
 lookup_comp = {
 
-	# fub1, fub0, zx, nx, zy, ny, f, no
+	# fub1, fub0, ySel, zx, nx, zy, ny, f, no
 	'0'    : '110101010',
 	'1'    : '110111111',
 	'-1'   : '110111010',
@@ -210,21 +210,17 @@ def handle_Labels( cmdList ):
 
 	for i in range( len( cmdList ) ):
 
-		if cmdList[i][0] == '(':
+		if cmdList[ i ][ 0 ] == '(':
 
-			label = cmdList[i][1:-1]    # get the label
+			label = cmdList[ i ][ 1 : - 1 ]    # get the label
 
-			ROM_addr = i - len( knownAddresses_ROM)    # and the corresponding ROM address
+			ROM_addr = i - len( knownAddresses_ROM )    # and the corresponding ROM address
 
 			knownAddresses_ROM[ '@' + label ] = '@' + str( ROM_addr )   # add it to dict of knownAddresses_ROM
 
 		else:
 
-			trimmedCmdList.append( cmdList[i] )   # not a label so include it
-
-	# print( len( 'knownAddresses_ROM') )
-	# print( knownAddresses_ROM[ '@SYS.INIT' ] )
-	# print( knownAddresses_ROM )
+			trimmedCmdList.append( cmdList[ i ] )   # not a label so include it
 
 	return( trimmedCmdList, knownAddresses_ROM )
 
@@ -241,12 +237,12 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 
 	for i in range( len( cmdList ) ):
 
-		if cmdList[i][0] == '@':
+		if cmdList[ i ][ 0 ] == '@':
 
 			# Is the address an integer? ---
 
 			try:
-				int( cmdList[i][1:] )
+				int( cmdList[ i ][ 1 : ] )
 			
 
 			except ValueError:
@@ -256,12 +252,12 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 				# Check known variables ---
 
 				try:
-					cmdList[i] = knownAddresses_ROM[ cmdList[i] ]
+					cmdList[ i ] = knownAddresses_ROM[ cmdList[ i ] ]
 
 				except KeyError:
 
 					try:
-						cmdList[i] = knownAddresses_RAM[ cmdList[i] ]
+						cmdList[ i ] = knownAddresses_RAM[ cmdList[ i ] ]
 
 
 					# Otherwise, create a new address ---	
@@ -274,9 +270,9 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 
 						newAddr = '@' + str( freeAddress )          # create new address
 
-						knownAddresses_RAM[ cmdList[i] ] = newAddr  # add it to dict of knownAddresses_RAM
+						knownAddresses_RAM[ cmdList[ i ] ] = newAddr  # add it to dict of knownAddresses_RAM
 
-						cmdList[i] = newAddr                        # and set it
+						cmdList[ i ] = newAddr                        # and set it
 
 						freeAddress += 1 	# register is no longer unallocated
 
@@ -290,7 +286,7 @@ def translate_Instructions( cmdList ):
 	for i in range( len( cmdList ) ):
 
 		#
-		cmd_s = cmdList[i]
+		cmd_s = cmdList[ i ]
 		cmd_b = None
 
 
@@ -298,7 +294,7 @@ def translate_Instructions( cmdList ):
 		if cmd_s[0] == '@':
 
 			opcode = '0'
-			addr = int( cmd_s[1:] )
+			addr = int( cmd_s[ 1 : ] )
 			addr = _toBinary( N_BITS - 1, addr )
 			cmd_b = opcode + addr
 
@@ -310,7 +306,7 @@ def translate_Instructions( cmdList ):
 			nUnusedBits = ( N_BITS - 16 )  # 16 bits used to encode opcode(1), dest(3), comp( 2 + 1 + 6 ), jmp(3)
 			header = opcode + '1' * nUnusedBits
 			
-			dest, comp, jmp = [None] * 3
+			dest, comp, jmp = [ None ] * 3
 
 			if '=' in cmd_s and ';' in cmd_s:
 				dest, comp, jmp = re.split( '=|;', cmd_s )
@@ -323,15 +319,15 @@ def translate_Instructions( cmdList ):
 
 			# print(dest, comp, jmp)
 
-			dest = lookup_dest[dest] if dest else lookup_dest['NULL']
-			jmp = lookup_jmp[jmp] if jmp else lookup_jmp['NULL']
+			dest = lookup_dest[dest] if dest else lookup_dest[ 'NULL' ]
+			jmp = lookup_jmp[jmp] if jmp else lookup_jmp[ 'NULL' ]
 			comp = lookup_comp[comp]
 
 			cmd_b = header + comp + dest + jmp
 
 
 		#
-		cmdList[i] = cmd_b
+		cmdList[ i ] = cmd_b
 
 	return cmdList
 

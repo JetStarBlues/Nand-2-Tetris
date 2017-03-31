@@ -186,7 +186,7 @@ class Screen():
 
 	def get1BitColor( self, colorCode ):
 
-		if colorCode == 1 : return self.fgColor
+		if int( colorCode ) == 1 : return self.fgColor
 
 		else: return self.bgColor
 

@@ -19,6 +19,11 @@ def isZero_( x ):
 
 	return not_( orNto1_( x ) )
 
+def isNegative_( x ):
+
+	''' 2s complement -> MSB is one if negative '''
+	return x[0]
+
 
 
 '''----------------------------- Adders -----------------------------'''
@@ -153,12 +158,6 @@ def negateN_( N, x ):
 
 	## Add 1
 	return incrementN_( N, temp )
-
-
-def isNegative_( x ):
-
-	''' 2s complement -> MSB is one if negative '''
-	return x[0]
 
 
 
