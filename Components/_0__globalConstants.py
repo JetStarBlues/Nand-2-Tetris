@@ -28,11 +28,10 @@ IO_BANK2_MEMORY_MAP = 24581  # 31 downto 16
 
 
 # Performance mode --
-#  Uses Python lists instead of flip flops for memory. 
-#   Can get away with no clock period.
+# Uses python built-ins for arithmetic operations and storage
 PERFORMANCE_MODE = False
 if PERFORMANCE_MODE :
-	CLOCK_HALF_PERIOD = 0
+	CLOCK_HALF_PERIOD = 0  # Can get away with no clock period as flip flops are not used for memory
 
 
 # Wishlist --

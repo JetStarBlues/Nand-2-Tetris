@@ -80,13 +80,15 @@ class CPU_():
 			x = self.D_register.read()
 
 			y = muxN_(
+
 				self.N,
 				main_memory.read( self.A_register.readDecimal() ),
 				self.A_register.read(),
 				instruction[ self.ysel ]
 			)
 
-			ALU_out = ALU_( 
+			ALU_out = ALU_(
+
 				self.N,
 				x, y,
 				instruction[ self.fub + 0 ], instruction[ self.fub + 1 ],
@@ -111,12 +113,13 @@ class CPU_():
 			zr = ALU_out[1] # ALU out is zero
 			ng = ALU_out[2] # ALU out is negative
 
-			jump = mux8to1_( 
+			jump = mux8to1_(
+				
 				1,                      # JMP
 				or_( zr, ng ),          # JLE
 				not_( zr ),             # JNE
 				ng,                     # JLT
-				or_( zr, not_( ng ) ),  # JGE
+				not_( ng ),             # JGE
 				zr,                     # JEQ
 				not_( or_( zr, ng ) ),  # JGT
 				0,                      # NULL

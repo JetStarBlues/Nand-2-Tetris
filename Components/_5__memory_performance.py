@@ -1,14 +1,13 @@
-''''
-	Memory components implemented with Python arrays instead of flip flop instances.
-	  Used to vastly improve the emulator's speed.
-	  For ff based memory, see '_5__memory.py'
+'''' 
+    Memory is implemented using Python lists instead of flip flop instances.
+    Data is stored/represented as integers instead of binary.
 '''
-
 
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer
 from ._x__components import *
+
 
 
 '''---------------------------- Registers ----------------------------'''
@@ -19,7 +18,7 @@ class RegisterN_():
 
 	def __init__( self, N ):
 
-		self.register = '0' * N
+		self.register = 0
 
 
 	def write( self, clk, x, write ):
@@ -36,13 +35,7 @@ class RegisterN_():
 
 	def readDecimal( self ):
 
-		# used by A_register and program_counter, as haven't implemented binary indexing
-
-		out = self.read()  # index in binary
-
-		out = int( ''.join( map( str, out ) ), 2 )  # index in decimal
-
-		return out
+		return self.register
 
 
 
@@ -54,16 +47,16 @@ class RAMXN_():
 
 	def __init__( self, X, N ):
 
-		self.registers = [ '0' * N for _ in range( X ) ]
+		self.registers = [ 0 for _ in range( X ) ]
 
 
 	def write( self, clk, x, write, address ):
 		
 		if clk == 1 and write == 1:
 			
-			self.registers[address] = x
+			self.registers[ address ] = x
 
 
 	def read( self, address ):
 
-		return self.registers[address]
+		return self.registers[ address ]

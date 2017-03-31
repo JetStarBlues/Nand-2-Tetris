@@ -112,10 +112,10 @@ class ComputerN_():
 		self.CPU.doTheThing( clk, self.reset, self.main_memory, self.program_memory )
 
 		# reset the reset ...
-		if self.reset == 1: self.reset = 0
+		# if self.reset == 1: self.reset = 0
 
 	
-	def reset( self ):
+	# def reset( self ):
 
-		self.reset = 1
+	# 	self.reset = 1
 

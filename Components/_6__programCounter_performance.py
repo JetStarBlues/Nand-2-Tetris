@@ -1,14 +1,8 @@
-''''
-	Memory components implemented with Python arrays instead of flip flop instances.
-	  Used to vastly improve the emulator's speed.
-	  For ff based memory, see '_5__memory.py'
-'''
-
-
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer
 from ._x__components import *
+
 
 
 '''------------------------- Program counter -------------------------'''
@@ -25,33 +19,26 @@ class ProgramCounterN_():
 
 
 	def doTheThing( self, clk, x, rst, write, inc ):
-		
-		change = or3_( write, inc, rst )
 
-		# TODO --- Replace mux with if statements
+		change = rst | write | inc
 
-		# d = muxN_performance_(
+		if rst:  # reset
 
-		# 		self.N,
-		# 		zeroN,
-		# 		muxN_performance_(
+			d = 0
 
-		# 			self.N,
-		# 			x[ -self.N : ],  # turn x to N bit by trimming signifcant bits
-		# 			muxN_performance_(
+		elif write:  # jump
 
-		# 				self.N,
-		# 				( incrementN_, ( self.N, self.register.read() ) ),
-		# 				( self.register.read, () ),
+			d = x
 
-		# 				inc 
-		# 			),
+		elif inc:  # increment
 
-		# 			write
-		# 		),
+			d = self.register.read() + 1
 
-		# 		rst
-		# 	)
+		else:
+
+			# d = self.register.read()
+
+			d = None  # don't care what assigned as won't be written
 
 		self.register.write( clk, d, change )
 

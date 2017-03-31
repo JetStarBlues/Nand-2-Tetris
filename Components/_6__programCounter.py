@@ -4,6 +4,7 @@
 from ._x__components import *
 
 
+
 '''------------------------- Program counter -------------------------'''
 
 class ProgramCounterN_():
@@ -29,14 +30,17 @@ class ProgramCounterN_():
 
 		d = muxN_(
 
+			# Reset
 			self.N,
-			zeroN,
+			zeroN_( self.N ),
 			muxN_(
 
+				# Jump
 				self.N,
-				x[ - self.N : ],  # turn x to N bit by trimming signifcant bits
+				x[ - self.N : ],  # turn x to self.N bits by trimming its signifcant bits
 				muxN_(
 
+					# Increment
 					self.N,
 					incrementN_( self.N, self.register.read() ),
 					self.register.read(),

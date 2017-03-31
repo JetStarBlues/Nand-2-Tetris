@@ -4,13 +4,19 @@
 from ._x__components import *
 
 
+
 '''----------------------------- Helpers -----------------------------'''
 
-zeroN = [0] * N_BITS
+def zeroN_( N ):
 
-oneN  = [0] * ( N_BITS - 1 ) + [1]
+	return ( '0', ) * N
+
+def oneN_( N ):
+
+	return ( '0', ) * ( N - 1 ) + ( '1', )
 
 def isZero_( x ):
+
 	return not_( orNto1_( x ) )
 
 
@@ -46,11 +52,13 @@ def fullAdder_( a, b, cIn ):
 def rippleCarryAdderN_( N, a, b ):
 
 	''' N bit ripple adder '''
-	summ = [None] * N
+	summ = [ None ] * N
 	carry = 0
 
 	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
+
 		summ[i], carry = fullAdder_( a[i], b[i], carry )
+
 	return summ
 
 
@@ -62,8 +70,8 @@ def addN_( N, a, b ):
 def incrementN_( N, x ):
 
 	''' add one '''
-	return addN_( N, x, oneN )   # use addN_
-	# return fastIncrement_( x )   # use shortcut
+	return addN_( N, x, oneN_( N ) )  # use addN_
+	# return fastIncrement_( x )      # use shortcut
 
 
 def fastIncrement_( x ):
@@ -74,9 +82,15 @@ def fastIncrement_( x ):
 	#  Doubt it atm due to break-statement
 
 	summ = list( x ) # mutable
+
 	for i in range ( len( summ ) - 1, -1, -1 ): # RtoL
+
 		summ[i] = not_( summ[i] )
-		if summ[i] == 1: break # flipped a zero
+
+		if summ[i] == 1: # flipped a zero
+
+			break
+
 	return summ
 
 
@@ -106,11 +120,13 @@ def subtractN_( N, a, b ):
 	''' N bit subractor, takes and outputs Nbit numbers
 	     if a < b, answer returned is in 2s complement
 	'''
-	diff = [None] * N
+	diff = [ None ] * N
 	borrow = 0
 
 	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
+
 		diff[i], borrow = fullSubtractor_( a[i], b[i], borrow )
+
 	return diff
 
 
@@ -146,7 +162,7 @@ def isNegative_( x ):
 
 
 
-'''------------------------- Shift Register -------------------------'''
+'''------------------------- Shift Registers -------------------------'''
 
 # MSB to LSB
 
@@ -166,29 +182,32 @@ def shiftRight16_( x, y ):
 
 	N = 16
 
-	t0 = [None] * N
-	t1 = [None] * N
-	t2 = [None] * N
-	t3 = [None] * N
+	t0 = [ None ] * N
+	t1 = [ None ] * N
+	t2 = [ None ] * N
+	t3 = [ None ] * N
 
 	y = y[::-1] # make life simpler by matching array access to MSB-to-LSB format
 
 	#
 	for i in range( N - 1, 0, -1 ):
-		t0[i] = mux_( x[i - 1], x[i], y[0] )
+
+		t0[i] = mux_( x[ i - 1 ], x[i], y[0] )
 
 	t0[0] = mux_( 0, x[0], y[0] )
 
 	#
 	for i in range( N - 1, 1, -1 ):
-		t1[i] = mux_( t0[i - 2], t0[i], y[1] )
+
+		t1[i] = mux_( t0[ i - 2 ], t0[i], y[1] )
 
 	t1[1] = mux_( 0, t0[1], y[1] )
 	t1[0] = mux_( 0, t0[0], y[1] )
 
 	#
 	for i in range( N - 1, 3, -1 ):
-		t2[i] = mux_( t1[i - 4], t1[i], y[2] )
+
+		t2[i] = mux_( t1[ i - 4 ], t1[i], y[2] )
 
 	t2[3] = mux_( 0, t1[3], y[2] )
 	t2[2] = mux_( 0, t1[2], y[2] )
@@ -197,7 +216,8 @@ def shiftRight16_( x, y ):
 
 	#
 	for i in range( N - 1, 7, -1 ):
-		t3[i] = mux_( t2[i - 8], t2[i], y[3] )
+
+		t3[i] = mux_( t2[ i - 8 ], t2[i], y[3] )
 
 	t3[7] = mux_( 0, t2[7], y[3] )
 	t3[6] = mux_( 0, t2[6], y[3] )
@@ -218,10 +238,10 @@ def shiftLeft16_( x, y ):
 
 	N = 16
 
-	t0 = [None] * N
-	t1 = [None] * N
-	t2 = [None] * N
-	t3 = [None] * N
+	t0 = [ None ] * N
+	t1 = [ None ] * N
+	t2 = [ None ] * N
+	t3 = [ None ] * N
 
 	y = y[::-1] # make life simpler by matching array access to MSB-to-LSB format
 
@@ -229,36 +249,40 @@ def shiftLeft16_( x, y ):
 	t0[N - 1] = mux_( 0, x[N - 1], y[0] )
 	
 	for i in range( N - 2, -1, -1 ):
-		t0[i] = mux_( x[i + 1], x[i], y[0] )
+
+		t0[i] = mux_( x[ i + 1 ], x[i], y[0] )
 
 	#
-	t1[N - 1] = mux_( 0, t0[N - 1], y[1] )
-	t1[N - 2] = mux_( 0, t0[N - 2], y[1] )
+	t1[ N - 1 ] = mux_( 0, t0[ N - 1 ], y[1] )
+	t1[ N - 2 ] = mux_( 0, t0[ N - 2 ], y[1] )
 
 	for i in range( N - 3, -1, -1 ):
-		t1[i] = mux_( t0[i + 2], t0[i], y[1] )
+
+		t1[i] = mux_( t0[ i + 2 ], t0[i], y[1] )
 
 	#
-	t2[N - 1] = mux_( 0, t1[N - 1], y[2] )
-	t2[N - 2] = mux_( 0, t1[N - 2], y[2] )
-	t2[N - 3] = mux_( 0, t1[N - 3], y[2] )
-	t2[N - 4] = mux_( 0, t1[N - 4], y[2] )
+	t2[ N - 1 ] = mux_( 0, t1[ N - 1 ], y[2] )
+	t2[ N - 2 ] = mux_( 0, t1[ N - 2 ], y[2] )
+	t2[ N - 3 ] = mux_( 0, t1[ N - 3 ], y[2] )
+	t2[ N - 4 ] = mux_( 0, t1[ N - 4 ], y[2] )
 
 	for i in range( N - 5, -1, -1 ):
-		t2[i] = mux_( t1[i + 4], t1[i], y[2] )
+
+		t2[i] = mux_( t1[ i + 4 ], t1[i], y[2] )
 
 	#
-	t3[N - 1] = mux_( 0, t2[N - 1], y[3] )
-	t3[N - 2] = mux_( 0, t2[N - 2], y[3] )
-	t3[N - 3] = mux_( 0, t2[N - 3], y[3] )
-	t3[N - 4] = mux_( 0, t2[N - 4], y[3] )
-	t3[N - 5] = mux_( 0, t2[N - 5], y[3] )
-	t3[N - 6] = mux_( 0, t2[N - 6], y[3] )
-	t3[N - 7] = mux_( 0, t2[N - 7], y[3] )
-	t3[N - 8] = mux_( 0, t2[N - 8], y[3] )
+	t3[ N - 1 ] = mux_( 0, t2[ N - 1 ], y[3] )
+	t3[ N - 2 ] = mux_( 0, t2[ N - 2 ], y[3] )
+	t3[ N - 3 ] = mux_( 0, t2[ N - 3 ], y[3] )
+	t3[ N - 4 ] = mux_( 0, t2[ N - 4 ], y[3] )
+	t3[ N - 5 ] = mux_( 0, t2[ N - 5 ], y[3] )
+	t3[ N - 6 ] = mux_( 0, t2[ N - 6 ], y[3] )
+	t3[ N - 7 ] = mux_( 0, t2[ N - 7 ], y[3] )
+	t3[ N - 8 ] = mux_( 0, t2[ N - 8 ], y[3] )
 
 	for i in range( N - 9, -1, -1 ):
-		t3[i] = mux_( t2[i + 8], t2[i], y[3] )
+		
+		t3[i] = mux_( t2[ i + 8 ], t2[i], y[3] )
 
 	#
 	return t3
@@ -298,14 +322,9 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	 return ( out, zr, ng ) 
 	'''
 
-# if PERFORMANCE_MODE:
-
-# 	return ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no )
-
-
-	x0 = muxN_( N,  zeroN             ,  x                 ,  zx )
+	x0 = muxN_( N,  zeroN_( N )       ,  x                 ,  zx )
 	x0 = muxN_( N,  notN_( N, x0 )    ,  x0                ,  nx )
-	y0 = muxN_( N,  zeroN             ,  y                 ,  zy )
+	y0 = muxN_( N,  zeroN_( N )       ,  y                 ,  zy )
 	y0 = muxN_( N,  notN_( N, y0 )    ,  y0                ,  ny )
 	t2 = muxN_( N,  addN_( N, x0, y0 ),  andN_( N, x0, y0 ),  f  )
 	t2 = muxN_( N,  notN_( N, t2 )    ,  t2                ,  no )
@@ -329,36 +348,6 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 	ng =  mux_( 1, 0, isNegative_( out ) )
 
 	return ( out, zr, ng )
-
-
-# def ALU_performance_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
-
-# 	x0 = muxN_performance_( N,  zeroN                   ,  x                       ,  zx )
-# 	x0 = muxN_performance_( N,  ( notN_, ( N, x0 ) )    ,  x0                      ,  nx )
-# 	y0 = muxN_performance_( N,  zeroN                   ,  y                       ,  zy )
-# 	y0 = muxN_performance_( N,  ( notN_, ( N, y0 ) )    ,  y0                      ,  ny )
-# 	t2 = muxN_performance_( N,  ( addN_, ( N, x0, y0 ) ),  ( andN_, ( N, x0, y0 ) ),  f  )
-# 	t2 = muxN_performance_( N,  ( notN_, ( N, t2 ) )    ,  t2                      ,  no )
-
-# 	t1 = muxN_performance_( N,
-
-# 		t2,
-# 		( xorN_, ( N, x, y ) ),
-# 		fub0
-# 	)
-
-# 	t0 = muxN_performance_( N,
-
-# 		( shiftLeftN_, ( N, x, y ) ),
-# 		( shiftRightN_, ( N, x, y ) ),
-# 		fub0
-# 	)
-
-# 	out = muxN_performance_( N, t1, t0, fub1 )
-# 	zr =  mux_( 1, 0, isZero_( out ) )
-# 	ng =  mux_( 1, 0, isNegative_( out ) )
-
-# 	return ( out, zr, ng )
 
 
 # def ALU_( N, x, y, zx, nx, zy, ny, f, no ):

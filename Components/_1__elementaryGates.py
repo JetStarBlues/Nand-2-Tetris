@@ -1,9 +1,3 @@
-'''----------------------------- Imports -----------------------------'''
-
-# Hack computer
-from ._x__components import *
-
-
 '''------------------- The elementary logic gates -------------------'''
 
 def and_( a, b ):
@@ -17,6 +11,7 @@ def xor_( a, b ):
 
 def not_( x ):
 	return 1 if int( x ) == 0 else 0	
+
 
 
 '''----------------------- And their inverses -----------------------'''

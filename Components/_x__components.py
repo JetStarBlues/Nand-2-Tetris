@@ -3,14 +3,15 @@
 from ._0__globalConstants import *
 from ._3__clock import *
 from ._8__computer import *
-from ._9__inputOutput import *
 
 if PERFORMANCE_MODE:
 
+	from ._1__elementaryGates_performance import *
 	from ._2__arithmetic_performance import *
 	from ._5__memory_performance import *
 	from ._6__programCounter_performance import *
 	from ._7__cpu_performance import *
+	from ._9__inputOutput_performance import *
 
 else:
 
@@ -20,3 +21,4 @@ else:
 	from ._5__memory import *
 	from ._6__programCounter import *
 	from ._7__cpu import *
+	from ._9__inputOutput import *

@@ -8,6 +8,7 @@ from random import random
 from ._x__components import *
 
 
+
 '''--------------------------- Flip flops ---------------------------'''
 
 class JKFlipFlop():
