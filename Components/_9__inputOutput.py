@@ -153,7 +153,7 @@ class IO():
 		pygame.surfarray.blit_array( self.display, self.genPixelArray() )
 
 		# Update display
-		pygame.display.update()
+		pygame.display.flip()
 
 	def genPixelArray( self ):
 

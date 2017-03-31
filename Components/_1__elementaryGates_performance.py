@@ -27,7 +27,7 @@ def not_( x ):
 
 def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 
-	sel = '{}{}{}'.format( s2, s1, s0 )
+	sel = s2 + s1 + s0
 
 	out = d0 if sel == '000' else \
 	      d1 if sel == '001' else \

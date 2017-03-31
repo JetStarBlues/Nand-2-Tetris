@@ -9,7 +9,7 @@ N_BITS = 16
 CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
 # SCREEN_REFRESH_RATE = 100  # ms
-SCREEN_FPS = 30
+SCREEN_FPS = 15
 
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
