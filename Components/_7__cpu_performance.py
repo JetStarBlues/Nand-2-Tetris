@@ -146,13 +146,9 @@ class CPU_():
 				'NULL' : '000',
 			'''
 
-			writeA = mux8to1_( 1, 1, 1, 1, 0, 0, 0, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
-			writeD = mux8to1_( 1, 1, 0, 0, 1, 1, 0, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
-			writeM = mux8to1_( 1, 0, 1, 0, 1, 0, 1, 0, instruction[ self.dst + 0 ], instruction[ self.dst + 1 ], instruction[ self.dst + 2 ] )
-
-			self.A_register.write( clk, ALU_out[0], writeA ) # write
-			self.D_register.write( clk, ALU_out[0], writeD ) # write
-			main_memory.write(     clk, ALU_out[0], writeM, self.A_register.readDecimal() ) # write
+			self.A_register.write( clk, ALU_out[0], int( instruction[ self.dst + 0 ] ) ) # write
+			self.D_register.write( clk, ALU_out[0], int( instruction[ self.dst + 1 ] ) ) # write
+			main_memory.write(     clk, ALU_out[0], int( instruction[ self.dst + 2 ] ), self.A_register.readDecimal() ) # write
 
 
 	def out( self ):

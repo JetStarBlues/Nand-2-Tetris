@@ -50,35 +50,35 @@ lookup_comp = {
 	'D-1'  : '110001110',
 	'A-1'  : '110110010',
 	'D+A'  : '110000010',
-	'A+D'  : '110000010',  # hmm..., can I add this?
+	'A+D'  : '110000010',  # order doesn't matter
 	'D-A'  : '110010011',
 	'A-D'  : '110000111',
 	'D&A'  : '110000000',
-	'A&D'  : '110000000',  # hmm..., can I add this?
+	'A&D'  : '110000000',  # order doesn't matter
 	'D|A'  : '110010101',
-	'A|D'  : '110010101',  # hmm..., can I add this?
+	'A|D'  : '110010101',  # order doesn't matter
 	'M'    : '111110000',
 	'!M'   : '111110001',
 	'-M'   : '111110011',
 	'M+1'  : '111110111',
 	'M-1'  : '111110010',
 	'D+M'  : '111000010',
-	'M+D'  : '111000010',  # hmm..., can I add this?
+	'M+D'  : '111000010',  # order doesn't matter
 	'D-M'  : '111010011',
 	'M-D'  : '111000111',
 	'D&M'  : '111000000',
-	'M&D'  : '111000000',  # hmm..., can I add this?
+	'M&D'  : '111000000',  # order doesn't matter
 	'D|M'  : '111010101',
-	'M|D'  : '111010101',  # hmm..., can I add this?
+	'M|D'  : '111010101',  # order doesn't matter
 
 	'D<<A' : '010000000',
 	'D<<M' : '011000000',
 	'D>>A' : '000000000',
 	'D>>M' : '001000000',
 	'D^A'  : '100000000',
-	'A^D'  : '100000000',  # hmm..., can I add this?
+	'A^D'  : '100000000',  # order doesn't matter
 	'D^M'  : '101000000',	
-	'M^D'  : '101000000'   # hmm..., can I add this?	
+	'M^D'  : '101000000'   # order doesn't matter	
 }
 
 lookup_dest = {
@@ -87,11 +87,19 @@ lookup_dest = {
 	'NULL' : '000',
 	'M'    : '001',
 	'D'    : '010',
-	'MD'   : '011',
 	'A'    : '100',
+	'DM'   : '011',
+	'MD'   : '011',  # order doesn't matter
 	'AM'   : '101',
+	'MA'   : '101',  # order doesn't matter
 	'AD'   : '110',
-	'AMD'  : '111'
+	'DA'   : '110',  # order doesn't matter
+	'MDA'  : '111',
+	'MAD'  : '111',  # order doesn't matter
+	'AMD'  : '111',  # order doesn't matter
+	'ADM'  : '111',  # order doesn't matter
+	'DMA'  : '111',  # order doesn't matter
+	'DAM'  : '111'   # order doesn't matter
 }
 
 lookup_jmp = {
@@ -100,10 +108,10 @@ lookup_jmp = {
 	'NULL' : '000',
 	'JGT'  : '001',
 	'JEQ'  : '010',
-	'JGE'  : '011',
 	'JLT'  : '100',
-	'JNE'  : '101',
+	'JGE'  : '011',
 	'JLE'  : '110',
+	'JNE'  : '101',
 	'JMP'  : '111'
 }
 

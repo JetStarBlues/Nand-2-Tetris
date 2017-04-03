@@ -99,7 +99,7 @@ class ComputerN_():
 		self.main_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
 
-		self.reset = 0
+		self.reset = 0  # If true(1), sets program counter value to zero
 
 
 	def load( self, binary_file ):
