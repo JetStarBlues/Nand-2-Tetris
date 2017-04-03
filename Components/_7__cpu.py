@@ -47,7 +47,7 @@ class CPU_():
 		self.jmp    = 13 + nUnusedBits
 
 
-	def doTheThing( self, clk, RESET, main_memory, program_memory ):
+	def doTheThing_save( self, clk, RESET, main_memory, program_memory ):
 
 		# --- Fetch instruction ---
 		instruction_address = self.programCounter.read()
@@ -148,5 +148,120 @@ class CPU_():
 			main_memory.write(     clk, ALU_out[0], int( instruction[ self.dst + 2 ] ), self.A_register.readDecimal() ) # write
 
 
-	def out( self ):
-		pass
+	def doTheThing( self, clk, RESET, main_memory, program_memory ):
+
+		'''
+			. All computations happen regardless of instruction.
+			. Multiplexers determine whether to ignore or act on computation results.
+			. Assumes all memory modules can be read asynchronously
+		'''
+
+		# --- Fetch instruction ---
+		instruction_address = self.programCounter.read()
+		instruction = program_memory.read( instruction_address )
+		# print( instruction_address, instruction )
+
+
+		# --- Execute instruction ---
+
+		increment = 1  # Hold high. PC design ensures priority ( reset -> jump -> increment )
+
+
+		# - Computation - 
+
+		# ALU -
+		x = self.D_register.read()
+
+		y = muxN_(
+
+			self.N,
+			main_memory.read( self.A_register.readDecimal() ),
+			self.A_register.read(),
+			instruction[ self.ysel ]
+		)
+
+		ALU_out = ALU_(
+
+			self.N,
+			x, y,
+			instruction[ self.fub + 0 ], instruction[ self.fub + 1 ],
+			instruction[ self.cmp + 0 ], instruction[ self.cmp + 1 ], instruction[ self.cmp + 2 ], 
+			instruction[ self.cmp + 3 ], instruction[ self.cmp + 4 ], instruction[ self.cmp + 5 ] 
+		)
+
+		# Jump -
+
+		'''
+			'JMP'  : '111'
+			'JLE'  : '110',
+			'JNE'  : '101',
+			'JLT'  : '100',
+			'JGE'  : '011',
+			'JEQ'  : '010',
+			'JGT'  : '001',
+			'NULL' : '000',
+		'''		
+
+		zr = ALU_out[1] # ALU out is zero
+		ng = ALU_out[2] # ALU out is negative
+
+		jumpLogic = mux8to1_(
+			
+			1,                      # JMP
+			or_( zr, ng ),          # JLE
+			not_( zr ),             # JNE
+			ng,                     # JLT
+			not_( ng ),             # JGE
+			zr,                     # JEQ
+			not_( or_( zr, ng ) ),  # JGT
+			0,                      # NULL
+			instruction[ self.jmp + 0 ], instruction[ self.jmp + 1 ], instruction[ self.jmp + 2 ] 
+		)
+
+
+		# - Switching -
+
+		writeA = mux_(
+
+			instruction[ self.dst + 0 ],
+			1,
+			instruction[ self.opcode ]
+		)
+
+		writeD = mux_(
+
+			instruction[ self.dst + 1 ],
+			0,
+			instruction[ self.opcode ]
+		)
+
+		writeM = mux_(
+
+			instruction[ self.dst + 2 ],
+			0,
+			instruction[ self.opcode ]
+		)
+
+		jump = mux_(
+
+			jumpLogic,
+			0,
+			instruction[ self.opcode ]
+		)
+
+		dataIn_A_Register = muxN_(
+
+			self.N,
+			ALU_out[ 0 ],
+			instruction,
+			instruction[ self.opcode ]
+		)
+
+
+		# - Writes -
+
+		self.programCounter.doTheThing( clk, self.A_register.read(), RESET, jump, increment )
+
+		self.A_register.write( clk, dataIn_A_Register, writeA )
+		self.D_register.write( clk, ALU_out[ 0 ], writeD )
+		main_memory.write( clk, ALU_out[ 0 ], writeM, self.A_register.readDecimal() )			
