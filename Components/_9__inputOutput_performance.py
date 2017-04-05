@@ -167,7 +167,6 @@ class IO():
 
 			return self.convertToBlitArray( self.getPixels_1BitMode() )
 			
-
 	def convertToBlitArray( self, a ):
 
 		''' Pygame 'blit_array' expects a numpy array arranged [ x, y ] '''
