@@ -1,5 +1,8 @@
 '''----------------------------- Imports -----------------------------'''
 
+# Built ins
+import math
+
 # Hack computer
 from ._x__components import *
 
@@ -39,15 +42,6 @@ def halfAdder_( a, b ):
 
 def fullAdder_( a, b, cIn ):
 
-	# if PERFORMANCE_MODE:
-
-	# 	sm = int( a ) + int( b ) + int( cIn )
-	# 	summ  = sm % 2
-	# 	cOut = sm // 2
-	# 	return( summ, cOut )
-
-	# else:
-
 	summ1, carry1 = halfAdder_( a, b )
 	summ2, carry2 = halfAdder_( summ1, cIn )
 	cOut = or_( carry1, carry2 )
@@ -74,9 +68,23 @@ def addN_( N, a, b ):
 
 def incrementN_( N, x ):
 
-	''' add one '''
-	return addN_( N, x, oneN_( N ) )  # use addN_
-	# return fastIncrement_( x )      # use shortcut
+	''' Add one '''
+
+	# Use addN_ --
+	# return addN_( N, x, oneN_( N ) )
+
+	# Use shortcut --
+	# return fastIncrement_( x )
+
+	# Use cascaded half adders --
+	summ = [ None ] * N
+	carry = 1
+
+	for i in range ( N - 1, -1, -1 ):  # (N - 1)..0, R to L
+
+		summ[i], carry = halfAdder_( x[i], carry )
+
+	return summ
 
 
 def fastIncrement_( x ):
@@ -202,8 +210,6 @@ def shiftLeftN_( N, x, y ):
 
 	ns = int( math.log( N , 2 ) )  # number of shift bits
 
-	N1 = N - 1
-
 	t = []
 
 	for i in range( ns ):
@@ -218,15 +224,15 @@ def shiftLeftN_( N, x, y ):
 
 		y_idx = N - j - 1
 
-		for k in range( p2 - 1, -1, -1 ):
+		for k in range( N - 1, N - 1 - p2 , -1 ):
 
-			t[ j ][ N1 - k ] = mux_( 0, h[ N1 - k ], y[ y_idx ] )
+			t[ j ][ k ] = mux_( 0, h[ k ], y[ y_idx ] )
 
-		for i in range( N1 - p2, - 1, -1 ):
+		for i in range( N - 1 - p2, -1, -1 ):
 
 			t[ j ][ i ] = mux_( h[ i + p2 ], h[ i ], y[ y_idx ] )
 
-	return t[ ns - 1 ]	
+	return t[ ns - 1 ]
 
 
 
