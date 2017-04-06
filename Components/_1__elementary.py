@@ -234,25 +234,6 @@ def xorN_( N, a, b ):
 def muxN_( N, d1, d0, sel ):
 	return tuple( mux_( d1[i], d0[i], sel ) for i in range( N ) )
 
-# def muxN_performance_( N, f1, f0, sel ):
-
-# 	''' Pass in functions so that execute only for the conditional branch that is true
-# 	     ( instead of executing both branches and passing in their results ).
-# 	'''
-# 	if int( sel ) == 1:
-
-# 		if isinstance( f1[1], tuple ):
-# 			return f1[0]( * f1[1] )  # f1 is a function, return result of call
-# 		else:
-# 			return f1  # f1 is a value
-	
-# 	else:
-
-# 		if isinstance( f0[1], tuple ):
-# 			return f0[0]( * f0[1] )
-# 		else:
-# 			return f0
-
 def muxN4to1_( N, d3, d2, d1, d0, s1, s0 ):
 	return tuple( mux4to1_( d3[i], d2[i], d1[i], d0[i], s1, s0 ) for i in range( N ) )
 
@@ -267,15 +248,6 @@ def or3_( a, b, c ):
 	return ( or_( a, or_( b, c ) ) )
 
 def orNto1_( x ):
-
-	# if PERFORMANCE_MODE:
-
-	# 	# Break once reach a one ...
-	# 	for bit in x:
-	# 		if int( bit ) == 1: return 1
-	# 	return 0
-
-	# else:
 
 	# Cascaded or gates
 	out = x[0]

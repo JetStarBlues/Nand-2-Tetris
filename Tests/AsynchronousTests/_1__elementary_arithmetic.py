@@ -14,7 +14,7 @@ import unittest
 from Tests import *
 
 
-'''------------------------- Elementary gates -------------------------'''
+'''------------------------- Elementary -------------------------------'''
 
 '''
 	and_( a, b )
@@ -77,7 +77,7 @@ from Tests import *
 	k_or8to1
 '''
 
-class Test_ElementaryGates( unittest.TestCase ):
+class Test_Elementary( unittest.TestCase ):
 
 	def test_and( self ):
 		''' and gate '''
@@ -231,7 +231,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 
 
 
-'''------------------------- Arithmetic gates -------------------------'''
+'''------------------------- Arithmetic -------------------------------'''
 
 '''
 	zeroN_( N )
@@ -267,7 +267,7 @@ class Test_ElementaryGates( unittest.TestCase ):
 	k_ALU16
 '''
 
-class Test_ArithmeticGates( unittest.TestCase ):
+class Test_Arithmetic( unittest.TestCase ):
 	
 	def test_zeroN_( self ):
 		pass

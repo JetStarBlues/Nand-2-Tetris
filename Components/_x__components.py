@@ -5,7 +5,7 @@ from ._3__clock import *
 
 if PERFORMANCE_MODE:
 
-	from ._1__elementaryGates_performance import *
+	from ._1__elementary_performance import *
 	from ._2__arithmetic_performance import *
 	from ._5__memory_performance import *
 	from ._6__programCounter_performance import *
@@ -14,7 +14,7 @@ if PERFORMANCE_MODE:
 
 else:
 
-	from ._1__elementaryGates import *
+	from ._1__elementary import *
 	from ._2__arithmetic import *
 	from ._4__flipFlops import *
 	from ._5__memory import *
