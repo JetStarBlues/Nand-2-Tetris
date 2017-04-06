@@ -203,8 +203,8 @@ def shiftLeft( N, x, y ):
 
 	return t[ ns - 1 ]
 
-x = 3
-y = 15  # Should I just use asm code to return 0 when y >= 16 ???
+x = 26570
+y = 10  # Should I just use asm code to return 0 when y >= 16 ???
 
 print( shiftLeft( N, toBin_( N, x ), toBin_( N, y ) ) )
 print( shiftLeft16_( toBin_( N, x ), toBin_( N, y ) ) )

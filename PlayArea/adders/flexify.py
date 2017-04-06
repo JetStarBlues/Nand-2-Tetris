@@ -1,6 +1,39 @@
-'''
-	Slower than ripple in software given serial/sequential execution
-'''
+# TODO ===================================
+
+def and_( a, b ):
+	return ( int( a ) & int( b ) )
+
+def or_( a, b ):
+	return ( int( a ) | int( b ) )	
+
+def xor_( a, b ):
+	return ( int( a ) ^ int( b ) )
+
+def or3_( a, b, c ):
+	return ( or_( a, or_( b, c ) ) )
+
+def orNto1_( x ):
+	out = x[0]
+	for i in range( 1, len( x ) ):
+		out = or_( out, x[i] )
+	return out
+
+def and3_( a, b, c ):
+	return ( and_( a, and_( b, c ) ) )
+
+def andNto1_( x ):
+	out = x[0]
+	for i in range( 1, len( x ) ):
+		out = and_( out, x[i] )
+	return out
+
+def toBin_( N, x ):
+
+	return bin(x)[2:].zfill( N )
+
+def toDec_( x ):
+
+	return int( ''.join( map( str, x ) ), 2 )
 
 def fullAdderCLA_( a, b, cIn ):
 
@@ -15,7 +48,7 @@ def fullAdderCLA_( a, b, cIn ):
 	return ( summ, propogate, generate )
 
 
-def carryLookAheadAdder4_( a, b, c0 ):
+def carryLookaheadAdder4_( a, b, c0 ):
 
 	# https://www.cs.umd.edu/class/sum2003/cmsc311/Notes/Comb/lookahead.html
 	# http://www.utdallas.edu/~poras/courses/ee3320/xilinx/upenn/lab4-CarryLookAheadAdder.htm
@@ -56,60 +89,27 @@ def carryLookAheadAdder4_( a, b, c0 ):
 	g = orNto1_( ( g3, and_( p3, g2 ), and3_( p3, p2, g1 ), andNto1_( ( p3, p2, p1, g0 ) ) ) )
 
 	return ( summ, cOut, p, g )
-	
-	'''
-	e = execInParallel()
 
-	p = [ None ] * 4
-	g = [ None ] * 4
-	s = [ None ] * 4
-	c = [ c0 ] + [ None ] * 4
-	idx = list( range( 4 ) )
 
-	def fx( i ):
+def carryLookaheadAdder16_( a, b ):
 
-		j = 3 - i
-		_, p[i], g[i] = fullAdderCLA_( a[j], b[j], '0' )
+	c0 = 0
+# def carryLookaheadAdder16_( a, b, c0 ):
 
-	e.run( 4, fx, idx )
-
-	c[1] = or_(       g[0], and_( p[0], c[0] ) )
-	c[2] = or3_(      g[1], and_( p[1], g[0] ), and3_( p[1], p[0], c[0] ) )
-	c[3] = orNto1_( ( g[2], and_( p[2], g[1] ), and3_( p[2], p[1], g[0] ), andNto1_( ( p[2], p[1], p[0], c[0] ) ) ) )
-	c[4] = orNto1_( ( g[3], and_( p[3], g[2] ), and3_( p[3], p[2], g[1] ), andNto1_( ( p[3], p[2], p[1], g[0] ) ), andNto1_( ( p[3], p[2], p[1], p[0], c[0] ) ) ) )
-
-	def fx2( i ):
-
-		j = 3 - i
-		s[i], _, _ = fullAdderCLA_( a[j], b[j], c[i] )
-
-	e.run( 4, fx2, idx )
-
-	summ = tuple( s[::-1] )
-	cOut = c[4]
-
-	pp = andNto1_( p )
-	gg = orNto1_( ( g[3], and_( p[3], g[2] ), and3_( p[3], p[2], g[1] ), andNto1_( ( p[3], p[2], p[1], g[0] ) ) ) )
-
-	return ( summ, cOut, pp, gg )
-	'''
-
-def carryLookAheadAdder16_( a, b, c0 ):
-
-	_, _, p0, g0 = carryLookAheadAdder4_( a[12:  ], b[12:  ], '0' )
-	_, _, p1, g1 = carryLookAheadAdder4_( a[ 8:12], b[ 8:12], '0' )
-	_, _, p2, g2 = carryLookAheadAdder4_( a[ 4:8 ], b[ 4:8 ], '0' )
-	_, _, p3, g3 = carryLookAheadAdder4_( a[  :4 ], b[  :4 ], '0' )
+	_, _, p0, g0 = carryLookaheadAdder4_( a[12:  ], b[12:  ], '0' )
+	_, _, p1, g1 = carryLookaheadAdder4_( a[ 8:12], b[ 8:12], '0' )
+	_, _, p2, g2 = carryLookaheadAdder4_( a[ 4:8 ], b[ 4:8 ], '0' )
+	_, _, p3, g3 = carryLookaheadAdder4_( a[  :4 ], b[  :4 ], '0' )
 
 	c1 = or_(       g0, and_( p0, c0 ) )
 	c2 = or3_(      g1, and_( p1, g0 ), and3_( p1, p0, c0 ) )
 	c3 = orNto1_( ( g2, and_( p2, g1 ), and3_( p2, p1, g0 ), andNto1_( ( p2, p1, p0, c0 ) ) ) )
 	c4 = orNto1_( ( g3, and_( p3, g2 ), and3_( p3, p2, g1 ), andNto1_( ( p3, p2, p1, g0 ) ), andNto1_( ( p3, p2, p1, p0, c0 ) ) ) )
 
-	s0, _, _, _ = carryLookAheadAdder4_( a[12:  ], b[12:  ], c0 )
-	s1, _, _, _ = carryLookAheadAdder4_( a[ 8:12], b[ 8:12], c1 )
-	s2, _, _, _ = carryLookAheadAdder4_( a[ 4:8 ], b[ 4:8 ], c2 )
-	s3, _, _, _ = carryLookAheadAdder4_( a[  :4 ], b[  :4 ], c3 )
+	s0, _, _, _ = carryLookaheadAdder4_( a[12:  ], b[12:  ], c0 )
+	s1, _, _, _ = carryLookaheadAdder4_( a[ 8:12], b[ 8:12], c1 )
+	s2, _, _, _ = carryLookaheadAdder4_( a[ 4:8 ], b[ 4:8 ], c2 )
+	s3, _, _, _ = carryLookaheadAdder4_( a[  :4 ], b[  :4 ], c3 )
 
 	cOut = c4
 	summ = s3 + s2 + s1 + s0
@@ -119,3 +119,16 @@ def carryLookAheadAdder16_( a, b, c0 ):
 
 	# return ( summ, cOut, p, g )
 	return ( summ )
+
+
+
+N = 16
+
+x = 2**13
+y = 17 
+
+# a0 = carryLookaheadAdder( N, toBin_( N, x ), toBin_( N, y ) )
+a1 = carryLookaheadAdder16_( toBin_( N, x ), toBin_( N, y ) )
+
+# print( toDec_( a0 ), a0 )
+print( toDec_( a1 ), a1 )
