@@ -124,11 +124,69 @@ def carryLookaheadAdder16_( a, b ):
 
 N = 16
 
-x = 2**13
-y = 17 
+x = 0
+y = 2**16 - 1
 
 # a0 = carryLookaheadAdder( N, toBin_( N, x ), toBin_( N, y ) )
 a1 = carryLookaheadAdder16_( toBin_( N, x ), toBin_( N, y ) )
 
 # print( toDec_( a0 ), a0 )
-print( toDec_( a1 ), a1 )
+# print( toDec_( a1 ), a1 )
+
+
+
+
+''' 
+	c1 = g0 + p0c0
+	c2 = g1 + p1g0 + p1p0c0
+	c3 = g2 + p2g1 + p2p1g0 + p2p1p0c0
+	c4 = g3 + p3g2 + p3p2g1 + p3p2p1g0 + p3p2p1p0c0
+'''
+
+def G( n ):
+
+	return 'G{}'.format( n )
+
+def P( n ):
+
+	return 'P{}'.format( n )
+
+def hmm( n ):
+
+	for i in range( n + 1 ):
+
+		print( '---' )
+
+		if i < n:
+
+			print( G( n - i - 1 ) )
+
+		if i > 0:
+
+			for j in range( n - 1, n - 1 - i, -1 ):
+
+				print( P( j ) )
+
+		if i == n:
+
+			print( 'C0' )
+
+
+
+	print( '\n====gg' )
+
+	for i in range( n ):
+
+		print( '---' )
+
+		if i < n:
+
+			print( G( n - i - 1 ) )
+
+		if i > 0:
+
+			for j in range( n - 1, n - 1 - i, -1 ):
+
+				print( P( j ) )
+
+hmm(4)
