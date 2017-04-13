@@ -22,11 +22,16 @@ Prism.languages.hackhl = {
 
 	'keyword': /\b(if|else|while|let|do|return|for|void|boolean|char|int|class)\b/,
 
-	'property': /\b(field|static|constructor|method|function|var)\b/,
+	'property': /\b(field|static|constructor|method|function|var|const)\b/,
 
 	'constant': /\b(true|false|null|this)\b/,
 
-	'number' : /\b[0-9]+\b/,
+	'number' : [
+
+		/\b[0-9]+\b/,            // decimal
+		/\b0[Bb][01]+\b/,        // binary
+		/\b0[Xx][0-9A-Fa-f]+\b/  // hexadecimal
+	],
 
 	'punctuation' : /[\.,;\(\)\[\]{}]/,
 
