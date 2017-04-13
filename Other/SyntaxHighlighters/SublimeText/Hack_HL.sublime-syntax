@@ -61,6 +61,10 @@ contexts:
     # Numbers --------------------------------------------------
     - match: \b[0-9]+\b
       scope: constant.numeric.jack
+    - match: \b0[Bb][01]+\b
+      scope: constant.numeric.jack
+    - match: \b0[Xx][0-9A-Fa-f]+\b
+      scope: constant.numeric.jack
 
     # Chars ----------------------------------------------------
     - match: \'.\'
