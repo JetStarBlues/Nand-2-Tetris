@@ -148,7 +148,7 @@ class IO():
 
 
 	# Screen ----------------------------------------------------
-	
+
 	def updateScreen( self ):
 
 		# Blit pixel values
@@ -207,7 +207,7 @@ class IO():
 
 	def get1BitColor( self, colorCode ):
 
-		if int( colorCode ) == 1 : return self.fgColor
+		if int( colorCode ) == 1: return self.fgColor
 
 		else: return self.bgColor
 

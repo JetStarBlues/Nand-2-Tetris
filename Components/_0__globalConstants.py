@@ -16,8 +16,7 @@ SCREEN_FPS = 15
 ROM_SIZE = 2**15
 RAM_SIZE = 2**15
 
-# RAM Allocation
-DATA_MEMORY_MAP     = 0
+# RAM Allocation (compatible)
 SCREEN_MEMORY_MAP   = 16384
 KBD_MEMORY_MAP      = 24576
 MOUSE_MEMORY_MAP    = 24577
@@ -40,11 +39,13 @@ if COLOR_MODE_4BIT :
 	# Revisit. If find clever way to init colors (probably thru software) no need to change any of the following,
 	N_BITS = 17  # first bit reserved ( used to decide if A or C instruction )
 	RAM_SIZE = 2**16
-	KBD_MEMORY_MAP    = 16384
-	MOUSE_MEMORY_MAP  = 16385
-	MOUSEX_MEMORY_MAP = 16386
-	MOUSEY_MEMORY_MAP = 16387
-	SCREEN_MEMORY_MAP = 16388
+	KBD_MEMORY_MAP      = 16384
+	MOUSE_MEMORY_MAP    = 16385
+	MOUSEX_MEMORY_MAP   = 16386
+	MOUSEY_MEMORY_MAP   = 16387
+	SCREEN_MEMORY_MAP   = 16388
+	IO_BANK1_MEMORY_MAP = 16389  # 15 downto 0
+	IO_BANK2_MEMORY_MAP = 16390  # 31 downto 16
 
 
 # --- Simulator UI -----------------------------------
