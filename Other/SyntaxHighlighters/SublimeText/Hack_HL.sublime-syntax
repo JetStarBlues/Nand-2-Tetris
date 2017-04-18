@@ -40,7 +40,7 @@ contexts:
       push: multiline_comment   
 
     # Keywords ------------------------------------------------
-    - match: \b(if|else|while|let|do|return|for|include)\b
+    - match: \b(if|else|while|let|do|return|for|include|break|continue)\b
       scope: keyword.control.jack
 
     - match: \s(=|==|<=|>=|<|>|!=)\s

@@ -20,7 +20,7 @@ Prism.languages.hackhl = {
 
 	'function': /[A-Za-z_][A-Za-z_0-9]*(?=\s*[\(|{])/i,
 
-	'keyword': /\b(if|else|while|let|do|return|for|void|boolean|char|int|class)\b/,
+	'keyword': /\b(if|else|while|let|do|return|for|include|break|continue|void|boolean|char|int|class)\b/,
 
 	'property': /\b(field|static|constructor|method|function|var|const)\b/,
 
