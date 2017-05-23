@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''

@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
@@ -37,11 +37,10 @@ def setup():
 	N = 16
 	computer = ComputerN_( N, 2**16, 2**15 )
 
-	computer.load( KnownValues.pathTo_kv_4 + 'test3_add.bin' )
+	computer.load( KnownValues.pathTo_kv_4 + 'test12a_shiftLeft.bin' )
 
-	a = 2**14
-	b = 356
-	expected = a + b
+	a = 10516
+	expected = int( bin( a << 4 )[ -16: ], 2 )
 
 
 # Update ---
@@ -58,7 +57,6 @@ def update(clk):
 	if count == 1:
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
-		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 )
 
 	elif count <= 20:
 		# main

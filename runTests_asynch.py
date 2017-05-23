@@ -1,10 +1,10 @@
 '''------------------------------ Imports ------------------------------'''
 
-import Tests
+import HardwareTests
 
 
 '''------------------------------- Main -------------------------------'''
 
 print( '\n=== Running asynchronous tests ===\n')
 
-Tests.AsynchronousTests.runTests()
+HardwareTests.AsynchronousTests.runTests()

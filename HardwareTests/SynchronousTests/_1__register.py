@@ -1,16 +1,16 @@
-'''=== RegisterN ====================================================='''
+'''=== Register ======================================================'''
 
 
 '''----------------------------- Imports -----------------------------'''
 
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
 
 # Setup ---
 
-testName, clock, fails, k_idx, k, N, register = [ None ] * 7
+testName, clock, fails, k_idx, k, register = [ None ] * 6
 
 def setup():
 
@@ -19,7 +19,6 @@ def setup():
 	global fails
 	global k_idx
 	global k
-	global N
 	global register
 
 	testName = fileName( __name__ )
@@ -32,12 +31,8 @@ def setup():
 
 	k_idx = -2
 
-	k = KnownValues.k_register16
-	N = 16
-	register = RegisterN_( N )
-	
-	if PERFORMANCE_MODE:
-		register = RegisterN_performance_( N )
+	k = KnownValues.k_register
+	register = Register_()
 
 
 # Update ---
@@ -53,7 +48,7 @@ def update(clk):
 	# execute
 	if k_idx <= len(k) - 2: 
 		
-		x = toBinary( N, k[k_idx][1] )
+		x = k[k_idx][1]
 		write = k[k_idx][2]
 
 		register.write( clk, x, write )
@@ -67,16 +62,16 @@ def update(clk):
 
 def record():
 
-	result = toString( register.read() )
+	result = register.read()
 
-	expected = toBinary( N, k[k_idx + 1][3] )
+	expected = k[k_idx + 1][3]
 
 	if expected != result:
 		fails.record( expected, result, k_idx + 1 ) # log the fail
 
 
 
-'''------------------------------- Run -------------------------------'''
+'''----------------------------- Run -----------------------------'''
 
 # Things to execute on clock edges
 def callOnRising():

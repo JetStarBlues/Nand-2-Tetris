@@ -1,6 +1,6 @@
 '''------------------------------ Imports ------------------------------'''
 
-import Tests
+import HardwareTests
 
 import multiprocessing
 
@@ -11,14 +11,14 @@ import multiprocessing
 print( '\n=== Running synchronous tests ===')
 
 
-tests = Tests.SynchronousTests._x__synchTests.files
+tests = HardwareTests.SynchronousTests._x__synchTests.files
 
 if __name__ == '__main__':
 
 	for test in tests:
 
 		startTest = None
-		cmd = 'from Tests.SynchronousTests.' + test + ' import start as startTest'
+		cmd = 'from HardwareTests.SynchronousTests.' + test + ' import start as startTest'
 		exec( cmd )
 
 		multiprocessing.Process(

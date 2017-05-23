@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
@@ -39,8 +39,7 @@ def setup():
 	computer = ComputerN_( N, 2**16, 2**15 )
 	io = IO( N, computer.main_memory )
 
-	computer.load( KnownValues.pathTo_kv_4 + 'test8a_fill.bin' )
-	a = 32 * 100
+	computer.load( KnownValues.pathTo_kv_4 + 'test8_fill.bin' )
 
 
 # Update ---
@@ -56,9 +55,9 @@ def update(clk):
 	#
 	if count == 1:
 		# setup
-		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
+		pass
 
-	elif count <= 1+16+17*32+6+ 8:
+	elif count <= 1+12+17*8192+6+ 4:
 		# main
 		computer.run( clk )
 

@@ -11,7 +11,7 @@
 import unittest
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------- Elementary -------------------------------'''

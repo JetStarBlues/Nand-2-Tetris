@@ -1,26 +1,30 @@
-'''=== RAM8N ========================================================='''
+'''=== ComputerN ==================================================== '''
 
 
 '''----------------------------- Imports -----------------------------'''
 
-from Tests import *
+# Hack computer tests
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
 
 # Setup ---
 
-testName, clock, fails, k_idx, k, N, ram = [ None ] * 7
+testName, clock, fails, count, N, computer, a, b, expected = [ None ] * 9
 
 def setup():
 
 	global testName
 	global clock
 	global fails
-	global k_idx
-	global k
+	global count
 	global N
-	global ram
+	global computer
+	global a
+	global b
+	global expected
+	global io
 
 	testName = fileName( __name__ )
 
@@ -29,50 +33,46 @@ def setup():
 	clock.callbackFalling = callOnFalling
 
 	fails = FailLogger()
+	count = 0
 
-	k_idx = -2
-
-	k = KnownValues.k_ram8_16
 	N = 16
-	ram = RAM8N_( N )
+	computer = ComputerN_( N, 2**16, 2**15 )
+	io = IO( N, computer.main_memory )
+
+	computer.load( KnownValues.pathTo_kv_4 + 'test9_rect.bin' )
+	a = 60
 
 
 # Update ---
 
 def update(clk):
 
-	global k_idx
+	global count
 	
 	# increment
-	k_idx += 2
+	count += 1
 
 
-	# execute
-	if k_idx <= len(k) - 2: 
-		
-		x = toBinary( N, k[k_idx][1] )
-		write = k[k_idx][2]
-		address = k[k_idx][3]
+	#
+	if count == 1:
+		# setup
+		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
 
-		ram.write( clk, x, write, address )
+	elif count <= 20 + 17*a:
+		# main
+		computer.run( clk )
 
 
-	# exhausted test values
+	# done test
 	else:
+		clock.stop() # stop the clock			
+
+	if io.hasExited:
 		clock.stop() # stop the clock
-		fails.report( testName )   # show results
 
 
 def record():
-
-	address = k[k_idx + 1][3]
-
-	result = toString( ram.read( address ) )
-
-	expected = toBinary( N, k[k_idx + 1][4] )
-
-	if expected != result:
-		fails.record( expected, result, k_idx + 1 ) # log the fail
+	pass
 
 
 
@@ -90,4 +90,3 @@ def callOnFalling():
 def start():
 	setup()
 	clock.run()
-

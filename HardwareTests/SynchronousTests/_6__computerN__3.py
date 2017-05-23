@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
@@ -37,10 +37,11 @@ def setup():
 	N = 16
 	computer = ComputerN_( N, 2**16, 2**15 )
 
-	computer.load( KnownValues.pathTo_kv_4 + 'test2_flip.bin' )
+	computer.load( KnownValues.pathTo_kv_4 + 'test3_add.bin' )
 
-	a = 50
-	b = 33
+	a = 2**14
+	b = 356
+	expected = a + b
 
 
 # Update ---
@@ -68,17 +69,18 @@ def update(clk):
 	else:
 		clock.stop() # stop the clock
 		
-		result0 = computer.main_memory.read( 0 )
-		result1 = computer.main_memory.read( 1 )
+
+		result = computer.main_memory.read( 2 )
+		result_dec = toDecimal_( result )
 
 
 		print( '\n-- Finished test ' + testName )
 
-		if toString( result0 ) == toBinary( N, b ) and \
-		   toString( result1 ) == toBinary( N, a ):
+		if result_dec == expected:
 			print( 'Success! Program executes as expected' )
 		else:
 			print( 'Fail! Something somewhere is not working' )
+			print( result_dec, result )
 
 
 def record():

@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
@@ -37,11 +37,10 @@ def setup():
 	N = 16
 	computer = ComputerN_( N, 2**16, 2**15 )
 
-	computer.load( KnownValues.pathTo_kv_4 + 'test13_shiftRight.bin' )
+	computer.load( KnownValues.pathTo_kv_4 + 'test4_gt0.bin' )
 
-	a = 40337
-	b = 5
-	expected = a >> b
+	a = -2
+	expected = int( a > 0 )
 
 
 # Update ---
@@ -58,7 +57,6 @@ def update(clk):
 	if count == 1:
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
-		computer.main_memory.write( clk, toBinary( N, b ), 1, 1 )
 
 	elif count <= 20:
 		# main
@@ -68,9 +66,9 @@ def update(clk):
 	# done test
 	else:
 		clock.stop() # stop the clock
-		
 
-		result = computer.main_memory.read( 2 )
+
+		result = computer.main_memory.read( 1 )
 		result_dec = toDecimal_( result )
 
 

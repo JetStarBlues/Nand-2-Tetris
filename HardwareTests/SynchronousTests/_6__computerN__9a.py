@@ -4,7 +4,7 @@
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer tests
-from Tests import *
+from HardwareTests import *
 
 
 '''------------------------------- Main -------------------------------'''
@@ -24,6 +24,7 @@ def setup():
 	global a
 	global b
 	global expected
+	global io
 
 	testName = fileName( __name__ )
 
@@ -36,11 +37,10 @@ def setup():
 
 	N = 16
 	computer = ComputerN_( N, 2**16, 2**15 )
+	io = IO( N, computer.main_memory )
 
-	computer.load( KnownValues.pathTo_kv_4 + 'test12a_shiftLeft.bin' )
-
-	a = 10516
-	expected = int( bin( a << 4 )[ -16: ], 2 )
+	computer.load( KnownValues.pathTo_kv_4 + 'test9a_rect.bin' )
+	a = 60
 
 
 # Update ---
@@ -58,7 +58,7 @@ def update(clk):
 		# setup
 		computer.main_memory.write( clk, toBinary( N, a ), 1, 0 ) # clk, x, write, address
 
-	elif count <= 20:
+	elif count <= 20 + 17*a:
 		# main
 		computer.run( clk )
 
@@ -66,19 +66,9 @@ def update(clk):
 	# done test
 	else:
 		clock.stop() # stop the clock
-		
 
-		result = computer.main_memory.read( 2 )
-		result_dec = toDecimal_( result )
-
-
-		print( '\n-- Finished test ' + testName )
-
-		if result_dec == expected:
-			print( 'Success! Program executes as expected' )
-		else:
-			print( 'Fail! Something somewhere is not working' )
-			print( result_dec, result )
+	if io.hasExited:
+		clock.stop() # stop the clock
 
 
 def record():
