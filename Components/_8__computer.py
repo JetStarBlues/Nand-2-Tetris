@@ -96,7 +96,7 @@ class ComputerN_():
 	def __init__( self, N, RAM_size, ROM_size ):
 
 		self.CPU = CPU_( N )
-		self.main_memory = MemoryRAMXN_( RAM_size, N )
+		self.data_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
 
 		self.reset = 0  # If true(1), sets program counter value to zero
@@ -109,7 +109,7 @@ class ComputerN_():
 
 	def run( self, clk ):
 
-		self.CPU.doTheThing( clk, self.reset, self.main_memory, self.program_memory )
+		self.CPU.doTheThing( clk, self.reset, self.data_memory, self.program_memory )
 
 		# reset the reset ...
 		# if self.reset == 1: self.reset = 0

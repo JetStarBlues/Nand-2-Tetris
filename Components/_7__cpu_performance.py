@@ -9,22 +9,29 @@ from ._x__components import *
 '''------------------------------- CPU -------------------------------'''
 
 '''
-  Instruction -> 0123456789ABCDEF
-    
-    0   -> opCode
-    1   -> comp, xor
-    2   -> comp, bitshift
-    3   -> y = A (0) | M (1)
-    4   -> comp, zero_x  
-    5   -> comp, not_x  
-    6   -> comp, zero_y  
-    7   -> comp, not_y  
-    8   -> comp, and (0) | add (1)  
-    9   -> comp, negate_out
-    ABC -> destination
-    DEF -> jump
+	Instruction - 0123456789ABCDEF
 
-    comp(utation) bits are sent to ALU
+		0 -> opCode
+
+		if opcode == 0, address instruction
+
+			123456789ABCDEF -> address
+
+		else, computation instruction
+
+			1   -> comp, xor
+			2   -> comp, bitshift
+			3   -> y = A (0) | M (1)
+			4   -> comp, zero_x  
+			5   -> comp, not_x  
+			6   -> comp, zero_y  
+			7   -> comp, not_y  
+			8   -> comp, and (0) | add (1)  
+			9   -> comp, negate_out
+			ABC -> destination
+			DEF -> jump
+
+			comp(utation) bits are sent to ALU
 '''
 
 class CPU_():
@@ -49,12 +56,12 @@ class CPU_():
 		self.jmp    = 13 + nUnusedBits
 
 
-	def doTheThing( self, clk, RESET, main_memory, program_memory ):
+	def doTheThing( self, clk, RESET, data_memory, program_memory ):
 
-		self.doTheThing_V2( clk, RESET, main_memory, program_memory )
+		self.doTheThing_V2( clk, RESET, data_memory, program_memory )
 
 
-	def doTheThing_V1( self, clk, RESET, main_memory, program_memory ):
+	def doTheThing_V1( self, clk, RESET, data_memory, program_memory ):
 
 		'''
 		    V1 --
@@ -97,7 +104,7 @@ class CPU_():
 
 			else:
 
-				y = main_memory.read( self.A_register.readDecimal() )
+				y = data_memory.read( self.A_register.readDecimal() )
 
 			ALU_out = ALU_(
 
@@ -146,10 +153,10 @@ class CPU_():
 
 			self.A_register.write( clk, ALU_out[ 0 ], int( instruction[ self.dst + 0 ] ) ) # write
 			self.D_register.write( clk, ALU_out[ 0 ], int( instruction[ self.dst + 1 ] ) ) # write
-			main_memory.write(     clk, ALU_out[ 0 ], int( instruction[ self.dst + 2 ] ), self.A_register.readDecimal() ) # write
+			data_memory.write(     clk, ALU_out[ 0 ], int( instruction[ self.dst + 2 ] ), self.A_register.readDecimal() ) # write
 
 
-	def doTheThing_V2( self, clk, RESET, main_memory, program_memory ):
+	def doTheThing_V2( self, clk, RESET, data_memory, program_memory ):
 
 		'''
 			V2 -- 
@@ -162,7 +169,7 @@ class CPU_():
 
 		instruction_address = self.programCounter.read()
 		instruction = program_memory.read( instruction_address )
-		# print( instruction_address, instruction )
+		print( instruction_address, instruction )
 
 
 		# --- Execute instruction ---
@@ -181,7 +188,7 @@ class CPU_():
 
 		else:
 
-			y = main_memory.read( self.A_register.readDecimal() )
+			y = data_memory.read( self.A_register.readDecimal() )
 
 		ALU_out = ALU_(
 
@@ -253,4 +260,4 @@ class CPU_():
 
 		self.A_register.write( clk, dataIn_A_Register, writeA )
 		self.D_register.write( clk, ALU_out[ 0 ], writeD )
-		main_memory.write( clk, ALU_out[ 0 ], writeM, self.A_register.readDecimal() )
+		data_memory.write( clk, ALU_out[ 0 ], writeM, self.A_register.readDecimal() )

@@ -13,8 +13,8 @@ SCREEN_FPS = 15
 
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
-ROM_SIZE = 2**15
-RAM_SIZE = 2**15
+PROGRAM_MEMORY_SIZE = 2**16
+DATA_MEMORY_SIZE = 2**15
 
 # RAM Allocation (compatible)
 SCREEN_MEMORY_MAP   = 16384

@@ -7,22 +7,29 @@ from ._x__components import *
 '''------------------------------- CPU -------------------------------'''
 
 '''
-  Instruction -> 0123456789ABCDEF
-    
-    0   -> opCode
-    1   -> comp, xor
-    2   -> comp, bitshift
-    3   -> comp, y = A (0) | M (1)
-    4   -> comp, zero_x  
-    5   -> comp, not_x  
-    6   -> comp, zero_y  
-    7   -> comp, not_y  
-    8   -> comp, and (0) | add (1)  
-    9   -> comp, negate_out
-    ABC -> destination
-    DEF -> jump
+	Instruction - 0123456789ABCDEF
 
-    comp(utation) bits are sent to ALU
+		0 -> opCode
+
+		if opcode == 0, address instruction
+
+			123456789ABCDEF -> address
+
+		else, computation instruction
+
+			1   -> comp, xor
+			2   -> comp, bitshift
+			3   -> y = A (0) | M (1)
+			4   -> comp, zero_x  
+			5   -> comp, not_x  
+			6   -> comp, zero_y  
+			7   -> comp, not_y  
+			8   -> comp, and (0) | add (1)  
+			9   -> comp, negate_out
+			ABC -> destination
+			DEF -> jump
+
+			comp(utation) bits are sent to ALU
 '''
 
 class CPU_():
@@ -47,7 +54,7 @@ class CPU_():
 		self.jmp    = 13 + nUnusedBits
 
 
-	def doTheThing( self, clk, RESET, main_memory, program_memory ):
+	def doTheThing( self, clk, RESET, data_memory, program_memory ):
 
 		'''
 			. All computations happen regardless of instruction.
@@ -74,7 +81,7 @@ class CPU_():
 		y = muxN_(
 
 			self.N,
-			main_memory.read( self.A_register.readDecimal() ),
+			data_memory.read( self.A_register.readDecimal() ),
 			self.A_register.read(),
 			instruction[ self.ysel ]
 		)
@@ -163,4 +170,4 @@ class CPU_():
 
 		self.A_register.write( clk, dataIn_A_Register, writeA )
 		self.D_register.write( clk, ALU_out[ 0 ], writeD )
-		main_memory.write( clk, ALU_out[ 0 ], writeM, self.A_register.readDecimal() )			
+		data_memory.write( clk, ALU_out[ 0 ], writeM, self.A_register.readDecimal() )			

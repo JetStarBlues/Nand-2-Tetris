@@ -39,6 +39,16 @@ def hl_to_bin( inputDirPath ):
 		# 'Programs/Libraries/OS/Screen.vm',
 		# 'Programs/Libraries/OS/String.vm',
 		# 'Programs/Libraries/OS/Sys.vm',
+
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/Array.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/DataMemory.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/Font.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/GFX.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/GlobalConstants.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/Keyboard.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/Math.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/String.vm',
+		'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/precompiled/Sys.vm',
 	]
 
 	# Generate VM files and return includes

@@ -1,14 +1,16 @@
 # ========================================================================================
-#
-# Description:
-#	Compiles Hack ASM (assembly) code to Hack BIN (binary) code
-#
-# Attribution:
-# 	Code by www.jk-quantized.com
-#
-# Redistributions and use of this code in source and binary forms must retain
-# the above attribution notice and this condition.
-#
+# 
+#  Description:
+# 
+#     Compiles Hack ASM (assembly) code to Hack BIN (binary) code
+# 
+#  Attribution:
+# 
+#     Code by www.jk-quantized.com
+# 
+#  Redistributions and use of this code in source and binary forms must retain
+#  the above attribution notice and this condition.
+# 
 # ========================================================================================
 
 
@@ -29,6 +31,33 @@ def _toBinary( N, x ):
 
 
 # == Main ====================================================
+
+
+'''
+	Instruction - 0123456789ABCDEF
+
+		0 -> opCode
+
+		if opcode == 0, address instruction
+
+			123456789ABCDEF -> address
+
+		else, computation instruction
+
+			1   -> comp, xor
+			2   -> comp, bitshift
+			3   -> y = A (0) | M (1)
+			4   -> comp, zero_x  
+			5   -> comp, not_x  
+			6   -> comp, zero_y  
+			7   -> comp, not_y  
+			8   -> comp, and (0) | add (1)  
+			9   -> comp, negate_out
+			ABC -> destination
+			DEF -> jump
+
+			comp(utation) bits are sent to ALU
+'''
 
 
 # -- Lookup tables ---------------------------------
@@ -71,9 +100,9 @@ lookup_comp = {
 	'D|M'  : '111010101',
 	'M|D'  : '111010101',  # order doesn't matter
 
-	'D<<A' : '010000000',
+	'D<<A' : '010000000',  # not used, can omit to free instruction code
 	'D<<M' : '011000000',
-	'D>>A' : '000000000',
+	'D>>A' : '000000000',  # not used, can omit to free instruction code
 	'D>>M' : '001000000',
 	'D^A'  : '100000000',
 	'A^D'  : '100000000',  # order doesn't matter
@@ -149,45 +178,54 @@ lookup_globalAddresses = {
 	# '@HEAP'   : '@2048',
 }
 
-static_segment_end = 255  # 16..255
+static_segment_start = 16
+static_segment_end   = 255
+
+largest_int = 2 ** N_BITS - 1
+largest_addressable_int = 2 ** ( N_BITS - 1 ) - 1   # 2^(N-1) because first instruction bit is reserved for use as opcode
 
 
 
 # -- Extraction -------------------------------------
 
+# With regex --
 
 # Select everything that is not a comment
 cmdPattern = '''
 	^                # from beginning of string
-	[^\/]            # that does not start with a comment
-	.*?              # select all characters until,
+	.*?              # select all characters until
 	(?=\/\/|[\r\n])  # reach start of a comment or the string's end
 '''
 cmdPattern = re.compile( cmdPattern, re.X )
 
 
 def extractCmd( line ):
-	
-	''' Extract symbolic command from line of source code '''
 
-	line = line.replace( ' ', '' )   # remove whitespaces
+	line = line.replace( ' ', '' )   # remove spaces
 	line = line.replace( '\t', '' )  # remove tabs
 	line = line.upper()              # upper case everything
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
-	if found != None:
+	if found:
 
-		return found.group( 0 )
+		cmd = found.group( 0 )
+		# cmd = cmd.strip()   # remove leading and trailing whitespace
+		return cmd.upper()  # upper case everything
 
 	else:
 
 		return None
 
 
-def extractCmds( inputFile ):
+# Without regex --
 
-	''' Extract symbolic commands from source code '''
+	# extract non commment
+	# remove spaces and tabs
+	# capitalize
+
+
+def extractCmds( inputFile ):
 
 	commands = []
 
@@ -214,7 +252,7 @@ def handle_Labels( cmdList ):
 
 	trimmedCmdList = []
 
-	knownAddresses_ROM = {}
+	knownAddresses_ProgramMemory = {}
 
 	for i in range( len( cmdList ) ):
 
@@ -222,25 +260,51 @@ def handle_Labels( cmdList ):
 
 			label = cmdList[ i ][ 1 : - 1 ]    # get the label
 
-			ROM_addr = i - len( knownAddresses_ROM )    # and the corresponding ROM address
+			addr = i - len( knownAddresses_ProgramMemory )    # and the corresponding address
 
-			knownAddresses_ROM[ '@' + label ] = '@' + str( ROM_addr )   # add it to dict of knownAddresses_ROM
+			if addr < largest_addressable_int:
+				
+				address = '@' + str( addr )
+
+			else if addr <= largest_int:
+
+				'''
+					address = largest_addressable_int + excess
+				'''
+
+				excess = addr % largest_addressable_int
+
+				address  = '@{}\n'.format( largest_addressable_int )
+				address += ...
+
+				@32
+				D = A
+				@m
+				D = D + A
+
+
+			else:
+
+				raise Exception( 'something ' )
+
+			knownAddresses_ProgramMemory[ '@' + label ] = address  # add it to dict of knownAddresses_ProgramMemory
+
 
 		else:
 
 			trimmedCmdList.append( cmdList[ i ] )   # not a label so include it
 
-	return( trimmedCmdList, knownAddresses_ROM )
+	return( trimmedCmdList, knownAddresses_ProgramMemory )
 
 
-def handle_Variables( cmdList, knownAddresses_ROM ):
+def handle_Variables( cmdList, knownAddresses_ProgramMemory ):
 
 	''' Replace variable names with integer addresses '''
 
-	freeAddress = 16  # 16..255 (static)
+	freeAddress = static_segment_start
 
-	knownAddresses_RAM = {}
-	knownAddresses_RAM.update( lookup_globalAddresses )  # fill with global addresses
+	knownAddresses_DataMemory = {}
+	knownAddresses_DataMemory.update( lookup_globalAddresses )  # fill with global addresses
 	
 
 	for i in range( len( cmdList ) ):
@@ -260,12 +324,12 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 				# Check known variables ---
 
 				try:
-					cmdList[ i ] = knownAddresses_ROM[ cmdList[ i ] ]
+					cmdList[ i ] = knownAddresses_ProgramMemory[ cmdList[ i ] ]   #TODO... probably use extend()...
 
 				except KeyError:
 
 					try:
-						cmdList[ i ] = knownAddresses_RAM[ cmdList[ i ] ]
+						cmdList[ i ] = knownAddresses_DataMemory[ cmdList[ i ] ]
 
 
 					# Otherwise, create a new address ---	
@@ -278,18 +342,22 @@ def handle_Variables( cmdList, knownAddresses_ROM ):
 
 						newAddr = '@' + str( freeAddress )          # create new address
 
-						knownAddresses_RAM[ cmdList[ i ] ] = newAddr  # add it to dict of knownAddresses_RAM
+						knownAddresses_DataMemory[ cmdList[ i ] ] = newAddr  # add it to dict of knownAddresses_DataMemory
 
 						cmdList[ i ] = newAddr                        # and set it
 
 						freeAddress += 1 	# register is no longer unallocated
+
+	if freeAddress > static_segment_end:
+
+		print( 'Assembled program exceeds static segment size by {}'.format( freeAddress - static_segment_end ) )
 
 	return cmdList
 
 
 def translate_Instructions( cmdList ):
 
-	''' Translate symbolic instructions to binary '''
+	''' Translate assembly instructions to binary '''
 
 	for i in range( len( cmdList ) ):
 
@@ -342,7 +410,7 @@ def translate_Instructions( cmdList ):
 
 def translateCmds( cmdList ):
 
-	''' Translate symbolic commands to binary '''
+	''' Translate assembly to binary '''
 
 	cmdList = handle_Labels( cmdList )
 	cmdList = handle_Variables( cmdList[0], cmdList[1] )
@@ -357,7 +425,7 @@ def translateCmds( cmdList ):
 
 def writeToOutputFile( binCmdList, outputFile ):
 
-	''' generate an output file containing the binary commands '''
+	''' Generate an output file containing the binary commands '''
 
 	with open( outputFile, 'w' ) as output_file:
 
@@ -377,9 +445,6 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 def asm_to_bin( inputFile, outputFile ):
 
-	''' Translate the symbolic code in inputFile to binary code,
-	     and generate an outputFile containing the translated code '''
-
 	# Read
 	cmds_assembly = extractCmds( inputFile )
 
@@ -387,7 +452,8 @@ def asm_to_bin( inputFile, outputFile ):
 	exceedsSizeLimit = len( cmds_assembly ) - 2 ** ( N_BITS - 1 )
 	if exceedsSizeLimit > 0:
 
-		raise Exception( 'Assembled program exceeds maximum length by {} lines'.format( exceedsSizeLimit ) )
+		# raise Exception( 'Assembled program exceeds maximum length by {} lines'.format( exceedsSizeLimit ) )
+		print( 'Assembled program exceeds maximum length by {} lines'.format( exceedsSizeLimit ) )
 
 	# Translate
 	cmds_binary = translateCmds( cmds_assembly )

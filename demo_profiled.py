@@ -6,13 +6,14 @@ from Components import *
 import yappi
 
 
+
 '''------------------------------- Main -------------------------------'''
 
 yappi.start()
 
 # Initialize
-computer = ComputerN_( N_BITS, RAM_SIZE, ROM_SIZE )
-io = IO( N_BITS, computer.main_memory )
+computer = ComputerN_( N_BITS, DATA_MEMORY_SIZE, PROGRAM_MEMORY_SIZE )
+io = IO( N_BITS, computer.data_memory )
 
 
 # Load program
