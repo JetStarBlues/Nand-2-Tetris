@@ -109,8 +109,6 @@ lookup_comp = {
 	# 'D<<A' : '010000000',  # not used, can omit to free instruction code
 	# 'D>>A' : '000000000',  # not used, can omit to free instruction code
 
-	# 'TUAA' : '111111111',  # toggle upper address access  ... TODO consider ALU out
-
 	'MBANK0' : '000000000',
 	'MBANK1' : '000000001',
 	# 'MBANK2' : '000000010',
@@ -277,6 +275,8 @@ def addMemoryBank_stage1( cmdList ):
 
 			labels.append( '@{}'.format( label ) )
 
+	print( 'Assembled program contains {} functions'.format( len( labels ) ) )
+
 
 	# Count number of insertions to be made. (Helper for Array.new)
 
@@ -290,7 +290,7 @@ def addMemoryBank_stage1( cmdList ):
 
 				count += 1
 
-	print( 'Assembled program contains {} functions'.format( count ) )
+	print( 'Assembled program contains {} function calls'.format( count ) )
 
 
 	# For every @functionName, precede with 'MBANK0' command
@@ -301,12 +301,11 @@ def addMemoryBank_stage1( cmdList ):
 
 		cmd = cmdList[ i ]
 
-		if cmd == label:
+		if cmd in labels:
 
 			expandedCmdList.append( 'MAD=MBANK0;JMP' )  # 1 000000000 000 000
 
 		expandedCmdList.append( cmd )
-
 
 	return expandedCmdList
 
@@ -369,6 +368,8 @@ def addMemoryBank_stage2( cmdList, knownAddresses_ProgramMemory ):
 				cmdList[ i + 1 ] = '@{}'.format( newAddr )
 
 				knownAddresses_ProgramMemory[ label ] = '@{}'.format( newAddr )
+
+	# print( knownAddresses_ProgramMemory )
 
 	return ( cmdList, knownAddresses_ProgramMemory )
 
