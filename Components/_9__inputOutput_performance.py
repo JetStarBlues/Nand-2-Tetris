@@ -277,10 +277,10 @@ class IO():
 
 		''' If key is pressed, write keyCode '''
 
-		print( 'Key pressed', key, modifier )
-
 		# Lookup keyCode
 		keyCode = self.lookupKey( key, modifier )
+
+		print( 'Key pressed', key, modifier, keyCode )
 
 		# Write to memory
 		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
@@ -294,36 +294,35 @@ class IO():
 
 	def lookupKey( self, key, modifier ):
 
-		# Handle shift modified presses
-		if modifier == 1 or modifier == 2 :  # Shift key modifier
+		# If valid, return relevant keyCode
+		if key in lookup_keys:
 
-			# Treat pressing of shift keys alone as such
-			if key == 303 or key == 304:
+			# Handle shift modified presses
+			if modifier == 1 or modifier == 2 :
 
-				return lookup_keys[ key ][ 0 ]
+				if key in lookup_shiftModifiedKeys:
 
-			# If valid combination, return relevant keyCode
-			elif key in lookup_shiftModifiedKeys:
+					return lookup_shiftModifiedKeys[ key ][ 0 ]
 
-				return lookup_shiftModifiedKeys[ key ][ 0 ]
+				else:
 
-			# Else, return null
+					'''
+						Ideally shift modifer would be 0 when shift key pressed alone.
+						However not the case. Sometimes it's 0 sometimes it's set (1 or 2).
+						Not sure how to work around. For now, ignoring all shift key presses
+						where shift modifier is set.
+						TLDR, shift key will not register consistently unless used as a modifier
+					'''
+					return 0
+
 			else:
 
-				return 0
+				return lookup_keys[ key ][ 0 ]	
 
-		# Handle standalone presses
 		else:
 
-			# If valid, return relevant keyCode
-			if key in lookup_keys:
+			return 0
 
-				return lookup_keys[ key ][ 0 ]
-
-			# Else, return null
-			else:
-
-				return 0
 
 
 '''
