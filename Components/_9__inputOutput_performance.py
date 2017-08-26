@@ -251,7 +251,7 @@ class IO():
 
 		''' If mouse button is pressed, write 1 and update mouseX and mouseY '''
 
-		print( 'Mouse pressed', pos )
+		# print( 'Mouse pressed', pos )
 
 		if button == 1:  # left button
 

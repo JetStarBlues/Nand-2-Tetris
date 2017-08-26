@@ -519,12 +519,7 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 	with open( outputFile, 'w' ) as file:
 
-		# firstLine = True # workaround to avoid extra blank line at end of output file, http://stackoverflow.com/a/18139440
-		
 		for cmd_binary in binCmdList:
-				
-			# if firstLine: firstLine = False
-			# else: file.write( '\n' )
 
 			file.write( cmd_binary )
 			file.write( '\n' )

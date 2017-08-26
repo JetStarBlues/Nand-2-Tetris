@@ -235,12 +235,6 @@ class IO():
 
 		return pixels
 
-	# def get1BitColor( self, colorCode ):
-
-	# 	if int( colorCode ) == 1: return self.fgColor
-
-	# 	else: return self.bgColor
-
 	def getPixels_4BitMode( self ):
 
 		pixels = []
