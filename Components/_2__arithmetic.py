@@ -12,11 +12,11 @@ from ._x__components import *
 
 def zeroN_( N ):
 
-	return ( '0', ) * N
+	return ( 0, ) * N
 
 def oneN_( N ):
 
-	return ( '0', ) * ( N - 1 ) + ( '1', )
+	return ( 0, ) * ( N - 1 ) + ( 1, )
 
 def isZero_( x ):
 

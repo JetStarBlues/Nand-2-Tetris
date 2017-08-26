@@ -12,11 +12,11 @@ from ._x__components import *
 
 '''---------------------------- Registers ----------------------------'''
 
-class RegisterN_():
+class Register_():
 
-	''' N bit register '''
+	''' 1 bit register '''
 
-	def __init__( self, N ):
+	def __init__( self ):
 
 		self.register = 0
 
@@ -33,7 +33,27 @@ class RegisterN_():
 		return self.register
 
 
-	def readDecimal( self ):
+class RegisterN_():
+
+	''' N bit register '''
+
+	def __init__( self, N ):
+
+		self.register = 0
+
+
+	def write( self, clk, x, write ):
+		
+		if clk == 1 and write == 1:
+
+			# print( 'writing', x )
+
+			self.register = x
+
+
+	def read( self ):
+
+		# print( 'reading', self.register )
 
 		return self.register
 

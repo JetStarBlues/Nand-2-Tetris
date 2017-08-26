@@ -39,7 +39,7 @@ class IO():
 		self.hasExited = False
 
 		# Pygame ---
-		self.fps = SCREEN_FPS
+		self.maxFps = SCREEN_FPS
 		self.display = None
 		self.clock = None
 
@@ -52,14 +52,22 @@ class IO():
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
 		self.nRegistersPerRow = self.width // self.N
 
+		if not COLOR_MODE_4BIT:
+
+			self.colors = {
+
+				'0' : self.bgColor,
+				'1' : self.fgColor
+			}
+
 		# 4Bit color mode ---
-		if COLOR_MODE_4BIT:
+		else:
 
-			self.colors = COLOR_PALETTE_4BIT
+			self.colors = {}
 
-			for key, value in self.colors.items():
+			for key, value in COLOR_PALETTE_4BIT.items():
 
-				self.colors[key] = self.hex2rgb( value )
+				self.colors[ key ] = self.hex2rgb( value )
 
 			self.nRegistersPerRow *= 4
 
@@ -86,7 +94,9 @@ class IO():
 		icon = pygame.image.load( 'Components/favicon.png' )
 		pygame.display.set_icon( icon )
 
-		self.display = pygame.display.set_mode( ( self.width, self.height ) )
+		pygame.display.set_mode( ( self.width, self.height ) )
+
+		self.surface = pygame.display.get_surface()
 
 		self.clock = pygame.time.Clock()
 
@@ -144,7 +154,7 @@ class IO():
 			self.updateScreen()
 
 			# Tick
-			self.clock.tick( self.fps )
+			self.clock.tick( self.maxFps )
 
 
 	# Screen ----------------------------------------------------
@@ -152,7 +162,7 @@ class IO():
 	def updateScreen( self ):
 
 		# Blit pixel values
-		pygame.surfarray.blit_array( self.display, self.genPixelArray() )
+		pygame.surfarray.blit_array( self.surface, self.genPixelArray() )
 
 		# Update display
 		pygame.display.flip()
@@ -169,9 +179,10 @@ class IO():
 			
 	def convertToBlitArray( self, a ):
 
-		''' Pygame 'blit_array' expects a numpy array arranged [ x, y ] '''
+		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row]) '''
 
-		return numpy.array( self.transposeArray( a ) )
+		# return numpy.array( self.transposeArray( a ) )
+		return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )  # marginally faster
 
 	def transposeArray( self, a ):
 
@@ -191,25 +202,19 @@ class IO():
 
 				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-				register = bin( register )[ 2 : ].zfill( N_BITS )  # Convert representation from integer to binary (N_BITS)
+				register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
 
 				for i in range( self.N ):
 				
 					pixel = register[ i ]
 
-					color = self.get1BitColor( pixel )
+					color = self.colors[ pixel ]  # look up corresponding color
 
 					row.append( color )
 
 			pixels.append( row )
 
 		return pixels
-
-	def get1BitColor( self, colorCode ):
-
-		if int( colorCode ) == 1: return self.fgColor
-
-		else: return self.bgColor
 
 	def getPixels_4BitMode( self ):
 
@@ -225,24 +230,19 @@ class IO():
 
 				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-				register = bin( register )[ 2 : ].zfill( N_BITS )  # Convert representation from integer to binary (N_BITS)
+				register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
 
 				for i in range( 0, self.N, 4 ):
 				
 					pixel = register[ i : i + 4 ]
 
-					color = self.get4BitColor( pixel )
+					color = self.colors[ pixel ]  # look up corresponding color
 
 					row.append( color )
 
 			pixels.append( row )
 
 		return pixels
-
-	def get4BitColor( self, colorCode ):
-
-		colorCode = ''.join( map( str, colorCode ) )  # convert tuple to string
-		return self.colors[ colorCode ]               # look up corresponding color
 
 
 	# Mouse -----------------------------------------------------
@@ -251,7 +251,7 @@ class IO():
 
 		''' If mouse button is pressed, write 1 and update mouseX and mouseY '''
 
-		# print( 'Mouse pressed', pos )
+		print( 'Mouse pressed', pos )
 
 		if button == 1:  # left button
 
@@ -277,8 +277,10 @@ class IO():
 
 		''' If key is pressed, write keyCode '''
 
+		print( 'Key pressed', key, modifier )
+
 		# Lookup keyCode
-		keyCode = lookupKey( key )
+		keyCode = self.lookupKey( key, modifier )
 
 		# Write to memory
 		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
@@ -330,15 +332,15 @@ class IO():
 '''
 
 lookup_keyModifiers = [
-	
+
 	#
 	  0, # None
-	256, # Alt left
-	512, # Alt right
-	 64, # Control left
-	128, # control right
 	  1, # Shift left
 	  2, # shift right
+	 64, # Control left
+	128, # control right
+	256, # Alt left
+	512, # Alt right
 ]
 
 lookup_keys = {

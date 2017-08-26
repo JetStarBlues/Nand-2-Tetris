@@ -9,10 +9,12 @@ from ._x__components import *
 
 '''----------------------------- Helpers -----------------------------'''
 
+largestInt = 2 ** ( N_BITS - 1 ) - 1  # two's complement
+
 def isNegative_( x ):
 
 	''' 2s complement -> MSB is one if negative '''
-	return int( x >= 2 ** ( N_BITS - 1 ) )
+	return int( x > largestInt )
 
 
 
@@ -64,11 +66,11 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
 	elif fub1 == 0 :
 
-		if fub0 == 1 : 
+		if fub0 == 1 :
 
 			out = shiftLeft_( x, y )
 
-		elif fub0 == 0 : 
+		elif fub0 == 0 :
 
 			out = shiftRight_( x, y )
 
@@ -76,4 +78,4 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
 	ng = isNegative_( out )
 
-	return ( out, zr, ng ) 
+	return ( out, zr, ng )

@@ -1,16 +1,23 @@
+'''----------------------------- Imports -----------------------------'''
+
+# Hack computer
+from ._x__components import *
+
+
+
 '''------------------- The elementary logic gates -------------------'''
 
 def and_( a, b ):
-	return ( int( a ) & int( b ) )
+	return ( a & b )
 
 def or_( a, b ):
-	return ( int( a ) | int( b ) )	
+	return ( a | b )	
 
 def xor_( a, b ):
-	return ( int( a ) ^ int( b ) )
+	return ( a ^ b )
 
 def not_( x ):
-	return 1 if int( x ) == 0 else 0	
+	return 1 if x == 0 else 0	
 
 
 
@@ -251,7 +258,7 @@ def orNto1_( x ):
 
 	# Cascaded or gates
 	out = x[0]
-	for i in range( 1, len( x ) ):
+	for i in range( 1, N_BITS ):
 		out = or_( out, x[i] )
 	return out
 
@@ -275,6 +282,6 @@ def andNto1_( x ):
 	# technically, could break once reach a zero ...
 	#   but is break doable with logic gates???
 	out = x[0]
-	for i in range( 1, len( x ) ):
+	for i in range( 1, N_BITS ):
 		out = and_( out, x[i] )
 	return out

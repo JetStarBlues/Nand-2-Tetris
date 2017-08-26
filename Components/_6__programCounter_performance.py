@@ -17,6 +17,8 @@ class ProgramCounterN_():
 		
 		self.register = RegisterN_( N )
 
+		self.maxValue = 2 ** N - 1
+
 
 	def doTheThing( self, clk, x, rst, write, inc ):
 
@@ -34,6 +36,11 @@ class ProgramCounterN_():
 
 			d = self.register.read() + 1
 
+			# emulate overflow
+			if d > self.maxValue:
+
+				d = 0
+
 		else:
 
 			# d = self.register.read()
@@ -45,8 +52,8 @@ class ProgramCounterN_():
 
 	def read( self ):
 		
-		return self.register.readDecimal()
+		return self.register.read()
 
-		# out = self.register.readDecimal()
+		# out = self.register.read()
 		# print( out )
 		# return( out )

@@ -7,11 +7,15 @@ from ._x__components import *
 
 '''----------------------------- Helpers -----------------------------'''
 
-def flip( b ):
+negativeOne = 2 ** N_BITS - 1  # two's complement
 
-	if b == '0': return '1'
+def toBin( x ):
 
-	else: return '0'
+	return bin( x )[ 2 : ].zfill( N_BITS )
+
+def toInt( a ):
+
+	return int( ''.join( map( str, a ) ), 2 )
 
 
 
@@ -19,7 +23,8 @@ def flip( b ):
 
 def not_( x ):
 
-	return 1 if int( x ) == 0 else 0	
+	# return int( x ) ^ 1	
+	return x ^ 1	
 
 
 
@@ -27,7 +32,7 @@ def not_( x ):
 
 def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 
-	sel = s2 + s1 + s0
+	sel = str( s2 ) + str( s1 ) + str( s0 )
 
 	out = d0 if sel == '000' else \
 	      d1 if sel == '001' else \
@@ -46,9 +51,24 @@ def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 
 def notN_( x ):
 
-	# Problematic in terms of speed
+	return x ^ negativeOne
 
-	x = bin( x )[ 2 : ].zfill( N_BITS )
 
-	return int( ''.join( flip( b ) for b in x ) , 2 )
 
+'''----------------------- Multi-way variants -----------------------'''
+
+# def andNto1_( x ):
+
+# 	x = [ int( e ) for e in toBin( x ) ]
+
+# 	out = x[ 0 ]
+
+# 	for i in range( 1, N_BITS ):
+
+# 		if out == 0:
+
+# 			return 0   # break once reach a zero
+
+# 		out = out & x[ i ]
+
+# 	return out

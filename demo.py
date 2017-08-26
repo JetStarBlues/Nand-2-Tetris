@@ -16,8 +16,8 @@ io = IO( N_BITS, computer.data_memory )
 # computer.program_memory.flash( 'Programs/Tests/Chapter_12/Main.bin' )
 # computer.program_memory.flash( 'Programs/ByOthers/MarkArmbrust/Creature/Main.bin' )
 # computer.program_memory.flash( 'Programs/ByOthers/GavinStewart/GASchunky/Main.bin' )
-computer.program_memory.flash( 'C:/Users/Janet/Desktop/tempNotes/MyCompilerOut/OS_standalone/hello/Main.bin' )
-# computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6.bin' )
+# computer.program_memory.flash( '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.bin' )
+computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6.bin' )
 # computer.program_memory.flash( 'Programs/Demos/bin/demo_eo6_color.bin' )
 
 

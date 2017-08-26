@@ -48,6 +48,8 @@ class MemoryROMXN_():
 
 				instruction = instruction.rstrip()  # remove newline characters
 
+				instruction = tuple( map( int, instruction ) ) # convert to tuple of ints
+
 				self.ROM.write( 1, instruction, 1, address )  # write
 
 				address += 1

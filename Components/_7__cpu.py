@@ -11,7 +11,7 @@ from ._x__components import *
 
 		0 -> opCode
 
-		if opcode == 0, address instruction
+		if opCode == 0, address instruction
 
 			123456789ABCDEF -> address
 

@@ -105,14 +105,22 @@ lookup_comp = {
 	'D^A'  : '100000000',
 	'A^D'  : '100000000',  # order doesn't matter
 	'D<<M' : '011000000',
+	'D<<A' : '010000000',  # not used, can omit to free instruction code
 	'D>>M' : '001000000',
-	# 'D<<A' : '010000000',  # not used, can omit to free instruction code
-	# 'D>>A' : '000000000',  # not used, can omit to free instruction code
+	'D>>A' : '000000000',  # not used, can omit to free instruction code
 
-	'MBANK0' : '000000000',
-	'MBANK1' : '000000001',
-	# 'MBANK2' : '000000010',
-	# 'MBANK3' : '000000011',
+	# There is probably something smarter that allows
+	#  16 bit Arduino to read an 8 GB sd card (2^16 vs 2 ^33).
+	#  For now, lets get this working
+	# 'DMBANK0' : '010100000',
+	# 'DMBANK1' : '010100001',
+	# 'DMBANK2' : '010100010',
+	# 'DMBANK3' : '010100011',
+
+	# 'PMBANK0' : '000100000',
+	# 'PMBANK1' : '000100001',
+	# 'PMBANK2' : '000100010',
+	# 'PMBANK3' : '000100011',
 }
 
 lookup_dest = {
@@ -216,9 +224,7 @@ def extractCmd( line ):
 
 	if found:
 
-		cmd = found.group( 0 )
-		# cmd = cmd.strip()   # remove leading and trailing whitespace
-		return cmd.upper()  # upper case everything
+		return found.group( 0 )
 
 	else:
 
@@ -236,9 +242,9 @@ def extractCmds( inputFile ):
 
 	commands = []
 
-	with open( inputFile, 'r' ) as input_file:
+	with open( inputFile, 'r' ) as file:
 		
-		for line in input_file:
+		for line in file:
 
 			cmd = extractCmd( line )
 
@@ -253,61 +259,61 @@ def extractCmds( inputFile ):
 # -- Translation -------------------------------------
 
 
-def addMemoryBank_stage1( cmdList ):
+# def addMemoryBank_stage1( cmdList ):
 
-	''' Support for programs >= 2^(N_BITS - 1) lines long
+# 	''' Support for programs >= 2^(N_BITS - 1) lines long
 
-		-> Adds memory bank selection placeholders.
-		   Default is MBANK0
-	'''
+# 		-> Adds memory bank selection placeholders.
+# 		   Default is MBANK0
+# 	'''
 
-	# Get function names
+# 	# Get function names
 
-	labels = []
+# 	labels = []
 
-	for i in range( len( cmdList ) ):
+# 	for i in range( len( cmdList ) ):
 
-		cmd = cmdList[ i ]
+# 		cmd = cmdList[ i ]
 
-		if cmd[ 0 ] == '(':
+# 		if cmd[ 0 ] == '(':
 
-			label = cmd[ 1 : - 1 ]  # get the label
+# 			label = cmd[ 1 : - 1 ]  # get the label
 
-			labels.append( '@{}'.format( label ) )
+# 			labels.append( '@{}'.format( label ) )
 
-	print( 'Assembled program contains {} functions'.format( len( labels ) ) )
-
-
-	# Count number of insertions to be made. (Helper for Array.new)
-
-	count = 0
-
-	for label in labels:
-
-		for i in range( len( cmdList ) ):
-
-			if cmdList[ i ] == label:
-
-				count += 1
-
-	print( 'Assembled program contains {} function calls'.format( count ) )
+# 	print( 'Assembled program contains {} functions'.format( len( labels ) ) )
 
 
-	# For every @functionName, precede with 'MBANK0' command
+# 	# Count number of insertions to be made. (Helper for Array.new)
 
-	expandedCmdList = []
+# 	count = 0
 
-	for i in range( len( cmdList ) ):
+# 	for label in labels:
 
-		cmd = cmdList[ i ]
+# 		for i in range( len( cmdList ) ):
 
-		if cmd in labels:
+# 			if cmdList[ i ] == label:
 
-			expandedCmdList.append( 'MAD=MBANK0;JMP' )  # 1 000000000 000 000
+# 				count += 1
 
-		expandedCmdList.append( cmd )
+# 	print( 'Assembled program contains {} function calls'.format( count ) )
 
-	return expandedCmdList
+
+# 	# For every @functionName, precede with 'MBANK0' command
+
+# 	expandedCmdList = []
+
+# 	for i in range( len( cmdList ) ):
+
+# 		cmd = cmdList[ i ]
+
+# 		if cmd in labels:
+
+# 			expandedCmdList.append( 'NULL=PMBANK0;NULL' )  # 1 000000000 000 000
+
+# 		expandedCmdList.append( cmd )
+
+# 	return expandedCmdList
 
 
 def handleLabels( cmdList ):
@@ -337,41 +343,45 @@ def handleLabels( cmdList ):
 	return( trimmedCmdList, knownAddresses_ProgramMemory )
 
 
-def addMemoryBank_stage2( cmdList, knownAddresses_ProgramMemory ):
+# def addMemoryBank_stage2( cmdList, knownAddresses_ProgramMemory ):
 
-	''' Support for programs >= 2 ^ ( N_BITS - 1 ) lines long
+# 	''' Support for programs >= 2 ^ ( N_BITS - 1 ) lines long
 
-		-> Replaces placeholders with appropriate values.
-		   MBANK0 with MBANKX
-	'''
+# 		-> Replaces placeholders with appropriate values.
+# 		   MBANK0 with MBANKX
+# 	'''
 
-	for i in range( len( cmdList ) ):
+# 	for i in range( len( cmdList ) ):
 
-		cmd = cmdList[ i ]
+# 		cmd = cmdList[ i ]
 
-		s = 'MAD=MBANK0;JMP'
+# 		s = 'NULL=PMBANK0;NULL'
 
-		if cmd == s:
+# 		if cmd == s:
 
-			label = cmdList[ i + 1 ]
+# 			label = cmdList[ i + 1 ]
 
-			addr = knownAddresses_ProgramMemory[ label ]
+# 			addr = knownAddresses_ProgramMemory[ label ]
 
-			addr = int( addr[ 1 : ] )
+# 			print( label, addr )
 
-			if addr > largest_addressable_int:
+# 			addr = int( addr[ 1 : ] )
 
-				bank, newAddr = divmod( addr, memory_bank_size )
+# 			if addr > largest_addressable_int:
 
-				cmdList[ i ] = 'MAD=MBANK{};JMP'.format( bank )
+# 				bank, newAddr = divmod( addr, memory_bank_size )
 
-				cmdList[ i + 1 ] = '@{}'.format( newAddr )
+# 				cmdList[ i ] = 'NULL=PMBANK{};NULL'.format( bank )
 
-				knownAddresses_ProgramMemory[ label ] = '@{}'.format( newAddr )
+# 				cmdList[ i + 1 ] = '@{}'.format( newAddr )
 
-	# print( knownAddresses_ProgramMemory )
+# 				knownAddresses_ProgramMemory[ label ] = '@{}'.format( newAddr )
 
-	return ( cmdList, knownAddresses_ProgramMemory )
+# 				print( newAddr )
+
+# 	# print( knownAddresses_ProgramMemory )
+
+# 	return ( cmdList, knownAddresses_ProgramMemory )
 
 
 def handleVariables( cmdList, knownAddresses_ProgramMemory ):
@@ -490,9 +500,9 @@ def translateCmds( cmdList ):
 	# binCmdList = translateInstructions( cmdList )
 
 	# Support for programs >= 2 ^ ( N_BITS - 1 ) lines long
-	cmdList = addMemoryBank_stage1( cmdList )
+	# cmdList = addMemoryBank_stage1( cmdList )
 	cmdList = handleLabels( cmdList )
-	cmdList = addMemoryBank_stage2( cmdList[0], cmdList[1] )
+	# cmdList = addMemoryBank_stage2( cmdList[0], cmdList[1] )
 	cmdList = handleVariables( cmdList[0], cmdList[1] )
 	binCmdList = translateInstructions( cmdList )
 
@@ -507,16 +517,17 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 	''' Generate an output file containing the binary commands '''
 
-	with open( outputFile, 'w' ) as output_file:
+	with open( outputFile, 'w' ) as file:
 
-		firstLine = True # workaround to avoid extra blank line at end of output file, http://stackoverflow.com/a/18139440
+		# firstLine = True # workaround to avoid extra blank line at end of output file, http://stackoverflow.com/a/18139440
 		
 		for cmd_binary in binCmdList:
 				
-			if firstLine: firstLine = False
-			else: output_file.write( '\n' )
+			# if firstLine: firstLine = False
+			# else: file.write( '\n' )
 
-			output_file.write( cmd_binary )
+			file.write( cmd_binary )
+			file.write( '\n' )
 
 
 

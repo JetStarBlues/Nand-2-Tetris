@@ -36,8 +36,11 @@ class IO():
 		self.main_memory = main_memory
 		self.hasExited = False
 
+		self.zeroN = self.toBinaryTuple( 0 )
+		self.oneN  = self.toBinaryTuple( 1 )
+
 		# Pygame ---
-		self.fps = SCREEN_FPS
+		self.maxFps = SCREEN_FPS
 		self.display = None
 		self.clock = None
 
@@ -50,16 +53,37 @@ class IO():
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
 		self.nRegistersPerRow = self.width // self.N
 
+		if not COLOR_MODE_4BIT:
+
+			self.colors = [ 
+
+				self.bgColor,
+				self.fgColor
+			]
+
 		# 4Bit color mode ---
-		if COLOR_MODE_4BIT:
+		else:
 
-			self.colors = COLOR_PALETTE_4BIT
+			self.colors = {}
 
-			for key, value in self.colors.items():
+			for key, value in COLOR_PALETTE_4BIT.items():
 
-				self.colors[key] = self.hex2rgb( value )
+				self.colors[ key ] = self.hex2rgb( value )
 
 			self.nRegistersPerRow *= 4
+
+		# Keyboard --
+		self.lookup_keys = {}
+		self.lookup_shiftModifiedKeys = {}
+
+		for key, value in lookup_keys.items():
+
+			self.lookup_keys[ key ] = self.toBinaryTuple( value[0] )
+
+		for key, value in lookup_shiftModifiedKeys.items():
+
+			self.lookup_shiftModifiedKeys[ key ] = self.toBinaryTuple( value[0] )
+
 
 		# Initialize Pygame ---
 		threading.Thread(
@@ -75,6 +99,12 @@ class IO():
 
 		return( r, g, b )
 
+	def toBinaryTuple( self, x ):
+
+		bStr = bin( x )[ 2 : ].zfill( self.N )
+
+		return tuple( map( int, bStr ) )  # tuple of ints
+
 	def initPygame( self ):
 
 		pygame.init()
@@ -84,7 +114,9 @@ class IO():
 		icon = pygame.image.load( 'Components/favicon.png' )
 		pygame.display.set_icon( icon )
 
-		self.display = pygame.display.set_mode( ( self.width, self.height ) )
+		pygame.display.set_mode( ( self.width, self.height ) )
+
+		self.surface = pygame.display.get_surface()
 
 		self.clock = pygame.time.Clock()
 
@@ -142,7 +174,7 @@ class IO():
 			self.updateScreen()
 
 			# Tick
-			self.clock.tick( self.fps )
+			self.clock.tick( self.maxFps )
 
 
 	# Screen ----------------------------------------------------
@@ -150,7 +182,7 @@ class IO():
 	def updateScreen( self ):
 
 		# Blit pixel values
-		pygame.surfarray.blit_array( self.display, self.genPixelArray() )
+		pygame.surfarray.blit_array( self.surface, self.genPixelArray() )
 
 		# Update display
 		pygame.display.flip()
@@ -164,12 +196,13 @@ class IO():
 		else:
 
 			return self.convertToBlitArray( self.getPixels_1BitMode() )
-
+			
 	def convertToBlitArray( self, a ):
 
-		''' Pygame 'blit_array' expects a numpy array arranged [ x, y ] '''
+		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row]) '''
 
-		return numpy.array( self.transposeArray( a ) )
+		# return numpy.array( self.transposeArray( a ) )
+		return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )  # marginally faster
 
 	def transposeArray( self, a ):
 
@@ -193,7 +226,8 @@ class IO():
 				
 					pixel = register[ i ]
 
-					color = self.get1BitColor( pixel )
+					# color = self.get1BitColor( pixel )
+					color = self.colors[ pixel ]  # look up corresponding color
 
 					row.append( color )
 
@@ -201,11 +235,11 @@ class IO():
 
 		return pixels
 
-	def get1BitColor( self, colorCode ):
+	# def get1BitColor( self, colorCode ):
 
-		if int( colorCode ) == 1: return self.fgColor
+	# 	if int( colorCode ) == 1: return self.fgColor
 
-		else: return self.bgColor
+	# 	else: return self.bgColor
 
 	def getPixels_4BitMode( self ):
 
@@ -250,15 +284,14 @@ class IO():
 		if button == 1:  # left button
 
 			# Convert to binary
-			mouseP = bin(      1 )[2:].zfill( self.N )
-			mouseX = bin( pos[0] )[2:].zfill( self.N )
-			mouseY = bin( pos[1] )[2:].zfill( self.N )
+			mouseX = self.toBinaryTuple( pos[0] )
+			mouseY = self.toBinaryTuple( pos[1] )
 
 			# Write to memory
 			#  clk, data, write, address
-			self.main_memory.write( 1, mouseP, 1,  MOUSE_MEMORY_MAP )
-			self.main_memory.write( 1, mouseX, 1, MOUSEX_MEMORY_MAP )
-			self.main_memory.write( 1, mouseY, 1, MOUSEY_MEMORY_MAP )
+			self.main_memory.write( 1, self.oneN, 1,  MOUSE_MEMORY_MAP )
+			self.main_memory.write( 1,    mouseX, 1, MOUSEX_MEMORY_MAP )
+			self.main_memory.write( 1,    mouseY, 1, MOUSEY_MEMORY_MAP )
 
 	def handleMouseReleased( self, button ):
 
@@ -266,11 +299,8 @@ class IO():
 
 		if button == 1:  # left button
 
-			# Convert to binary
-			mouseP = bin( 0 )[2:].zfill( self.N )
-
 			# Write to memory
-			self.main_memory.write( 1, mouseP, 1,  MOUSE_MEMORY_MAP )
+			self.main_memory.write( 1, self.zeroN, 1, MOUSE_MEMORY_MAP )
 
 
 	# Keyboard --------------------------------------------------
@@ -279,11 +309,10 @@ class IO():
 
 		''' If key is pressed, write keyCode '''
 
-		# Lookup keyCode
-		keyCode = lookupKey( key )
+		print( 'Key pressed', key, modifier )
 
-		# Convert to binary
-		keyCode = ( keyCode )[2:].zfill( self.N )
+		# Lookup keyCode
+		keyCode = self.lookupKey( key, modifier )
 
 		# Write to memory
 		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
@@ -292,11 +321,8 @@ class IO():
 
 		''' If key is released, write 0 '''
 
-		# Convert to binary
-		zero = bin( 0 )[2:].zfill( self.N )
-
 		# Write to memory
-		self.main_memory.write( 1, zero, 1,  KBD_MEMORY_MAP )
+		self.main_memory.write( 1, self.zeroN, 1, KBD_MEMORY_MAP )
 
 	def lookupKey( self, key, modifier ):
 
@@ -306,12 +332,12 @@ class IO():
 			# Treat pressing of shift keys alone as such
 			if key == 303 or key == 304:
 
-				return lookup_keys[ key ][ 0 ]
+				return self.lookup_keys[ key ]
 
 			# If valid combination, return relevant keyCode
-			elif key in lookup_shiftModifiedKeys:
+			elif key in self.lookup_shiftModifiedKeys:
 
-				return lookup_shiftModifiedKeys[ key ][ 0 ]
+				return self.lookup_shiftModifiedKeys[ key ]
 
 			# Else, return null
 			else:
@@ -322,9 +348,9 @@ class IO():
 		else:
 
 			# If valid, return relevant keyCode
-			if key in lookup_keys:
+			if key in self.lookup_keys:
 
-				return lookup_keys[ key ][ 0 ]
+				return self.lookup_keys[ key ]
 
 			# Else, return null
 			else:
@@ -338,15 +364,15 @@ class IO():
 '''
 
 lookup_keyModifiers = [
-	
+
 	#
 	  0, # None
-	256, # Alt left
-	512, # Alt right
-	 64, # Control left
-	128, # control right
 	  1, # Shift left
 	  2, # shift right
+	 64, # Control left
+	128, # control right
+	256, # Alt left
+	512, # Alt right
 ]
 
 lookup_keys = {
