@@ -23,7 +23,6 @@ def toInt( a ):
 
 def not_( x ):
 
-	# return int( x ) ^ 1	
 	return x ^ 1	
 
 
@@ -52,23 +51,3 @@ def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 def notN_( x ):
 
 	return x ^ negativeOne
-
-
-
-'''----------------------- Multi-way variants -----------------------'''
-
-# def andNto1_( x ):
-
-# 	x = [ int( e ) for e in toBin( x ) ]
-
-# 	out = x[ 0 ]
-
-# 	for i in range( 1, N_BITS ):
-
-# 		if out == 0:
-
-# 			return 0   # break once reach a zero
-
-# 		out = out & x[ i ]
-
-# 	return out

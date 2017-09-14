@@ -16,6 +16,11 @@ def isNegative_( x ):
 	''' 2s complement -> MSB is one if negative '''
 	return int( x > largestInt )
 
+def trim( x ):
+
+	''' discard overflow bits '''
+	return x & negativeOne
+
 
 
 '''------------------------- Shift Registers -------------------------'''
@@ -29,12 +34,7 @@ def shiftLeft_( x, y ):
 	
 	z = x << y
 
-	# Cap at N_BITS since operating system that emulator is running on
-	#  likely has different nBits ( ex. 32/64bit )
-	z = bin( z )[ 2 : ]  # convert to binary string and remove '0B' header
-	z = z[ - N_BITS : ]  # get last N_BITS
-
-	return int( z, 2 )
+	return trim( z )
 
 
 
@@ -56,7 +56,7 @@ def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 			if  nx == 1 : x = notN_( x )
 			if  zy == 1 : y = 0
 			if  ny == 1 : y = notN_( y )
-			if   f == 1 : out = x + y
+			if   f == 1 : out = trim( x + y )
 			elif f == 0 : out = x & y
 			if  no == 1 : out = notN_( out )
 

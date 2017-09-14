@@ -8,7 +8,7 @@
 # 
 #     Code by www.jk-quantized.com
 # 
-#  Redistributions and use of this code in source and binary forms must retain
+#  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
 # 
 # ========================================================================================
@@ -24,10 +24,12 @@ import os
 from Components._0__globalConstants import *
 
 
+
 # == Helpers =================================================
 
 def _toBinary( N, x ):
 	return bin( x )[ 2 : ].zfill( N )
+
 
 
 # == Main ====================================================
@@ -108,19 +110,6 @@ lookup_comp = {
 	'D<<A' : '010000000',  # not used, can omit to free instruction code
 	'D>>M' : '001000000',
 	'D>>A' : '000000000',  # not used, can omit to free instruction code
-
-	# There is probably something smarter that allows
-	#  16 bit Arduino to read an 8 GB sd card (2^16 vs 2 ^33).
-	#  For now, lets get this working
-	# 'DMBANK0' : '010100000',
-	# 'DMBANK1' : '010100001',
-	# 'DMBANK2' : '010100010',
-	# 'DMBANK3' : '010100011',
-
-	# 'PMBANK0' : '000100000',
-	# 'PMBANK1' : '000100001',
-	# 'PMBANK2' : '000100010',
-	# 'PMBANK3' : '000100011',
 }
 
 lookup_dest = {
@@ -195,9 +184,8 @@ static_segment_start = 16
 static_segment_end   = 255
 static_segment_size = static_segment_end - static_segment_start + 1
 
-# largest_int = 2 ** N_BITS - 1
-memory_bank_size = 2 ** ( N_BITS - 1 )  # 2^(N-1) because first instruction bit is reserved for use as opcode
-largest_addressable_int = memory_bank_size - 1
+largest_immediate = 2 ** ( N_BITS - 1 ) - 1
+negative_one = 2 ** N_BITS - 1
 
 
 
@@ -231,7 +219,7 @@ def extractCmd( line ):
 		return None
 
 
-# Without regex --
+# Without regex (Todo) --
 
 	# extract non commment
 	# remove spaces and tabs
@@ -259,61 +247,81 @@ def extractCmds( inputFile ):
 # -- Translation -------------------------------------
 
 
-# def addMemoryBank_stage1( cmdList ):
-
-# 	''' Support for programs >= 2^(N_BITS - 1) lines long
-
-# 		-> Adds memory bank selection placeholders.
-# 		   Default is MBANK0
-# 	'''
-
-# 	# Get function names
-
-# 	labels = []
-
-# 	for i in range( len( cmdList ) ):
-
-# 		cmd = cmdList[ i ]
-
-# 		if cmd[ 0 ] == '(':
-
-# 			label = cmd[ 1 : - 1 ]  # get the label
-
-# 			labels.append( '@{}'.format( label ) )
-
-# 	print( 'Assembled program contains {} functions'.format( len( labels ) ) )
+knownAddresses_ProgramMemory = {}
+knownAddresses_DataMemory = {}
+knownAddresses_DataMemory.update( lookup_globalAddresses )  # fill with global addresses
 
 
-# 	# Count number of insertions to be made. (Helper for Array.new)
+def doubleLabels_P1( cmdList ):
 
-# 	count = 0
+	''' Allow for labels greater than largest_immediate.
+		
+		For example,
 
-# 	for label in labels:
+			@4301
+			A = !A  // A = 61234
 
-# 		for i in range( len( cmdList ) ):
+			@555
+			A = A  // redundancy for simplicity
 
-# 			if cmdList[ i ] == label:
+		Idea by @cadet1620
+		  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Is-it-possible-to-have-programs-longer-than-32K-with-the-Hack-instruction-set-td4031378.html
+	'''
 
-# 				count += 1
+	cmdList2 = []
 
-# 	print( 'Assembled program contains {} function calls'.format( count ) )
+	labels = []
+
+	# Get labels
+	for i in range( len( cmdList ) ):
+
+		cmd = cmdList[ i ]
+
+		if cmd[ 0 ] == '(':
+
+			label = cmd[ 1 : - 1 ]  # get the label
+
+			labels.append( label )
+
+	# Double references
+	for i in range( len( cmdList ) ):
+
+		cmd = cmdList[ i ]
+
+		cmdList2.append( cmd )
+
+		if cmd[ 0 ] == '@':
+
+			if cmd[ 1 : ] in labels:
+
+				cmdList2.append( 'A=A' )
+
+	return cmdList2
 
 
-# 	# For every @functionName, precede with 'MBANK0' command
+def doubleLabels_P2( cmdList ):
 
-# 	expandedCmdList = []
+	for i in range( len( cmdList ) ):
 
-# 	for i in range( len( cmdList ) ):
+		cmd = cmdList[ i ]
 
-# 		cmd = cmdList[ i ]
+		if cmd[ 0 ] == '@':
 
-# 		if cmd in labels:
+			addr = cmd[ 1 : ]
 
-# 			expandedCmdList.append( 'NULL=PMBANK0;NULL' )  # 1 000000000 000 000
+			if addr.isdigit():
 
-# 		expandedCmdList.append( cmd )
+				addr = int( addr )
 
-# 	return expandedCmdList
+				if addr > largest_immediate:
+
+					n_addr = addr ^ negative_one  # flip bits
+
+					cmdList[ i ] = '@{}'.format( n_addr )
+
+					cmdList[ i + 1 ] = 'A=!A'
+
+	return cmdList
 
 
 def handleLabels( cmdList ):
@@ -322,77 +330,32 @@ def handleLabels( cmdList ):
 
 	trimmedCmdList = []
 
-	knownAddresses_ProgramMemory = {}
-
 	for i in range( len( cmdList ) ):
 
 		cmd = cmdList[ i ]
 
 		if cmd[ 0 ] == '(':
 
-			label = cmd[ 1 : - 1 ]    # get the label
+			label = cmd[ 1 : - 1 ]  # get the label
 
-			addr = i - len( knownAddresses_ProgramMemory )    # and the corresponding address
+			addr = i - len( knownAddresses_ProgramMemory )  # and the corresponding address
 
 			knownAddresses_ProgramMemory[ '@{}'.format( label ) ] = '@{}'.format( addr )  # add it to dict of knownAddresses_ProgramMemory
 
 		else:
 
-			trimmedCmdList.append( cmd )   # not a label so include it
+			trimmedCmdList.append( cmd )  # not a label so include it
 
-	return( trimmedCmdList, knownAddresses_ProgramMemory )
+	# for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
 
-
-# def addMemoryBank_stage2( cmdList, knownAddresses_ProgramMemory ):
-
-# 	''' Support for programs >= 2 ^ ( N_BITS - 1 ) lines long
-
-# 		-> Replaces placeholders with appropriate values.
-# 		   MBANK0 with MBANKX
-# 	'''
-
-# 	for i in range( len( cmdList ) ):
-
-# 		cmd = cmdList[ i ]
-
-# 		s = 'NULL=PMBANK0;NULL'
-
-# 		if cmd == s:
-
-# 			label = cmdList[ i + 1 ]
-
-# 			addr = knownAddresses_ProgramMemory[ label ]
-
-# 			print( label, addr )
-
-# 			addr = int( addr[ 1 : ] )
-
-# 			if addr > largest_addressable_int:
-
-# 				bank, newAddr = divmod( addr, memory_bank_size )
-
-# 				cmdList[ i ] = 'NULL=PMBANK{};NULL'.format( bank )
-
-# 				cmdList[ i + 1 ] = '@{}'.format( newAddr )
-
-# 				knownAddresses_ProgramMemory[ label ] = '@{}'.format( newAddr )
-
-# 				print( newAddr )
-
-# 	# print( knownAddresses_ProgramMemory )
-
-# 	return ( cmdList, knownAddresses_ProgramMemory )
+	return trimmedCmdList
 
 
-def handleVariables( cmdList, knownAddresses_ProgramMemory ):
+def handleVariables( cmdList ):
 
 	''' Replace variable names with integer addresses '''
 
 	freeAddress = static_segment_start
-
-	knownAddresses_DataMemory = {}
-	knownAddresses_DataMemory.update( lookup_globalAddresses )  # fill with global addresses
-	
 
 	for i in range( len( cmdList ) ):
 
@@ -428,12 +391,14 @@ def handleVariables( cmdList, knownAddresses_ProgramMemory ):
 
 				freeAddress += 1 	# register is no longer unallocated
 
-	print( 'Assembled program uses {} global variables. Maximum is {}.'.format( freeAddress - static_segment_start, static_segment_size ) )
+	# print( 'Assembled program has {} global variables.'.format( freeAddress - static_segment_start ) )
+	print( 'Assembled program has {} global variables. Maximum is {}.'.format( freeAddress - static_segment_start, static_segment_size ) )
 
 	if freeAddress > static_segment_end:
 
-		# print( 'Assembled program exceeds static segment size by {}'.format( freeAddress - static_segment_end ) )
-		print( 'Assembled program exceeds maximum number global variables' )
+		# print( 'Assembled program exceeds maximum number of global variables.' )
+		print( 'Assembled program exceeds maximum number of global variables by {}.'.format( freeAddress - static_segment_end ) )
+		# print( 'Assembled program exceeds static segment size by {}.'.format( freeAddress - static_segment_end ) )
 
 	return cmdList
 
@@ -476,7 +441,7 @@ def translateInstructions( cmdList ):
 			elif ';' in cmd_s:
 				comp, jmp = re.split( ';', cmd_s )
 
-			# print(dest, comp, jmp)
+			# print( dest, comp, jmp )
 
 			dest = lookup_dest[dest] if dest else lookup_dest[ 'NULL' ]
 			jmp = lookup_jmp[jmp] if jmp else lookup_jmp[ 'NULL' ]
@@ -496,14 +461,17 @@ def translateCmds( cmdList ):
 	''' Translate assembly to binary '''
 
 	# cmdList = handleLabels( cmdList )
-	# cmdList = handleVariables( cmdList[0], cmdList[1] )
+	# cmdList = handleVariables( cmdList )
 	# binCmdList = translateInstructions( cmdList )
 
-	# Support for programs >= 2 ^ ( N_BITS - 1 ) lines long
-	# cmdList = addMemoryBank_stage1( cmdList )
+	# Support for programs greater than largest_immediate lines long
+	cmdList = doubleLabels_P1( cmdList )
 	cmdList = handleLabels( cmdList )
-	# cmdList = addMemoryBank_stage2( cmdList[0], cmdList[1] )
-	cmdList = handleVariables( cmdList[0], cmdList[1] )
+	cmdList = handleVariables( cmdList )
+	cmdList = doubleLabels_P2( cmdList )
+	# print( '---' )
+	# for c in cmdList: print( c )
+	# print( '---' )
 	binCmdList = translateInstructions( cmdList )
 
 	return binCmdList
@@ -542,14 +510,15 @@ def asm_to_bin( inputFile, outputFile ):
 	# Check size
 	if len( cmds_binary ) > PROGRAM_MEMORY_SIZE:
 
-		# raise Exception( 'Assembled program exceeds maximum length by {} lines'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) ) )
-		# print( 'Assembled program exceeds maximum length by {} lines'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) )
-		print( 'Assembled program exceeds maximum length' )
+		# print( 'Assembled program exceeds maximum length.' )
+		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) )
+		# raise Exception( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) ) )
 
 	# Write
 	writeToOutputFile( cmds_binary, outputFile )
 
 	# print( 'Done' )
+
 
 def genBINFile( inputDirPath ):
 
@@ -557,7 +526,7 @@ def genBINFile( inputDirPath ):
 
 	for fileName in fileNames:
 
-		if fileName[ -3 : ] == 'asm' or fileName[ -4 : ] == 'hasm':
+		if fileName[ - 3 : ] == 'asm' or fileName[ - 4 : ] == 'hasm':
 
 			inputFilePath = inputDirPath + '/' + fileName
 
