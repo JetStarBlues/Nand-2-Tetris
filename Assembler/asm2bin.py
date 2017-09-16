@@ -152,8 +152,8 @@ lookup_globalAddresses = {
 	'@KBD'    : '@' + str( KBD_MEMORY_MAP ),
 
 	'@R0'     : '@0',   # SP
-	'@R1'     : '@1',   # ARG
-	'@R2'     : '@2',   # LCL
+	'@R1'     : '@1',   # LCL
+	'@R2'     : '@2',   # ARG
 	'@R3'     : '@3',   # THIS
 	'@R4'     : '@4',   # THAT
 	'@R5'     : '@5',   # TEMP
@@ -407,6 +407,8 @@ def translateInstructions( cmdList ):
 
 	''' Translate assembly instructions to binary '''
 
+	binCmdList = []
+
 	for i in range( len( cmdList ) ):
 
 		#
@@ -451,9 +453,11 @@ def translateInstructions( cmdList ):
 
 
 		#
-		cmdList[ i ] = cmd_b
+		# cmdList[ i ] = cmd_b
+		binCmdList.append( cmd_b )
 
-	return cmdList
+	# return cmdList
+	return binCmdList
 
 
 def translateCmds( cmdList ):
@@ -469,10 +473,11 @@ def translateCmds( cmdList ):
 	cmdList = handleLabels( cmdList )
 	cmdList = handleVariables( cmdList )
 	cmdList = doubleLabels_P2( cmdList )
-	# print( '---' )
-	# for c in cmdList: print( c )
-	# print( '---' )
 	binCmdList = translateInstructions( cmdList )
+
+	for c in cmdList: print( c )
+	print( '\n--\n' )
+	for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
 
 	return binCmdList
 

@@ -54,7 +54,8 @@ def hl_to_bin( inputDirPath ):
 
 	# Generate ASM file
 	print( 'Generating assembly file...' )
-	vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = False )
+	vm2asm.genASMFile( inputDirPath, debug = False )
+	# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = False )
 	# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = True )
 
 	# Generate BIN file
