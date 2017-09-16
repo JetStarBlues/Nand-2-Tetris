@@ -19,6 +19,8 @@ programPath = '../tempNotes/MyCompilerOut/OS_standalone/math_ex/Main.bin'
 # programPath = 'Programs/Demos/bin/demo_eo6.bin'
 # programPath = 'Programs/Demos/bin/demo_eo6_color.bin'
 
+debugMode = True
+
 
 
 '''----------------------------- Main -----------------------------------'''
@@ -44,15 +46,17 @@ def update():
 		print( 'See you later!' )
 
 
-	# debug()
-	debug2File()
-	
+	if debugMode:
 
-	if breakpoint():
+		# debug()
+		debug2File()
+		
 
-		clock.stop()
-		# io.quitPygame()  # call crashes for some reason
-		print( 'Breakpoint reached' )
+		if breakpoint():
+
+			clock.stop()
+			# io.quitPygame()  # call crashes for some reason
+			print( 'Breakpoint reached' )
 
 
 
@@ -146,7 +150,8 @@ def debug2File():
 '''----------------------------- Run -----------------------------------'''
 
 # Remove existing logs
-for f in os.listdir( debugPath ): os.remove( debugPath + f )
+if debugMode:
+	for f in os.listdir( debugPath ): os.remove( debugPath + f )
 
 # Setup callbacks
 clock.callbackRising = update
