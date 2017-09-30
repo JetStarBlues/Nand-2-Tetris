@@ -354,18 +354,6 @@ class Compiler():
 
 		s = []
 
-		# # Decrement address held by SP
-		# s.append( '@SP' )
-		# s.append( 'M = M - 1' )
-
-		# # And get the value
-		# s.append( 'A = M' )
-		# s.append( 'D = M' )
-
-		# s.append( 'AM = M - 1' )  # set A reg and memory value simultaneously
-		                            # Why does this not work in simulator? Get R[M-1]=M-1
-		                            #   Is it that no delay for Areg to take on new value?
-
 		# Decrement address held by SP, and get the value
 		s.append( '@SP' )
 		s.append( 'AM = M - 1' )
@@ -736,14 +724,6 @@ class Compiler():
 				s.append( 'M = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op prev_val
 
 		elif op in comparisonOps:
-
-			# if self.useGenerics:
-				
-			# 	s.append( self.compile_comparisonOp_generic( op ) )
-
-			# else:
-
-			# 	s.append( self.compile_comparisonOp_inline( op ) )
 			
 			s.append( self.compile_comparisonOp( op ) )
 
@@ -774,17 +754,6 @@ class Compiler():
 		# Get value from segment
 		s.append( self.compile_push_( seg, index ) )
 
-		# # Get prevprev value
-		# s.append( '@SP' )
-		# s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-		# # Apply op
-		# s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
-
-		# # Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		# s.append( '@SP' )
-		# s.append( 'M = M - 1' )  # This can be simplified if get AM working...  'AM = M - 1'
-
 		# Get prevprev value, and
 		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
 		s.append( '@SP' )
@@ -801,8 +770,7 @@ class Compiler():
 
 	def compile_binaryOp_ifgoto( self, op, loc ):
 
-		# If get AM working, only one line saved by doing this instead of using popStackToD in ifgoto,
-		#  otherwise two lines
+		# Only one line saved by doing this instead of using popStackToD in ifgoto
 
 		s = []
 
@@ -827,19 +795,9 @@ class Compiler():
 
 	def compile_unaryOp_ifgoto( self, op, loc ):
 
-		# If get AM working, only three lines saved by doing this instead of using popStackToD in ifgoto,
-		#  otherwise two lines
+		# Three lines saved by doing this instead of using popStackToD in ifgoto
 
 		s = []
-
-		# Apply op
-		# s.append( '@SP' )
-		# s.append( 'A = M - 1' )
-		# s.append( 'D = {} M'.format( unaryOps[ op ] ) )
-
-		# # Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		# s.append( '@SP' )
-		# s.append( 'M = M - 1' )  # This can be simplified if get AM working...  'AM = M - 1'
 
 		# Apply op, and
 		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result) 
@@ -878,11 +836,6 @@ class Compiler():
 		
 		# End/continue
 		s.append( self.label( cEnd ) )
-
-		# Update stack
-		# s.append( '@SP' )
-		# s.append( 'A = M - 1' )
-		# s.append( 'M = D' )
 		
 		return self.a2s( s )
 
@@ -956,9 +909,8 @@ class Compiler():
 
 	def compile_comparisonOp_ifgoto( self, op, loc ):
 
-		# If get AM working, only one line saved by doing this instead of using popStackToD in ifgoto,
-		#  otherwise two lines
-		# Howver, also saving 3 lines by not pushing comparison result onto stack
+		# Only one line saved by doing this instead of using popStackToD in ifgoto.
+		# However, also save 3 lines by not pushing comparison result onto stack
 
 		s = []
 
@@ -977,109 +929,6 @@ class Compiler():
 
 		# Conditional jump
 		s.append( self.compile_ifgoto_( loc ) )
-
-		return self.a2s( s )
-
-
-	def compile_comparisonOp_generic( self, op ):
-
-		# Need at least 11 calls to break even
-		#  5x6+22(fixed_generic) + 11(variable_generic)
-		#  vs. 16(variable_inline)
-		# Thereafter, save 5 lines per call
-
-		s = []
-
-		# Store op function position at R14
-		s.append( self.at( comparisonOps_generic[ op ] ) )
-		s.append( 'D = A' )
-		s.append( self.atGP( 1 ) )
-		s.append( 'M = D' )
-
-		# Save return position
-		returnPos = '$_returnFromGenericFunction{}'.format( self.returnGenericPosCount )
-		self.returnGenericPosCount += 1
-
-		s.append( self.at( returnPos ) )
-		s.append( 'D = A' )
-		s.append( self.atGP( 2 ) )
-		s.append( 'M = D' )
-
-		# Goto genericComparisonOp function
-		s.append( self.at( '$_genericComparisonOp' ) )
-		s.append( '0 ; JMP' )
-
-		# Create return position
-		s.append( self.label( returnPos ) )
-
-		return self.a2s( s )		
-
-
-	def compile_comparisonOp_bootstrap( self ):
-
-		s = []
-
-		cTrue  = 'comp_true'
-		cFalse = 'comp_false'
-		cEnd   = 'comp_end'
-
-
-		# ---------------------------
-
-		for op in comparisonOps:
-
-			fxName   = comparisonOps_generic[ op ]
-			jumpType = comparisonOps[ op ]
-
-			s.append( self.label( fxName ) )
-			s.append( self.at( cTrue ) )
-			s.append( 'D ; {}'.format( jumpType ) )
-			s.append( self.at( cFalse ) )
-			s.append( '0 ; JMP' )
-			s.append( '' )  # formatting... spacing between
-
-
-		# ---------------------------
-
-		# Create label
-		s.append( self.label( '$_genericComparisonOp' ) )
-
-		# Get prev value
-		s.append( self.popStackToD() )  # D = prev_val
-
-		# Get prevprev value 
-		s.append( 'A = A - 1' )  # aReg = prevprev_addr
-
-		# Compare
-		s.append( 'D = M - D' )  # D = prevprev_val - prev_val
-
-		# Goto respective jump
-		s.append( self.atGP( 1 ) )
-		s.append( 'A = M' )
-		s.append( '0 ; JMP' )
-		
-		# False
-		s.append( self.label( cFalse ) )
-		s.append( 'D = 0' )
-		s.append( self.at( cEnd ) )
-		s.append( '0 ; JMP' )
-		
-		# True
-		s.append( self.label( cTrue ) )
-		s.append( 'D = 1' )
-		
-		# End/continue
-		s.append( self.label( cEnd ) )
-
-		# Update stack
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )
-		s.append( 'M = D' )
-
-		# Goto return position
-		s.append( self.atGP( 2 ) )  # get return position from R15
-		s.append( 'A = M' )
-		s.append( '0 ; JMP' )
 
 		return self.a2s( s )
 
@@ -1290,20 +1139,6 @@ class Compiler():
 			s.append( '@SP' )
 			s.append( 'M = M + 1' )
 
-		# elif nLocals > 1:
-		# 	s.append( '@SP' )
-		# 	s.append( 'D = M' )
-
-		# 	for i in range( nLocals ):
-		# 		s.append( 'A = D' )
-		# 		s.append( 'M = 0' )
-		# 		s.append( 'D = D + 1' )
-
-		# 	s.append( self.at( nLocals ) )
-		# 	s.append( 'D = A' )
-		# 	s.append( '@SP' )
-		# 	s.append( 'M = M + D' )
-
 		return self.a2s( s )
 
 
@@ -1352,7 +1187,6 @@ class Compiler():
 		s.append( 'M = D + 1' )
 
 		# Restore segment pointers of caller
-		#  s.append( 'A = D - 1' )
 		s.append( self.at( curLCL ) )
 		s.append( 'A = M - 1' )
 		s.append( 'D = M' )
@@ -1536,13 +1370,7 @@ class Compiler():
 				s.append( '\n// genericCall' )
 
 			s.append( self.compile_call_bootstrap() )
-			
-			# if self.debug: 
-
-			# 	s.append( '\n// genericComparisonOp' )
-
-			# s.append( self.compile_comparisonOp_bootstrap() )
-			
+						
 			if self.debug: 
 
 				s.append( '\n// --- end generic functions\n' )
