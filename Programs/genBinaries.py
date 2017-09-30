@@ -43,6 +43,6 @@ subdir = 'Tests/Chapter_6_assembly/'
 
 for file in files:
 	# print(file)
-	input = subdir + file + '.hasm'
+	input = subdir + file + '.asm'
 	output = subdir + 'bin/' + file + '.bin'
 	Assembler.asm_to_bin( input, output )
