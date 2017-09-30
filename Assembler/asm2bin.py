@@ -28,7 +28,35 @@ from Components._0__globalConstants import *
 # == Helpers =================================================
 
 def _toBinary( N, x ):
+
 	return bin( x )[ 2 : ].zfill( N )
+
+
+def debugStuff( cmdList ):
+
+	for c in cmdList:
+
+		print( c )
+
+	print( '\n--\n' )
+
+	# for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
+	for kv in sorted(
+
+		knownAddresses_ProgramMemory.items(),
+		key = lambda x : int( x[ 1 ][ 1 : ] ) 
+	):		
+		print( '{:<6}  {}'.format( kv[ 1 ], kv[ 0 ] ) )
+
+	print( '\n--\n' )
+
+	# for k, v in knownAddresses_DataMemory.items(): print( k, v )
+	for kv in sorted(
+
+		knownAddresses_DataMemory.items(),
+		key = lambda x : int( x[ 1 ][ 1 : ] )
+	):
+		print( '{:<6}  {}'.format( kv[ 1 ], kv[ 0 ] ) )
 
 
 
@@ -346,8 +374,6 @@ def handleLabels( cmdList ):
 
 			trimmedCmdList.append( cmd )  # not a label so include it
 
-	# for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
-
 	return trimmedCmdList
 
 
@@ -460,7 +486,7 @@ def translateInstructions( cmdList ):
 	return binCmdList
 
 
-def translateCmds( cmdList ):
+def translateCmds( cmdList, debug ):
 
 	''' Translate assembly to binary '''
 
@@ -475,9 +501,7 @@ def translateCmds( cmdList ):
 	cmdList = doubleLabels_P2( cmdList )
 	binCmdList = translateInstructions( cmdList )
 
-	for c in cmdList: print( c )
-	print( '\n--\n' )
-	for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
+	if debug: debugStuff( cmdList )
 
 	return binCmdList
 
@@ -502,13 +526,13 @@ def writeToOutputFile( binCmdList, outputFile ):
 # -- Run ------------------------------------------
 
 
-def asm_to_bin( inputFile, outputFile ):
+def asm_to_bin( inputFile, outputFile, debug = False ):
 
 	# Read
 	cmds_assembly = extractCmds( inputFile )
 
 	# Translate
-	cmds_binary = translateCmds( cmds_assembly )
+	cmds_binary = translateCmds( cmds_assembly, debug )
 
 	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), PROGRAM_MEMORY_SIZE ) )
 
@@ -525,13 +549,13 @@ def asm_to_bin( inputFile, outputFile ):
 	# print( 'Done' )
 
 
-def genBINFile( inputDirPath ):
+def genBINFile( inputDirPath, debug = False ):
 
 	fileNames = os.listdir( inputDirPath )
 
 	for fileName in fileNames:
 
-		if fileName[ - 3 : ] == 'asm' or fileName[ - 4 : ] == 'hasm':
+		if fileName[ - 3 : ] == 'asm':
 
 			inputFilePath = inputDirPath + '/' + fileName
 
@@ -539,4 +563,4 @@ def genBINFile( inputDirPath ):
 
 	outputFilePath = inputDirPath + '/Main.bin'
 
-	asm_to_bin( inputFilePath, outputFilePath )
+	asm_to_bin( inputFilePath, outputFilePath, debug )

@@ -7,6 +7,7 @@ from Assembler.hl2bin import *
 
 inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/math_ex'
 # inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/hello_ex'
+# inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/includesOfincludes'
 # inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/hello'
 # inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/gfx'
 # inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/math'

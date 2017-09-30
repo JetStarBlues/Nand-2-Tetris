@@ -42,12 +42,8 @@ class Clock():
 		self.currentCycle += self.value  # count clock cycles
 
 		# pseudo edges
-		if self.value == 1:		 	 # 0 to 1
-			self.isRising = True
-			self.isFalling = False
-		else: 					  	 # 1 to 0
-			self.isRising = False
-			self.isFalling = True
+		self.isRising = self.value
+		self.isFalling = not( self.value )
 
 		# print("clock half tick at", round(time.time(),8), self.isRising)
 
@@ -74,7 +70,8 @@ class Clock():
 			if self.isRising and self.callbackRising:
 				self.callbackRising()
 
-			elif self.isFalling and self.callbackFalling:
-				self.callbackFalling()
+			# if self.isFalling and self.callbackFalling:
+			# 	self.callbackFalling()
 
-			time.sleep( self.halfPeriod )
+			if self.halfPeriod:
+				time.sleep( self.halfPeriod )

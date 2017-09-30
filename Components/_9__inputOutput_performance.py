@@ -46,11 +46,13 @@ class IO():
 		# Screen ---
 		self.width = 512
 		self.height = 256
+		self.screenMemStart = SCREEN_MEMORY_MAP
 
 		# 1Bit color mode ---
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
 		self.nRegistersPerRow = self.width // self.N
+		self.screenMemEnd = self.screenMemStart + ( self.width * self.height // self.N )
 
 		if not COLOR_MODE_4BIT:
 
@@ -72,10 +74,10 @@ class IO():
 			self.nRegistersPerRow *= 4
 
 		# Initialize Pygame ---
-		threading.Thread(
-			target = self.initPygame,
-			name = 'io_thread'
-		).start()
+		# threading.Thread(
+		# 	target = self.initPygame,
+		# 	name = 'io_thread'
+		# ).start()
 
 	def hex2rgb( self, h ):
 
@@ -84,6 +86,13 @@ class IO():
 		b = int( h[ -2 :    ], 16 )
 
 		return( r, g, b )
+
+	def runAsThread( self ):
+
+		threading.Thread(
+			target = self.initPygame,
+			name = 'io_thread'
+		).start()
 
 	def initPygame( self ):
 
@@ -180,39 +189,51 @@ class IO():
 	def convertToBlitArray( self, a ):
 
 		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row]) '''
+		
+		# return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )
 
-		# return numpy.array( self.transposeArray( a ) )
-		return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )  # marginally faster
-
-	def transposeArray( self, a ):
-
-		return list( map( list, zip( * a ) ) )
+		return numpy.array( a ).reshape( ( self.height, self.width, 3 ) ).transpose( ( 1, 0, 2 ) )
 
 	def getPixels_1BitMode( self ):
 
 		pixels = []
 
-		for y in range( self.height ):
+		# for y in range( self.height ):
 
-			row = []
+		# 	row = []
 
-			for x in range( self.nRegistersPerRow ):
+		# 	for x in range( self.nRegistersPerRow ):
 
-				idx = x + y * self.nRegistersPerRow
+		# 		idx = x + y * self.nRegistersPerRow
 
-				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
+		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-				register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+		# 		register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
 
-				for i in range( self.N ):
-				
-					pixel = register[ i ]
+		# 		for i in range( self.N ):
 
-					color = self.colors[ pixel ]  # look up corresponding color
+		# 			pixel = register[ i ]
 
-					row.append( color )
+		# 			color = self.colors[ pixel ]  # look up corresponding color
 
-			pixels.append( row )
+		# 			row.append( color )
+
+		# 	pixels.append( row )
+
+
+		for idx in range( self.screenMemStart, self.screenMemEnd ):
+
+			register = self.main_memory.read( idx )
+
+			register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+
+			for i in range( self.N ):
+
+				pixel = register[ i ]
+
+				color = self.colors[ pixel ]  # look up corresponding color
+
+				pixels.append( color )		
 
 		return pixels
 

@@ -4,7 +4,7 @@ See main website,
 http://www.nand2tetris.org
 
 And Coursera classes,  
-https://www.coursera.org/course/nand2tetris1
+https://www.coursera.org/course/nand2tetris1  
 https://www.coursera.org/course/nand2tetris2
 
 From the Coursera page,

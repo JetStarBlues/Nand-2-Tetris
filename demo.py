@@ -10,6 +10,7 @@ from Components import *
 # Initialize
 computer = ComputerN_( N_BITS, DATA_MEMORY_SIZE, PROGRAM_MEMORY_SIZE )
 io = IO( N_BITS, computer.data_memory )
+io.runAsThread()
 
 
 # Load program

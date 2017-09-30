@@ -1,0 +1,79 @@
+-- Hack HL (Jack) Grammar ----------------------------------------------------------------
+
+class           -> 'class' className '{' constDec* classVarDec* subroutineDec* '}'
+
+classVarDec     -> ( 'static' | 'field' ) type varName ( ',' varName )* ';'
+
+type            -> 'int' | 'char' | 'boolean' | className
+
+subroutineDec   -> ( 'constructor' | 'function' | 'method' ) ( 'void' | type ) subroutineName '(' parameterList ')' subroutineBody
+
+parameterList   -> ( type varName ( ',' type varName )* )?
+
+subroutineBody  -> '{' constDec* varDec* statements '}'
+
+varDec          -> 'var' type varName ( ',' varName )* ';'
+
+className       -> identifier
+subroutineName  -> identifier
+varName         -> identifier
+
+statements      -> statement*
+
+statement       -> letStatement | ifStatement | whileStatement | doStatement | returnStatement | whileStatement | continueStatement | breakStatement
+
+letStatement    -> 'let'? assignment ';'
+
+ifStatement     -> 'if' '(' expression ')' statementBlock ( 'else' statementBlock )?
+
+whileStatement  -> 'while' '(' expression ')' statementBlock
+
+doStatement     -> 'do'? subroutineCall ';'
+
+returnStatement -> 'return' expression? ';'
+
+expression      -> expressionTerm ( binaryOp expressionTerm )*
+
+expressionTerm  -> integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOp expressionTerm
+
+subroutineCall  -> ( ( className | varName ) '.' )? subroutineName '(' expressionList ')'
+
+expressionList  -> ( expression ( ',' expression )* )?
+
+binaryOp        -> '+'|'-'|...
+unaryOp         -> '~'|'-'|...
+
+keywordConstant -> 'true' | 'false' | 'null' | 'this'
+
+integerConstant -> number in range 0..32767 | hexConstant | binConstant | charConstant
+
+stringConstant  -> sequence wrapped in double quotes
+
+identifier      -> sequence of letters, digits, and underscore not starting with a digit
+
+
+-- Stuff I added -------------------------------------------------------------------------
+
+assignment        -> varName ( '[' expression ']' )? assignmentOp expression
+
+assignmentOp      -> '=' | +=' | '-=' | '/=' | ...
+
+forStatement      -> 'for' '(' assignment ';' expression ';' assignment ')' statementBlock
+
+include           -> 'include' stringConstant
+
+-- Inspired by @cadet1620 ----
+
+continueStatement -> 'continue' ';'
+
+breakStatement    -> 'break' ';'
+
+charConstant      -> single Ascii character wrapped in single quotes
+
+hexConstant       -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
+
+binConstant       -> ( '0b' | '0B' ) ( 0 | 1 )+
+
+constDec          -> 'const' 'int' varName '=' '-'? integerConstant ';'
+
+statementBlock    -> statement | ( '{' statements '}' )
