@@ -29,10 +29,9 @@ from Components import *
 '''------------------------------ Setup --------------------------------'''
 
 # programPath = 'Programs/Tests/Chapter_12/Main.bin'
-# programPath = 'Programs/ByOthers/MarkArmbrust/Creature/Main.bin'
-# programPath = 'Programs/ByOthers/GavinStewart/GASchunky/Main.bin'
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello_ex/Main.bin'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/math_ex/Main.bin'
+# programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.bin'
+# programPath = 'Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky/Main.bin'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.bin'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/math/Main.bin'
 # programPath = 'Programs/Demos/bin/demo_eo6.bin'
 # programPath = 'Programs/Demos/bin/demo_eo6_color.bin'

@@ -48,15 +48,19 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gfx/Main.vmx'  
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello_ex/Main.vmx'  
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/math_ex/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'  
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/math/Main.vmx'
 
 debugPath = 'C:/Users/Janet/Desktop/Temp/DumpDebug2/'  # Folder where logs go
 
-debugMode = True
+debugMode = False
 
 useMultiprocessing = False  # Gains realized only if screen fps > 3
+
 
 
 # Setup computer -------------------
@@ -137,10 +141,15 @@ def negate( x ):
 
 # VM Helpers ------------------------
 
-unaryOps = [ 'not', 'neg' ]
-binaryOps = [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR' ]
-comparisonOps = [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ]
-operations = unaryOps + binaryOps + comparisonOps
+# unaryOps = [ 'not', 'neg' ]
+# binaryOps = [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR' ]
+# comparisonOps = [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ]
+# operations = [ unaryOps + binaryOps + comparisonOps ]
+unaryOps = set( [ 'not', 'neg' ] )
+# binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR' ] )
+binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR', 'mult', 'div' ] )
+comparisonOps = set( [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ] )
+operations = unaryOps | binaryOps | comparisonOps  # Set marginally faster to lookup than list
 
 addressLookup = {}
 staticLookup = {}
@@ -322,7 +331,7 @@ def operation( op ):
 
 		elif op == 'shiftR':
 
-			value = a >> b
+			value = a >> b  # logical shift
 
 		elif op == 'add':
 
@@ -332,13 +341,41 @@ def operation( op ):
 
 			value = trim( a + negate( b ) )
 
-		# elif op == 'mult':
+		elif op == 'mult':
 
-		# 	value = trim( a * b )
+			value = trim( a * b )
 
-		# elif op == 'div':
+		elif op == 'div':
 
-		# 	value = int( a / b )
+			# value = a // b  # floor
+
+			# Divide using absolutes and add signs after
+			if a > largestInt:
+
+				a = negate( a )
+
+				if b > largestInt:
+
+					b = negate( b )
+
+					value = a // b
+
+				else:
+
+					value = negate( a // b )
+
+			else:
+
+				if b > largestInt:
+
+					b = negate( b )
+
+					value = negate( a // b )
+
+				else:
+
+					value = a // b
+
 
 		RAM[ addr_a ] = value
 
@@ -354,32 +391,40 @@ def operation( op ):
 		value = None
 
 		diff = trim( a + negate( b ) )
+		zr = diff == 0
+		ng = diff > largestInt
 
 		if op == 'eq':
 
-			value = int( diff == 0 )
+			value = zr
 
 		elif op == 'gt':
 
-			value = int( diff != 0 and diff <= largestInt )  # positive, twos complement
+			value = not( zr or ng )
 
 		elif op == 'lt':
 
-			value = int( diff > largestInt )  # negative, twos complement
+			value = ng
 
 		elif op == 'gte':
 
-			value = int( diff <= largestInt )
+			value = not( ng )
 
 		elif op == 'lte':
 
-			value = int( diff == 0 or diff > largestInt )
+			value = zr or ng
 
 		elif op == 'ne':
 
-			value = int( diff != 0 )
+			value = not( zr )
 
-		RAM[ addr_a ] = value
+		if value:
+
+			RAM[ addr_a ] = negativeOne  # 111111 so that !True = 00000
+
+		else:
+
+			RAM[ addr_a ] = 0
 
 		# Update SP
 		RAM[ SP ] -= 1
@@ -404,6 +449,7 @@ def ifgoto( loc ):
 	value = RAM[ addr ]
 
 	if value != 0:
+	# if value:
 
 		PC = addressLookup[ loc ]
 
@@ -616,13 +662,13 @@ def updateWithDebug():
 		print( 'Breakpoint reached after {} clock cycles'.format( clock.currentCycle ) )
 		print( 'Took {} seconds to reach breakpoint'.format( time.time() - startTime ) )
 
-		# debug2File()		
+		debug2File()		
 
 
 def breakpoint():
 
 	# pass
-	return PC == 8236  # Sys.halt (position changes with recompile)
+	return PC == 8515  # Sys.halt (position changes with recompile)
 	# return clock.currentCycle == 384381
 
 
@@ -716,12 +762,13 @@ def setup():
 	extractProgram( programPath )
 	print( 'Completed ROM flash. Took {} seconds.'.format( time.time() - startTime ) )
 
-	# Remove existing logs
-	# if debugMode:
-	# 	for f in os.listdir( debugPath ): os.remove( debugPath + f )
+	if debugMode:
 
-	# Dump ROM and addresses
-	# dumpROMnAddresses()
+		# Remove existing logs
+		for f in os.listdir( debugPath ): os.remove( debugPath + f )
+
+		# Dump ROM and addresses
+		dumpROMnAddresses()
 
 	# Initialize clock
 	clock = Components.Clock()
@@ -733,7 +780,7 @@ def setup():
 		clock.callbackRising = update
 
 	# Initialize IO
-	# io = Components.IO( N_BITS, RAMWrapper( RAM ) )	
+	io = Components.IO( N_BITS, RAMWrapper( RAM ) )
 
 
 def tick():
@@ -765,10 +812,11 @@ def update():
 
 	tick()
 
-	# if ( useMultiprocessing and not io_process.is_alive() ) or io.hasExited :
+	# Handle exit via IO
+	if ( useMultiprocessing and not io_process.is_alive() ) or io.hasExited :
 
-	# 	clock.stop()
-	# 	print( 'See you later!' )
+		clock.stop()
+		print( 'See you later!' )
 
 
 # Run -------------------------------
@@ -784,17 +832,17 @@ if __name__ == '__main__':
 	setup()
 
 	# Start IO
-	# if useMultiprocessing:
+	if useMultiprocessing:
 
-	# 	io_process = Process(
-	# 		target = io.initPygame,
-	# 		name   = 'io_process'
-	# 	)
-	# 	io_process.start()
+		io_process = Process(
+			target = io.initPygame,
+			name   = 'io_process'
+		)
+		io_process.start()
 
-	# else:
+	else:
 
-	# 	io.runAsThread()
+		io.runAsThread()
 
 	# Start clock
 	clock.run()

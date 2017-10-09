@@ -69,17 +69,6 @@ operations.update( binaryOps )
 operations.update( comparisonOps )
 
 
-comparisonOps_generic = {
-
-	'eq'  : '$_equal',
-	'gt'  : '$_greaterThan',
-	'lt'  : '$_lessThan',
-	'gte' : '$_greaterThanOrEqual',
-	'lte' : '$_lessThanOrEqual',
-	'ne'  : '$_notEqual',
-}
-
-
 
 # -- Extraction -------------------------------------
 

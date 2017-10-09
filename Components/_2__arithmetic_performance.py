@@ -27,7 +27,7 @@ def trim( x ):
 
 def shiftRight_( x, y ):
 
-	return x >> y
+	return x >> y  # logical shift
 
 
 def shiftLeft_( x, y ):

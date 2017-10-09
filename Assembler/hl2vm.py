@@ -34,7 +34,7 @@ import os
 import re
 
 # Hack computer
-# import Components._0__globalConstants as GC
+import Components._0__globalConstants as GC
 
 
 # === Helpers ===================================================
@@ -43,12 +43,7 @@ def prettyPrint( d ):
 	# stackoverflow.com/a/3314411
 	print( json.dumps( d, sort_keys = True, indent = 4 ) )
 
-
-# === Sample code ================================================
-
-# filePath = ''
-# with open( filePath, 'r' ) as file:
-# 	sampleCode = file.read()
+largestInt = 2 ** ( GC.N_BITS - 1 ) - 1  # two's complement
 
 
 # === Hack Lexicon ===============================================
@@ -91,7 +86,7 @@ Hack_lexicon = {
 	'punctuation' : '.,;(){}[]',
 }
 
-Hack_lexicon[ 'keywords' ] = (
+Hack_lexicon[ 'keywords' ] = set (
 
 	Hack_lexicon[ 'statementTypes'   ] + 
 	Hack_lexicon[ 'functionTypes'    ] + 
@@ -108,16 +103,6 @@ Hack_lexicon[ 'ops' ] = set (
 	Hack_lexicon[ 'binaryOps'     ] +
 	Hack_lexicon[ 'assignmentOps' ]
 )
-
-Hack_pointerMap = {
-
-	# '_SCREEN'   : GC.SCREEN_MEMORY_MAP,
-	# '_KEYBOARD' : GC.KBD_MEMORY_MAP,
-	# '_MOUSEX'   : GC.MOUSEX_MEMORY_MAP, 
-	# '_MOUSEY'   : GC.MOUSEY_MEMORY_MAP,
-	# '_IOBANK1'  : GC.IO_BANK1_MEMORY_MAP,
-	# '_IOBANK2'  : GC.IO_BANK2_MEMORY_MAP,
-}
 
 
 
@@ -1910,30 +1895,48 @@ class Parser():
 
 			self.input.next()
 
+			val = int( tok[ 'value' ] )
+
+			if val > largestInt:
+
+				raise Exception( 'Illegal 16-bit value' )
+
 			return {
 
 				'type'  : 'integerConstant',
-				'value' : tok[ 'value' ]
+				'value' : val
 			}
 
 		elif tok[ 'type' ] == 'hex':
 
 			self.input.next()
 
+			val = int( tok[ 'value' ], 16 )  # str2int
+
+			if val > largestInt:
+
+				raise Exception( 'Illegal 16-bit value' )
+
 			return {
 
 				'type'  : 'integerConstant',
-				'value' : int( tok[ 'value' ], 16 )  # str2int
+				'value' : val
 			}
 
 		elif tok[ 'type' ] == 'bin':
 
 			self.input.next()
 
+			val = int( tok[ 'value' ], 2 )  # str2int
+
+			if val > largestInt:
+
+				raise Exception( 'Illegal 16-bit value' )
+
 			return {
 
 				'type'  : 'integerConstant',
-				'value' : int( tok[ 'value' ], 2 )  # str2int
+				'value' : val
 			}
 
 		elif tok[ 'type' ] == 'char':
@@ -2238,6 +2241,9 @@ class CompileTo_HackVM():
 	def neg_    ( self ) : return 'neg\n'
 	def shiftR_ ( self ) : return 'shiftR\n'
 	def shiftL_ ( self ) : return 'shiftL\n'
+
+	def mult_   ( self ) : return 'mult\n' # temp, hardware
+	def div_    ( self ) : return 'div\n'  # temp, hardware
 
 
 	# -----------------------------------
@@ -2785,8 +2791,10 @@ class CompileTo_HackVM():
 		if   op == '+': return self.add_()
 		elif op == '-': return self.sub_()
 
-		elif op == '*': return self.call_( 'Math.multiply', 2 )
-		elif op == '/': return self.call_( 'Math.divide', 2 )
+		# elif op == '*': return self.call_( 'Math.multiply', 2 )
+		# elif op == '/': return self.call_( 'Math.divide', 2 )
+		elif op == '*': return self.mult_()  # test
+		elif op == '/': return self.div_()   # test
 		elif op == '%': return self.call_( 'Math.mod', 2 )
 
 		elif op == '>>': return self.shiftR_()
