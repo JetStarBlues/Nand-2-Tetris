@@ -33,19 +33,20 @@ if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0  # Can get away with no clock period as flip flops are not used for memory
 
 
-# Wishlist --
-COLOR_MODE_4BIT = False
+# Color mode --
+COLOR_MODE_4BIT = True
 if COLOR_MODE_4BIT :
-	# Revisit. If find clever way to init colors (probably thru software) no need to change any of the following,
-	N_BITS = 17  # first bit reserved ( used to decide if A or C instruction )
-	RAM_SIZE = 2**16
-	KBD_MEMORY_MAP      = 16384
-	MOUSE_MEMORY_MAP    = 16385
-	MOUSEX_MEMORY_MAP   = 16386
-	MOUSEY_MEMORY_MAP   = 16387
-	SCREEN_MEMORY_MAP   = 16388
-	IO_BANK1_MEMORY_MAP = 16389  # 15 downto 0
-	IO_BANK2_MEMORY_MAP = 16390  # 31 downto 16
+
+	# No space is left unallocated
+	heapEnd = PROGRAM_MEMORY_SIZE - 8192 * 4 - 6
+
+	KBD_MEMORY_MAP      = heapEnd + 0
+	MOUSE_MEMORY_MAP    = heapEnd + 1
+	MOUSEX_MEMORY_MAP   = heapEnd + 2
+	MOUSEY_MEMORY_MAP   = heapEnd + 3
+	IO_BANK1_MEMORY_MAP = heapEnd + 4  # 15 downto 0
+	IO_BANK2_MEMORY_MAP = heapEnd + 5  # 31 downto 16
+	SCREEN_MEMORY_MAP   = heapEnd + 6
 
 
 # --- Simulator UI -----------------------------------

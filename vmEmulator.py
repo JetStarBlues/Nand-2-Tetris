@@ -28,7 +28,7 @@
 
 		I'm sure there are optimizations to be made that can improve the performance
 		of the assembly/binary emulation. If you have any ideas, be sure to share
-		them because the best case scenario is for that emulator to execute at a
+		them because the best case scenario is for the binary emulator to execute at a
 		usable speed. Till then, this exists as an inbetween.
 '''
 
@@ -40,6 +40,7 @@ import re
 import time
 import os
 from multiprocessing import Array, Process
+import threading
 
 # Hack computer (will use only the Clock and IO modules)
 import Components
@@ -48,8 +49,10 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
+# programPath = 'C:/Users/Janet/Desktop/Hack/colorImages/lpTest/lpTest/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gfx/Main.vmx'  
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'  
@@ -86,6 +89,7 @@ clock = None
 io    = None
 
 startTime = None
+sysHalt = None
 
 io_process = None
 
@@ -662,13 +666,14 @@ def updateWithDebug():
 		print( 'Breakpoint reached after {} clock cycles'.format( clock.currentCycle ) )
 		print( 'Took {} seconds to reach breakpoint'.format( time.time() - startTime ) )
 
-		debug2File()		
+		debug2File()
+
 
 
 def breakpoint():
 
 	# pass
-	return PC == 8515  # Sys.halt (position changes with recompile)
+	return PC == sysHalt  # Sys.halt (position changes with recompile)
 	# return clock.currentCycle == 384381
 
 
@@ -716,8 +721,10 @@ def debug2File():
 		file.write( '' + '\n' )
 
 		# heap 2048..16383
+		# heapEnd = 16384
+		heapEnd = 32762  # 4bit color mode
 		file.write( 'Heap' + '\n' )
-		for i in range( 2048, 16384 ):
+		for i in range( 2048, heapEnd ):
 			file.write( '\t{:<5}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '' + '\n' )
 
@@ -749,6 +756,7 @@ def setup():
 	global clock
 	global io
 	global startTime
+	global sysHalt
 
 	# Setup RAM
 	RAM[ SP   ] = 256
@@ -769,6 +777,9 @@ def setup():
 
 		# Dump ROM and addresses
 		dumpROMnAddresses()
+
+	# Retrive location
+	sysHalt = addressLookup[ 'Sys.halt' ]
 
 	# Initialize clock
 	clock = Components.Clock()
@@ -815,8 +826,28 @@ def update():
 	# Handle exit via IO
 	if ( useMultiprocessing and not io_process.is_alive() ) or io.hasExited :
 
+		# debug2File()
+
 		clock.stop()
 		print( 'See you later!' )
+
+	# Stop running when reach Sys.halt
+	if PC == sysHalt:
+
+		# TODO, none of these actions seem to lower processor use...
+
+		clock.stop()
+		io.maxFps = 0  # stop screen refresh
+
+		print( 'Sys.halt reached' )
+
+		# Am I really killing the clock and IO threads with the above??
+		main_thread = threading.main_thread()
+
+		for t in threading.enumerate():
+
+			print( t.getName(), t.isAlive() )
+
 
 
 # Run -------------------------------

@@ -316,9 +316,13 @@ class Compiler():
 
 		return self.at( self.GP + index )
 
-	def atStatic( self, index ):
+	# def atStatic( self, index ):
+	def atStatic( self, index, className = None ):
 
 		return '@{}.{}'.format( self.curClassName, index )
+
+		# TODO, support for static access outside class
+		# return '@{}.{}'.format( className, index )
 
 	def label( self, loc ):
 

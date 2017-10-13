@@ -52,7 +52,7 @@ class IO():
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
 		self.nRegistersPerRow = self.width // self.N
-		self.screenMemEnd = self.screenMemStart + ( self.width * self.height // self.N )
+		self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
 		if not COLOR_MODE_4BIT:
 
@@ -72,6 +72,8 @@ class IO():
 				self.colors[ key ] = self.hex2rgb( value )
 
 			self.nRegistersPerRow *= 4
+			self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+
 
 		# Initialize Pygame ---
 		# threading.Thread(
@@ -241,27 +243,42 @@ class IO():
 
 		pixels = []
 
-		for y in range( self.height ):
+		# for y in range( self.height ):
 
-			row = []
+		# 	row = []
 
-			for x in range( self.nRegistersPerRow ):
+		# 	for x in range( self.nRegistersPerRow ):
 
-				idx = x + y * self.nRegistersPerRow
+		# 		idx = x + y * self.nRegistersPerRow
 
-				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
+		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-				register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+		# 		register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
 
-				for i in range( 0, self.N, 4 ):
-				
-					pixel = register[ i : i + 4 ]
+		# 		for i in range( 0, self.N, 4 ):
 
-					color = self.colors[ pixel ]  # look up corresponding color
+		# 			pixel = register[ i : i + 4 ]
 
-					row.append( color )
+		# 			color = self.colors[ pixel ]  # look up corresponding color
 
-			pixels.append( row )
+		# 			row.append( color )
+
+		# 	pixels.append( row )
+
+
+		for idx in range( self.screenMemStart, self.screenMemEnd ):
+
+			register = self.main_memory.read( idx )
+
+			register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+
+			for i in range( 0, self.N, 4 ):
+
+				pixel = register[ i : i + 4 ]
+
+				color = self.colors[ pixel ]  # look up corresponding color
+
+				pixels.append( color )
 
 		return pixels
 
