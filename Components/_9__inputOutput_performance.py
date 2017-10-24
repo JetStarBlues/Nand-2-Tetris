@@ -303,10 +303,12 @@ class IO():
 
 		''' If mouse button is released, write 0 '''
 
-		if button == 1:  # left button
+		# if button == 1:  # left button
 
-			# Write to memory
-			self.main_memory.write( 1, 0, 1, MOUSE_MEMORY_MAP )
+		# 	# Write to memory
+		# 	self.main_memory.write( 1, 0, 1, MOUSE_MEMORY_MAP )
+
+		pass  # Too fast, cleared long before Hack program has chance to see
 
 
 	# Keyboard --------------------------------------------------
@@ -328,7 +330,9 @@ class IO():
 		''' If key is released, write 0 '''
 
 		# Write to memory
-		self.main_memory.write( 1, 0, 1,  KBD_MEMORY_MAP )
+		# self.main_memory.write( 1, 0, 1,  KBD_MEMORY_MAP )
+
+		pass  # Too fast, cleared long before Hack program has chance to see
 
 	def lookupKey( self, key, modifier ):
 
@@ -336,7 +340,7 @@ class IO():
 		if key in lookup_keys:
 
 			# Handle shift modified presses
-			if modifier == 1 or modifier == 2 :
+			if modifier == 3 :
 
 				if key in lookup_shiftModifiedKeys:
 
@@ -352,6 +356,17 @@ class IO():
 						TLDR, shift key will not register consistently unless used as a modifier
 					'''
 					return 0
+
+			# Handle caps_lock modified presses
+			elif modifier == 8192:
+
+				if key in range( 97, 123 ):  # is a letter
+
+					return lookup_shiftModifiedKeys[ key ][ 0 ]
+
+				else:
+
+					return lookup_keys[ key ][ 0 ]
 
 			else:
 
@@ -370,14 +385,22 @@ class IO():
 
 lookup_keyModifiers = [
 
-	#
-	  0, # None
-	  1, # Shift left
-	  2, # shift right
-	 64, # Control left
-	128, # control right
-	256, # Alt left
-	512, # Alt right
+	0,     # None
+	1,     # Shift_left
+	2,     # Shift_right
+	3,     # Shift
+	8192,  # Caps
+	64,    # Ctrl_left
+	128,   # Ctrl_right
+	192,   # Ctrl
+	256,   # Alt_left
+	512,   # Alt_right
+	768,   # Alt
+	# 1024,  # Meta_left
+	# 2048,  # Meta_right
+	# 3072,  # Meta
+	# 4096,  # Num
+	# 16384, # Mode
 ]
 
 lookup_keys = {
@@ -463,6 +486,23 @@ lookup_keys = {
 	305 : [ 156 , None ],  # Control right
 	308 : [ 157 , None ],  # Alt left
 	307 : [ 158 , None ],  # Alt right
+
+	268 : [  42 , '*'  ],  # keypad asterisk
+	270 : [  43 , '+'  ],  # keypad plus
+	269 : [  45 , '-'  ],  # keypad minus
+	266 : [  46 , '.'  ],  # keypad period
+	267 : [  47 , '/'  ],  # keypad slash
+	256 : [  48 , '0'  ],  # keypad 0
+	257 : [  49 , '1'  ],  # keypad 1
+	258 : [  50 , '2'  ],  # keypad 2
+	259 : [  51 , '3'  ],  # keypad 3
+	260 : [  52 , '4'  ],  # keypad 4
+	261 : [  53 , '5'  ],  # keypad 5
+	262 : [  54 , '6'  ],  # keypad 6
+	263 : [  55 , '7'  ],  # keypad 7
+	264 : [  56 , '8'  ],  # keypad 8
+	265 : [  57 , '9'  ],  # keypad 9
+	271 : [ 128 , None ],  # keypad enter
 }
 
 lookup_shiftModifiedKeys = {

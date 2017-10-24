@@ -37,6 +37,11 @@ import re
 import Components._0__globalConstants as GC
 
 
+# === Settings ==================================================
+
+USE_COMPATIBLE_VM_INSTRUCTIONS = False  #TODO
+
+
 # === Helpers ===================================================
 
 def prettyPrint( d ):
