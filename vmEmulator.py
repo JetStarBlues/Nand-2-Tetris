@@ -32,6 +32,16 @@
 		usable speed. Till then, this exists as an inbetween.
 '''
 
+'''
+	TODO - Make if faster!
+
+	Official emulator attains speed by using OS libraries written in Java instead of Jack.
+	Is this a possible course of action?
+	E.g.
+	  - Sys.wait
+	  - GFX.drawPixel
+'''
+
 
 # Imports --------------------------
 
@@ -493,7 +503,14 @@ def call( fxName, nArgs ):
 	RAM[ SP ] = addr
 
 	# Goto function
-	goto( fxName )
+	# goto( fxName )
+	if fxName in OSWrappers:
+
+		OSWrappers[ fxName ]()
+
+	else:
+
+		goto( fxName )
 
 
 def ret():
@@ -544,6 +561,286 @@ def function( fxName, nLocals ):
 		RAM[ addr ] = 0
 
 	RAM[ SP ] += nLocals
+
+
+# OS Wrappers -----------------------
+
+def Sys_wait():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	duration = RAM[ argBase ]
+
+
+	# Subroutine body ---
+
+	'''
+		if ( duration <= 0 ) {
+
+			Sys.error( 1 );
+			// Sys.raiseException( "Sys.delay duration must be greater than zero" );
+		}
+	'''
+
+	if duration <= 0:
+
+		push( 'constant', 1, None )
+		call( 'Sys.error', 1 )
+
+	# print( "About to sleep for {} ms".format( duration ) )
+	time.sleep( duration / 1000 )  # convert msec to sec
+
+
+	# Return ---
+	ret()
+
+
+def GFX_drawPixel():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+
+
+	# Subroutine body ---
+
+	'''
+		var int screenIdx, wordIdx;
+		var int curWord;
+
+		// A bit slow to do this check for every pixel drawn!
+		if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ) {
+
+			// Sys.error( 7 );
+			// Sys.raiseException( "Pixel coordinates are out of bounds" );
+			return;
+		}
+
+		screenIdx = ( y * wordsPerRow ) + ( x >> pixelsPerWordL2 );
+		screenIdx += screenBaseAddr;
+
+		curWord = DataMemory.peek( screenIdx );
+
+		wordIdx = x % pixelsPerWord;
+
+		/**/
+		// 1bit color mode ----------------------------
+
+		if ( fgColor ) {
+
+			DataMemory.poke( screenIdx, curWord | pixelMask[ wordIdx ] );  // set bit to 1
+		}
+		else {
+
+			DataMemory.poke( screenIdx, curWord & ( ~ pixelMask[ wordIdx ] ) );  // set bit to 0
+		}/**/
+
+
+		/*
+		// 4bit color mode ----------------------------
+		
+		DataMemory.poke(
+
+			screenIdx,
+			colorMask[ fgColor ][ wordIdx ] | ( curWord & ( ~ pixelMask4[ wordIdx ] ) )
+		);*/
+	'''
+
+	# Static indices depend on the order they are listed in 'GFX.jack'
+	colorBitMode    = RAM[ staticLookup[ 'GFX_0' ] ]
+	screenBaseAddr  = RAM[ staticLookup[ 'GFX_1' ] ]
+	wordsPerRow     = RAM[ staticLookup[ 'GFX_2' ] ]
+	pixelsPerWord   = RAM[ staticLookup[ 'GFX_3' ] ]
+	pixelsPerWordL2 = RAM[ staticLookup[ 'GFX_4' ] ]
+	fgColor         = RAM[ staticLookup[ 'GFX_5' ] ]
+
+	# print( "Got {} of value {}".format( 'colorBitMode   ', colorBitMode    ) )
+	# print( "Got {} of value {}".format( 'screenBaseAddr ', screenBaseAddr  ) )
+	# print( "Got {} of value {}".format( 'wordsPerRow    ', wordsPerRow     ) )
+	# print( "Got {} of value {}".format( 'pixelsPerWord  ', pixelsPerWord   ) )
+	# print( "Got {} of value {}".format( 'pixelsPerWordL2', pixelsPerWordL2 ) )
+	# print( "Got {} of value {}".format( 'fgColor        ', fgColor         ) )
+
+	width = 512
+	height = 256
+
+	pixelMask = (
+
+		0b1000000000000000,
+		0b0100000000000000,
+		0b0010000000000000,
+		0b0001000000000000,
+		0b0000100000000000,
+		0b0000010000000000,
+		0b0000001000000000,
+		0b0000000100000000,
+		0b0000000010000000,
+		0b0000000001000000,
+		0b0000000000100000,
+		0b0000000000010000,
+		0b0000000000001000,
+		0b0000000000000100,
+		0b0000000000000010,
+		0b0000000000000001
+	)
+	pixelMask4 = (
+
+		0b1111000000000000,
+		0b0000111100000000,
+		0b0000000011110000,
+		0b0000000000001111
+	)
+	colorMask = (
+
+		(
+			0b0000000000000000,
+			0b0000000000000000,
+			0b0000000000000000,
+			0b0000000000000000
+		),
+		(
+			0b0001000000000000,
+			0b0000000100000000,
+			0b0000000000010000,
+			0b0000000000000001
+		),
+		(
+			0b0010000000000000,
+			0b0000001000000000,
+			0b0000000000100000,
+			0b0000000000000010
+		),
+		(
+			0b0011000000000000,
+			0b0000001100000000,
+			0b0000000000110000,
+			0b0000000000000011
+		),
+		(
+			0b0100000000000000,
+			0b0000010000000000,
+			0b0000000001000000,
+			0b0000000000000100
+		),
+		(
+			0b0101000000000000,
+			0b0000010100000000,
+			0b0000000001010000,
+			0b0000000000000101
+		),
+		(
+			0b0110000000000000,
+			0b0000011000000000,
+			0b0000000001100000,
+			0b0000000000000110
+		),
+		(
+			0b0111000000000000,
+			0b0000011100000000,
+			0b0000000001110000,
+			0b0000000000000111
+		),
+		(
+			0b1000000000000000,
+			0b0000100000000000,
+			0b0000000010000000,
+			0b0000000000001000
+		),
+		(
+			0b1001000000000000,
+			0b0000100100000000,
+			0b0000000010010000,
+			0b0000000000001001
+		),
+		(
+			0b1010000000000000,
+			0b0000101000000000,
+			0b0000000010100000,
+			0b0000000000001010
+		),
+		(
+			0b1011000000000000,
+			0b0000101100000000,
+			0b0000000010110000,
+			0b0000000000001011
+		),
+		(
+			0b1100000000000000,
+			0b0000110000000000,
+			0b0000000011000000,
+			0b0000000000001100
+		),
+		(
+			0b1101000000000000,
+			0b0000110100000000,
+			0b0000000011010000,
+			0b0000000000001101
+		),
+		(
+			0b1110000000000000,
+			0b0000111000000000,
+			0b0000000011100000,
+			0b0000000000001110
+		),
+		(
+			0b1111000000000000,
+			0b0000111100000000,
+			0b0000000011110000,
+			0b0000000000001111
+		)
+	)
+
+
+	screenIdx = None
+	wordIdx   = None
+	curWord   = None
+
+	# A bit slow to do this check for every pixel drawn!
+	if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ):
+
+		return
+
+	screenIdx = trim( trim( y * wordsPerRow ) + ( x >> pixelsPerWordL2 ) )
+	screenIdx = trim( screenIdx + screenBaseAddr )
+
+	curWord = RAM[ screenIdx ]
+
+	# Equivalent of 'x % pixelsPerWord'
+	# Assumes, 'x' is zero or positive, 'pixelsPerWord' is positive
+	wordIdx = trim( x + negate( trim( pixelsPerWord * ( x // pixelsPerWord ) ) ) )  #  x % pixelsPerWord
+
+
+	# If fast enough, do colorBitMode check here so that less manual work when switching modes
+
+	''''''
+	# 1bit color mode ----------------------------
+
+	if ( fgColor ):
+
+		RAM[ screenIdx ] = curWord | pixelMask[ wordIdx ]  # set bit to 1
+
+	else:
+
+		RAM[ screenIdx ] = curWord & ( pixelMask[ wordIdx ] ^ negativeOne )  # set bit to 0
+
+	''''''
+
+	'''
+	# 4bit color mode ----------------------------
+	
+	RAM[ screenIdx ] = colorMask[ fgColor ][ wordIdx ] | ( curWord & ( pixelMask4[ wordIdx ] ^ negativeOne ) )
+	'''
+
+
+	# Return ---
+	ret()
+
+OSWrappers = {
+	
+	'Sys.wait' : Sys_wait,
+	'GFX.drawPixel' : GFX_drawPixel  # Atm about 1 second faster
+}
 
 
 # Load program ----------------------
@@ -656,10 +953,6 @@ def updateWithDebug():
 
 	update()
 
-	# if clock.currentCycle > - 1:
-
-	# 	debug2File()
-
 	if breakpoint():
 
 		clock.stop()
@@ -671,11 +964,11 @@ def updateWithDebug():
 		debug2File()
 
 
-
 def breakpoint():
 
 	# pass
-	return PC == sysHalt  # Sys.halt (position changes with recompile)
+	return PC == addressLookup[ 'GASchunky.run' ]
+	# return PC == sysHalt
 	# return clock.currentCycle == 384381
 
 
