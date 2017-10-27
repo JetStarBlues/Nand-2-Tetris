@@ -39,7 +39,7 @@ import Components._0__globalConstants as GC
 
 # === Settings ==================================================
 
-USE_COMPATIBLE_VM_INSTRUCTIONS = False  #TODO
+USE_COMPATIBLE = True  # TODO (or not)  # Use VM instructions that are compatible with the official TECS VMEmulator
 
 
 # === Helpers ===================================================
@@ -2793,28 +2793,57 @@ class CompileTo_HackVM():
 
 	def compile_binaryOp( self, op ):
 
-		if   op == '+': return self.add_()
+		# Logic ---
+		if   op == '&': return self.and_()
+		elif op == '|': return self.or_()
+
+		elif op == '^':
+			if USE_COMPATIBLE: return self.call_( 'Math.xor', 2 )
+			else:              return self.xor_()
+
+
+		# Arithmetic ---
+		elif op == '+': return self.add_()
 		elif op == '-': return self.sub_()
 
-		# elif op == '*': return self.call_( 'Math.multiply', 2 )
-		# elif op == '/': return self.call_( 'Math.divide', 2 )
-		elif op == '*': return self.mult_()  # test
-		elif op == '/': return self.div_()   # test
 		elif op == '%': return self.call_( 'Math.mod', 2 )
 
-		elif op == '>>': return self.shiftR_()
-		elif op == '<<': return self.shiftL_()
-		elif op == '&': return self.and_()
-		elif op == '|': return self.or_()
-		elif op == '^': return self.xor_()
+		elif op == '*':
+			if USE_COMPATIBLE: return self.call_( 'Math.multiply', 2 )
+			else:              return self.mult_()
 
+		elif op == '/':
+			if USE_COMPATIBLE: return self.call_( 'Math.divide', 2 )
+			else:              return self.div_()
+
+		elif op == '>>': 
+			if USE_COMPATIBLE: return self.call_( 'Math.lsr', 2 )
+			else:              return self.shiftR_()
+
+		elif op == '<<': 
+			if USE_COMPATIBLE: return self.call_( 'Math.lsl', 2 )
+			else:              return self.shiftL_()
+
+
+		# Comparison ---
 		elif op == '=' or op == '==': return self.eq_()
-		elif op == '>'  : return self.gt_()
-		elif op == '<'  : return self.lt_()
-		elif op == '>=' : return self.gte_()
-		elif op == '<=' : return self.lte_()
-		elif op == '!=' : return self.ne_()
+		elif op == '>': return self.gt_()
+		elif op == '<': return self.lt_()
 
+		elif op == '>=':
+			if USE_COMPATIBLE: return self.call_( 'Math.gte', 1 )
+			else:              return self.gte_()
+
+		elif op == '<=':
+			if USE_COMPATIBLE: return self.call_( 'Math.lte', 1 )
+			else:              return self.lte_()
+
+		elif op == '!=':
+			if USE_COMPATIBLE: return self.call_( 'Math.ne', 1 )
+			else:              return self.ne_()
+
+
+		# ---
 		else:
 			self.croak( "Error: Don't know how to compile the binaryOp " + op )
 

@@ -22,31 +22,45 @@ import Assembler.vm2vmx as vm2vmx
 
 # == Main ==========================================================
 
+def compileOS():
+
+	OSPath = '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS'
+
+	# Generate VM files
+	print( 'Generating OS VM files...' )
+	hl2vm.genVMFiles( OSPath )
+
+	# Remove 'Main.vm'
+	# os.remove( '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Main.vm' )
+
+
 def hl_to_bin( inputDirPath ):
+
+	# Compile OS
+	compileOS()
 
 	VM_includes = [
 
 		# OS files
 		# 'Programs/Libraries/OS/Array.vm',
+		# 'Programs/Libraries/OS/DataMemory.vm',
+		# 'Programs/Libraries/OS/Font.vm',
+		# 'Programs/Libraries/OS/GFX.vm',
+		# 'Programs/Libraries/OS/GlobalConstants.vm',
 		# 'Programs/Libraries/OS/Keyboard.vm',
 		# 'Programs/Libraries/OS/Math.vm',
-		# 'Programs/Libraries/OS/Memory.vm',
-		# 'Programs/Libraries/OS/Output.vm',
-		# 'Programs/Libraries/OS/Screen.vm',
 		# 'Programs/Libraries/OS/String.vm',
-		# 'Programs/Libraries/OS/Sys.vm',
+		# 'Programs/Libraries/OS/Sys.vm'
 
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Array.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/DataMemory.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Font.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GFX.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GlobalConstants.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Keyboard.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Math.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/String.vm',
-		# '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Sys.vm',
-
-		#TODO... use precompiled ASM file instead...
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Array.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/DataMemory.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Font.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GFX.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GlobalConstants.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Keyboard.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Math.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/String.vm',
+		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Sys.vm'
 	]
 
 	# Generate VM files and return includes

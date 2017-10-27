@@ -59,14 +59,15 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-# programPath = 'C:/Users/Janet/Desktop/Hack/colorImages/lpTest/lpTest/Main.vmx'
+# programPath = '../colorImages/lpTest/lpTest/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/sys/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/keyboard/Main.vmx'  
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gfx/Main.vmx'  
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/gfx/Main.vmx'  
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'  
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/math/Main.vmx'
 

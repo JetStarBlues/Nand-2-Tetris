@@ -10,17 +10,13 @@ import Assembler.hl2vm as hl2vm
 
 '''------------------------------- Main -------------------------------'''
 
-inputDirPath = 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/precompiledOS'
+inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS'
 
 # Generate VM files
-print( 'Generating VM files...' )
+print( 'Generating OS VM files...' )
 hl2vm.genVMFiles( inputDirPath )
 
 # Remove 'Main.vm'
-os.remove( 'C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Main.vm' )
-
-# Generate ASM file
-# print( 'Generating assembly file...' )
-# vm2asm.genASMFile( inputDirPath, debug = True )
+# os.remove( '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Main.vm' )
 
 print( 'Done!' )
