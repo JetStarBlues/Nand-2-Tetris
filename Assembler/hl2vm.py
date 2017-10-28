@@ -39,7 +39,7 @@ import Components._0__globalConstants as GC
 
 # === Settings ==================================================
 
-USE_COMPATIBLE = True  # TODO (or not)  # Use VM instructions that are compatible with the official TECS VMEmulator
+USE_COMPATIBLE = True  # Use VM instructions that are compatible with the official TECS VMEmulator
 
 
 # === Helpers ===================================================
@@ -2548,7 +2548,7 @@ class CompileTo_HackVM():
 
 				s += right
 
-			else:  # +=, -=, *= etc.
+			else:  # compound assignment such as +=, -=, &=
 
 				s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
 				s += right

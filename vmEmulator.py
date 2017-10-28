@@ -106,6 +106,8 @@ sysHalt = None
 
 io_process = None
 
+yieldToExternal = False  # Suspend tick
+
 
 # Setup stack ----------------------
 
@@ -504,20 +506,15 @@ def call( fxName, nArgs ):
 	RAM[ SP ] = addr
 
 	# Goto function
-	# goto( fxName )
-	if fxName in OSWrappers:
-
-		OSWrappers[ fxName ]()
-
-	else:
-
-		goto( fxName )
+	goto( fxName )
 
 
 def ret():
 
 	global PC
 	global PC_jump
+
+	global yieldToExternal
 
 	# Save current LCL
 	curLCL = RAM[ LCL ]
@@ -549,11 +546,15 @@ def ret():
 
 	PC_jump = True
 
+	yieldToExternal = False  # temp...
+
 
 def label( loc ): pass
 
 
 def function( fxName, nLocals ):
+
+	global yieldToExternal
 
 	# Init locals to zeros
 	for i in range( nLocals ):
@@ -562,6 +563,12 @@ def function( fxName, nLocals ):
 		RAM[ addr ] = 0
 
 	RAM[ SP ] += nLocals
+
+	# If exists, execute python equivalent
+	if fxName in OSWrappers:
+
+		yieldToExternal = True
+		OSWrappers[ fxName ]()
 
 
 # OS Wrappers -----------------------
@@ -579,20 +586,25 @@ def Sys_wait():
 		if ( duration <= 0 ) {
 
 			Sys.error( 1 );
-			// Sys.raiseException( "Sys.delay duration must be greater than zero" );
+			// Sys.raiseException( "Sys.wait duration must be greater than zero" );
 		}
 	'''
 
 	if duration <= 0:
 
-		push( 'constant', 1, None )
-		call( 'Sys.error', 1 )
+		print( "ERROR: Sys.wait duration must be greater than zero" )
+
+		# Halt program
+		haltOnError()
+
+		return
 
 	# print( "About to sleep for {} ms".format( duration ) )
 	time.sleep( duration / 1000 )  # convert msec to sec
 
 
 	# Return ---
+	push( 'constant', 0, None )
 	ret()
 
 
@@ -613,9 +625,8 @@ def GFX_drawPixel():
 		// A bit slow to do this check for every pixel drawn!
 		if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ) {
 
-			// Sys.error( 7 );
+			Sys.error( 7 );
 			// Sys.raiseException( "Pixel coordinates are out of bounds" );
-			return;
 		}
 
 		screenIdx = ( y * wordsPerRow ) + ( x >> pixelsPerWordL2 );
@@ -800,6 +811,11 @@ def GFX_drawPixel():
 	# A bit slow to do this check for every pixel drawn!
 	if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ):
 
+		print( "ERROR: Pixel coordinates are out of bounds ( {}, {} )".format( x, y ) )
+
+		# Halt program
+		haltOnError()
+
 		return
 
 	screenIdx = trim( trim( y * wordsPerRow ) + ( x >> pixelsPerWordL2 ) )
@@ -835,11 +851,12 @@ def GFX_drawPixel():
 
 
 	# Return ---
+	push( 'constant', 0, None )
 	ret()
 
 OSWrappers = {
 	
-	'Sys.wait' : Sys_wait,
+	'Sys.wait'      : Sys_wait,
 	'GFX.drawPixel' : GFX_drawPixel  # Atm about 1 second faster
 }
 
@@ -968,8 +985,8 @@ def updateWithDebug():
 def breakpoint():
 
 	# pass
-	return PC == addressLookup[ 'GASchunky.run' ]
-	# return PC == sysHalt
+	# return PC == addressLookup[ 'GFX.fillRect' ]
+	return PC == sysHalt
 	# return clock.currentCycle == 384381
 
 
@@ -1047,6 +1064,22 @@ def dumpROMnAddresses():
 
 # Computer --------------------------
 
+def haltOnError():
+
+	global PC
+	global yieldToExternal
+
+	PC = sysHalt  # end program
+
+	yieldToExternal = True  # prevent tick
+
+	if debugMode:
+
+		debug2File()
+
+	update()
+
+
 def setup():
 
 	global clock
@@ -1117,12 +1150,16 @@ def tick():
 
 def update():
 
-	tick()
+	if not yieldToExternal:
+
+		tick()
 
 	# Handle exit via IO
 	if ( useMultiprocessing and not io_process.is_alive() ) or io.hasExited :
 
-		# debug2File()
+		if debugMode:
+
+			debug2File()
 
 		clock.stop()
 		print( 'See you later!' )
@@ -1142,7 +1179,7 @@ def update():
 
 		for t in threading.enumerate():
 
-			print( t.getName(), t.isAlive() )
+			print( t.getName(), t.isAlive() )  # Nope, they are still alive! TODO, how to properly stop them
 
 
 	#Hmmm
