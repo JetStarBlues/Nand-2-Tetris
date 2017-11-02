@@ -44,8 +44,8 @@ if COLOR_MODE_4BIT :
 	MOUSE_MEMORY_MAP    = heapEnd + 1
 	MOUSEX_MEMORY_MAP   = heapEnd + 2
 	MOUSEY_MEMORY_MAP   = heapEnd + 3
-	IO_BANK1_MEMORY_MAP = heapEnd + 4  # 15 downto 0
-	IO_BANK2_MEMORY_MAP = heapEnd + 5  # 31 downto 16
+	IO_BANK1_MEMORY_MAP = heapEnd + 4
+	IO_BANK2_MEMORY_MAP = heapEnd + 5
 	SCREEN_MEMORY_MAP   = heapEnd + 6
 
 

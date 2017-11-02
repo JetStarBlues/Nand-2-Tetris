@@ -59,17 +59,23 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-# programPath = '../colorImages/lpTest/lpTest/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/sys/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/keyboard/Main.vmx'  
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/gfx/Main.vmx'  
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'  
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/math/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
+# programPath = '../colorImages/lpTest/lpTest/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/sys/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/string/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/memory/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/math/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/keyboard/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/array/Main.vmx'
+# programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
+# programPath = 'Programs/ByOthers/GavinStewart/Games&Demos/GASscroller/modifiedCode/Main.vmx'
+
 
 debugPath = 'C:/Users/Janet/Desktop/Temp/DumpDebug2/'  # Folder where logs go
 
@@ -156,6 +162,10 @@ def trim( x ):
 def negate( x ):
 
 	return trim( ( x ^ negativeOne ) + 1 )  # twos complement
+
+def isNegative( x ):
+
+	return x > largestInt
 
 
 # VM Helpers ------------------------
@@ -417,25 +427,89 @@ def operation( op ):
 
 			value = zr
 
-		elif op == 'gt':
-
-			value = not( zr or ng )
-
-		elif op == 'lt':
-
-			value = ng
-
-		elif op == 'gte':
-
-			value = not( ng )
-
-		elif op == 'lte':
-
-			value = zr or ng
-
 		elif op == 'ne':
 
 			value = not( zr )
+
+		else:
+
+			# For gt, gte, lt, lte see discussion here,
+			#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/-td4031520.html
+
+			oppositeSigns = ( a > largestInt ) ^ ( b > largestInt )
+			aIsNeg = a > largestInt
+
+			if op == 'gt':
+
+				# value = not( zr or ng )
+
+				if oppositeSigns:  # opposite signs and,
+
+					if aIsNeg:     # a is negative
+
+						value = False
+
+					else:          # a is zero or positive
+
+						value = True
+
+				else:  # same signs
+
+					value = not( zr or ng )
+
+			elif op == 'gte':
+
+				# value = not( ng )
+
+				if oppositeSigns:  # opposite signs and,
+
+					if aIsNeg:     # a is negative
+
+						value = False
+
+					else:          # a is zero or positive
+
+						value = True
+
+				else:  # same signs
+
+					value = not( ng )
+
+			elif op == 'lt':
+
+				# value = ng
+
+				if oppositeSigns:  # opposite signs and,
+
+					if aIsNeg:     # a is negative
+
+						value = True
+
+					else:          # a is zero or positive
+
+						value = False
+
+				else:  # same signs
+
+					value = ng
+
+			elif op == 'lte':
+
+				# value = zr or ng
+
+				if oppositeSigns:  # opposite signs and,
+
+					if aIsNeg:     # a is negative
+
+						value = True
+
+					else:          # a is zero or positive
+
+						value = False
+
+				else:  # same signs
+
+					value = zr or ng
 
 		if value:
 

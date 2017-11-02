@@ -2831,15 +2831,15 @@ class CompileTo_HackVM():
 		elif op == '<': return self.lt_()
 
 		elif op == '>=':
-			if USE_COMPATIBLE: return self.call_( 'Math.gte', 1 )
+			if USE_COMPATIBLE: return self.call_( 'Math.gte', 2 )
 			else:              return self.gte_()
 
 		elif op == '<=':
-			if USE_COMPATIBLE: return self.call_( 'Math.lte', 1 )
+			if USE_COMPATIBLE: return self.call_( 'Math.lte', 2 )
 			else:              return self.lte_()
 
 		elif op == '!=':
-			if USE_COMPATIBLE: return self.call_( 'Math.ne', 1 )
+			if USE_COMPATIBLE: return self.call_( 'Math.ne', 2 )
 			else:              return self.ne_()
 
 
