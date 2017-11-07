@@ -807,6 +807,9 @@ class Compiler():
 	# def compile_comparisonOp_inline( self, op ):
 	def compile_comparisonOp_( self, op ):
 
+		# TODO - Change gt, gte, lt, lte to reflect,
+		#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
+
 		s = []
 
 		cTrue = 'comp_true{}'.format( self.compCount )

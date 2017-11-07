@@ -39,7 +39,8 @@ import Components._0__globalConstants as GC
 
 # === Settings ==================================================
 
-USE_COMPATIBLE = True  # Use VM instructions that are compatible with the official TECS VMEmulator
+USE_COMPATIBLE = None  # Use VM instructions that are compatible with the official TECS VMEmulator
+                       # Value is set by call to 'genVMFiles'
 
 
 # === Helpers ===================================================
@@ -3018,9 +3019,15 @@ class CompileTo_HackVM():
 
 # -- Run -----------------------------------------
 
-def genVMFile( inputFilePath, outputFilePath ):
+def genVMFile( inputFilePath, outputFilePath, useCompatibleVM = False ):
 
-	compiler = Compiler()  # init compiler
+	global USE_COMPATIBLE
+
+	# Setup compatibility
+	USE_COMPATIBLE = useCompatibleVM
+
+	# Init compiler
+	compiler = Compiler()
 
 	# Read
 	with open( inputFilePath, 'r' ) as file:
@@ -3077,11 +3084,15 @@ def translateFile( compiler, className, inputFilePath, outputDirPath, includes )
 	includes.extend( includes_ )
 
 
-def genVMFiles( inputDirPath ):
+def genVMFiles( inputDirPath, useCompatibleVM = False ):
+
+	global USE_COMPATIBLE
+
+	# Setup compatibility
+	USE_COMPATIBLE = useCompatibleVM
 
 	# Init compiler
 	compiler = Compiler()
-
 
 	# Translate jack files in input directory
 	classes = []

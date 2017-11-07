@@ -22,16 +22,17 @@ import Assembler.vm2vmx as vm2vmx
 
 # == Main ==========================================================
 
+useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
+# useCompatibleVM = False
+
+
 def compileOS():
 
 	OSPath = '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS'
 
 	# Generate VM files
 	print( 'Generating OS VM files...' )
-	hl2vm.genVMFiles( OSPath )
-
-	# Remove 'Main.vm'
-	# os.remove( '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Main.vm' )
+	hl2vm.genVMFiles( OSPath, useCompatibleVM )
 
 
 def hl_to_bin( inputDirPath ):
@@ -65,7 +66,7 @@ def hl_to_bin( inputDirPath ):
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
-	VM_includes.extend( hl2vm.genVMFiles( inputDirPath ) )
+	VM_includes.extend( hl2vm.genVMFiles( inputDirPath, useCompatibleVM ) )
 
 	# Generate VMX file
 	print( 'Generating VMX file...' )
