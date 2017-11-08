@@ -22,8 +22,8 @@ import Assembler.vm2vmx as vm2vmx
 
 # == Main ==========================================================
 
-useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
-# useCompatibleVM = False
+# useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
+useCompatibleVM = False
 
 
 def compileOS():

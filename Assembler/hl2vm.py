@@ -40,7 +40,7 @@ import Components._0__globalConstants as GC
 # === Settings ==================================================
 
 USE_COMPATIBLE = None  # Use VM instructions that are compatible with the official TECS VMEmulator
-                       # Value is set by call to 'genVMFiles'
+                       # Value is set by caller of 'genVMFiles'
 
 
 # === Helpers ===================================================

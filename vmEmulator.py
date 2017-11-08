@@ -59,10 +59,10 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/pong/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/pong/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
 # programPath = '../colorImages/lpTest/lpTest/Main.vmx'
