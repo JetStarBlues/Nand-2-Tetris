@@ -1,0 +1,7 @@
+class FourthClass {
+
+	function void main () {
+
+		GFX.printString( "You found me!" );
+	}
+}

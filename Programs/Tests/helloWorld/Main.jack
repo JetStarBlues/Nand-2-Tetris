@@ -1,0 +1,16 @@
+class Main {
+
+	function void main () {
+
+		Font.changeFont( 1 );
+
+		// GFX.setColor( 11 );
+
+		GFX.setColor( 0 );
+		GFX.setTxtBgColor( 1 );
+
+		// GFX.setTextSize( 16 );
+		
+		GFX.printString( "Hello" );
+	}
+}

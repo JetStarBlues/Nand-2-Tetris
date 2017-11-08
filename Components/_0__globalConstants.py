@@ -34,7 +34,7 @@ if PERFORMANCE_MODE :
 
 
 # Color mode --
-COLOR_MODE_4BIT = False
+COLOR_MODE_4BIT = True
 if COLOR_MODE_4BIT :
 
 	# No space is left unallocated

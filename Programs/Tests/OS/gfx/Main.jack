@@ -1,0 +1,635 @@
+class Main {
+
+	// See prototype at
+	//  www.khanacademy.org/cs/a/6545640993914880
+
+	const int width = 512;
+	const int height = 256;
+
+	// 1 bit mode
+	// const int colorMode = 0;
+	// const int BLACK     = 1;
+	// const int BLUE      = 0;
+	// const int RED       = 0;
+	// const int GREEN     = 0;
+	// const int CYAN      = 0;
+	// const int MAGENTA   = 0;
+	// const int YELLOW    = 0;
+	// const int WHITE     = 0;
+
+	// 4 bit mode
+	const int colorMode = 4;
+	const int BLACK     = 0;
+	const int BLUE      = 1;
+	const int RED       = 8;
+	const int GREEN     = 11;
+	const int CYAN      = 12;
+	const int MAGENTA   = 14;
+	const int YELLOW    = 10;
+	const int WHITE     = 7;
+
+
+	function void main () {
+
+		if ( colorMode ) {
+
+			Main.testFillScreen();
+		}
+
+		Main.testText();
+		Main.testLines( WHITE );
+		Main.testFastLines(RED, BLUE);
+		Main.testRects( YELLOW );
+
+		if ( colorMode ) {
+
+			Main.testFilledRects( BLUE, YELLOW );
+		}
+		else {
+
+			Main.testFilledRects( BLUE, BLACK );
+		}
+
+		Main.testCircles( 10, RED );
+		Main.testFilledCircles( 10, GREEN );
+		Main.testTriangles();
+		// Main.testFilledTriangles();   // filled triangles not yet implemented...
+		Main.testRoundRects();
+		Main.testFilledRoundRects();
+	}
+
+
+	function int testFillScreen () {
+
+		// var int start;
+
+		// start = Sys.millis();
+
+		// GFX.setColor( BLACK );
+		// GFX.fillScreen();
+
+		GFX.setColor( RED );
+		GFX.fillScreen();
+
+		GFX.setColor( GREEN );
+		GFX.fillScreen();
+
+		GFX.setColor( BLUE );
+		GFX.fillScreen();
+
+		// GFX.setColor( BLACK );
+		// GFX.fillScreen();
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testText () {
+
+		// var int start;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// start = millis();
+
+		// GFX.setLineSpacing( 2 );
+		// GFX.setColor( WHITE );
+		// GFX.setTextSize( 10 );
+		// GFX.printString( "Hello World!" );
+		// GFX.println();
+		GFX.setColor( YELLOW );
+		GFX.setTextSize( 20 );
+		GFX.printString( "1234.56" );
+		GFX.println();
+		GFX.setColor( RED );
+		GFX.setTextSize( 30 );
+		GFX.printChar(1);
+		GFX.printString( "???" );
+		GFX.println();
+		GFX.setColor( MAGENTA );
+		GFX.setTextSize( 15 );
+		GFX.printString( "Ninjitsu - " );
+		GFX.setTextSize( 12 );
+		GFX.printString( "hidden leaf village" );
+		GFX.println();
+		GFX.setTextSize( 10 );
+		GFX.setColor( GREEN );
+		// GFX.printString( "Now this is a story" );
+		// GFX.println();
+		// GFX.printString( "all about how" );
+		// GFX.println();
+		// GFX.printString( "My life got flipped turned" );
+		// GFX.println();
+		// GFX.printString( "upside down" );
+		// GFX.println();
+		GFX.setLineSpacing( 2 );
+		GFX.printString( "And I'd like to take a" );
+		GFX.println();
+		GFX.printString( "minute just sit right there" );
+		GFX.println();
+		GFX.setLineSpacing( 1 );
+		GFX.printString( "I'll tell you how I" );
+		GFX.println();
+		GFX.printString( "became the prince of" );
+		GFX.println();
+		GFX.printString( "a town called Bel-Air" );
+		GFX.println();
+		Font.changeFont( 2 );
+		GFX.setColor( WHITE );
+		GFX.printString( "I wanna be the very best / Like no one ever was / \nTo catch them is my real test / To train them is my cause / \nI will travel across the land / Searching far and wide" );
+		GFX.println();
+		Font.changeFont( 1 );
+		GFX.setColor( CYAN );
+		GFX.printString( "I wanna be the very best / Like no one ever was / To catch them is my real test / To train them is my cause / I will travel across the land / \n\tSearching far and wide" );
+		GFX.println();
+		GFX.printString( "  \tDon't let go" );
+		GFX.println();
+
+		// return millis() - start;
+
+		return 0;
+	}
+
+	function int testLines ( int color ) {
+
+		// var int start, t;
+		var int x1, y1, x2, y2;
+		var int w, h;
+
+		w = width;
+		h = height;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		x1 = 0;
+		y1 = 0;
+		y2 = h - 1;
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( x2 = 0; x2 < w; x2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		x2 = w - 1;
+
+		for ( y2 = 0; y2 < h; y2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		// t = Sys.millis() - start;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		x1 = w - 1;
+		y1 = 0;
+		y2 = h - 1;
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( x2 = 0; x2 < w; x2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		x2 = 0;
+
+		for ( y2 = 0; y2 < h; y2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		// t += Sys.millis() - start;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		x1 = 0;
+		y1 = h - 1;
+		y2 = 0;
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( x2 = 0; x2 < w; x2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		x2 = w - 1;
+
+		for ( y2 = 0; y2 < h; y2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		// t += Sys.millis() - start;    
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		x1 = w - 1;
+		y1 = h - 1;
+		y2 = 0;
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( x2 = 0; x2 < w; x2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		x2 = 0;
+
+		for ( y2 = 0; y2 < h; y2 += 6 ){
+
+			GFX.drawLine( x1, y1, x2, y2 );
+		}
+
+		// t += Sys.millis() - start; 
+
+		// return t;
+
+		return 0;
+	}
+
+	function int testFastLines ( int color1, int color2 ) {
+
+		// var int start;
+		var int x, y, w, h;
+
+		x = width;
+		y = width;
+		w = width;
+		h = height;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// start = Sys.millis();
+
+		GFX.setColor( color1 );
+
+		for ( y = 0; y < h; y += 5 ) {
+
+			GFX.drawFastHLine( 0, y, w );
+		}
+
+		GFX.setColor( color2 );
+
+		for ( x = 0; x < w; x += 5 ) {
+
+			GFX.drawFastVLine( x, 0, h );
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testRects ( int color ) {
+
+		// var int start;
+		var int n, i, i2, cx, cy;
+
+		cx = width / 2;
+		cy = height / 2;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		n = Math.min( width, height );
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( i = 2; i < n; i += 6 ) {
+
+			i2 = i / 2;
+			GFX.strokeRect( cx - i2, cy - i2, i, i );
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testFilledRects ( int color1, int color2 ) {
+
+		// var int start, t;
+		var int n, i, i2, cx, cy;
+		var int count;
+
+		cx = width / 2 - 1;
+		cy = height / 2 - 1;
+
+		n = Math.min( width, height );
+
+		count = 0;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// start = Sys.millis();
+		// t = 0;
+
+		for ( i = n; i > 0; i -= 6 ) {
+
+			i2 = i / 2 - 1;
+
+			if ( count % 2 == 0 ) {
+
+				GFX.setColor( color1 );
+			}
+			else {
+
+				GFX.setColor( color2 );
+			}
+			
+			// start = Sys.millis();
+
+			GFX.fillRect( cx - i2, cy - i2, i, i );
+
+			// t += Sys.millis() - start;
+
+			count += 1;
+		}
+
+		// return t;
+
+		return 0;
+	}
+
+	function int testCircles ( int r, int color ) {
+
+		// var int start;
+		var int x, y, w, h, r2;
+
+		w = width;
+		h = height;
+		r2 = r * 2;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		// for ( x = 0; x < ( w - r ); x += r2 ) {
+		for ( x = r; x < ( w - r ); x += r2 ) {
+
+			// for ( y = 0; y < ( h - r ); y += r2 ) {
+			for ( y = r; y < ( h - r ); y += r2 ) {
+
+				GFX.strokeCircle( x, y, r );
+			}
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testFilledCircles ( int r, int color ) {
+
+		// var int start;
+		var int x, y, w, h, r2;
+
+		w = width;
+		h = height;
+		r2 = r * 2;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// start = Sys.millis();
+
+		GFX.setColor( color );
+
+		for ( x = r; x < ( w - r ); x += r2 ) {
+
+			for ( y = r; y < ( h - r ); y += r2 ) {
+
+				GFX.fillCircle( x, y, r );
+			}
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testTriangles () {
+
+		// var int start;
+		var int n, i, cx, cy;
+		var int c;
+
+		cx = width / 2 - 1;
+		cy = height / 2 - 1;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		n = Math.min( cx, cy );
+
+		c = 8;
+
+		// start = Sys.millis();
+
+		for ( i = 0; i < n; i += 5 ) {
+
+			if ( colorMode ) {
+
+				// color( 0, 0, i )  rgb
+
+				GFX.setColor( c );  // ....
+				c += 1;
+				if ( c > 10 ){ c = 8; }
+			}
+			else {
+
+				GFX.setColor( WHITE );
+			}
+
+			GFX.strokeTriangle(
+
+				cx    , cy - i,
+				cx - i, cy + i,
+				cx + i, cy + i
+			);
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testFilledTriangles () {
+
+		// var int start, t;
+		var int i, cx, cy;
+
+		var int count;
+
+		cx = width / 2 - 1;
+		cy = height / 2 - 1;
+
+		count = 0;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		// t = 0;
+
+		for ( i = Math.min( cx, cy ); i > 10; i -= 5 ) {
+
+			// start = Sys.millis();
+
+			if ( count % 2 == 0 ) {
+
+				GFX.setColor( WHITE );
+			}
+			else {
+
+				GFX.setColor( BLACK );
+			}
+
+			// GFX.setColor( i % 8 );
+			// color( 0, i, i )  rgb
+
+			GFX.fillTriangle(
+
+				cx    , cy - i,
+				cx - i, cy + i,
+				cx + i, cy + i
+			
+			);
+
+			/*
+			GFX.setColor( i % ( 8 + 8 ) );
+			color( i, i, 0 )  rgb
+
+			GFX.strokeTriangle(
+
+				cx    , cy - i,
+				cx - i, cy + i,
+				cx + i, cy + i
+				
+			);*/
+
+			// t += Sys.millis() - start;
+			
+			count += 1;
+		}
+
+		// return t;
+
+		return 0;
+	}
+
+	function int testRoundRects () {
+
+		// var int start;
+		var int w, i, i2, cx, cy;
+		var int c;
+
+		cx = width / 2 - 1;
+		cy = height / 2 - 1;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		w = Math.min( width, height );
+
+		c = 12;
+
+		// start = Sys.millis();
+
+		for ( i = 0; i < w; i += 6 ) {
+
+			if ( colorMode ) {
+
+				// color( i, 0, 0 )  rgb
+
+				GFX.setColor( c );  // ....
+				c += 1;
+				if ( c > 14 ){ c = 12; }
+			}
+			else {
+
+				GFX.setColor( WHITE );
+			}
+
+			i2 = i / 2;
+
+			GFX.strokeRoundRect( cx - i2, cy - i2, i, i, i / 8 );
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+	function int testFilledRoundRects () {
+
+		// var int start;
+		var int w, i, i2, cx, cy;
+
+		var int c, fu;
+
+		cx = width / 2 - 1;
+		cy = height / 2 - 1;
+
+		GFX.setColor( BLACK );
+		GFX.fillScreen();
+
+		w = Math.min( width, height );
+		
+		fu = 0;
+		c = 5;
+
+		// start = Sys.millis();
+
+		for ( i = w; i > 20; i -= 6 ) {
+
+			if ( colorMode ) {
+
+				// color( 0, i, 0 )  rgb
+
+				GFX.setColor( c );  // ....
+				c += 1;
+				if ( c > 7 ){ c = 5; }
+			}
+			else {
+
+				GFX.setColor( fu % 2 );
+				fu += 1;
+			}
+
+			i2 = i / 2 - 1;
+
+			GFX.fillRoundRect( cx - i2, cy - i2, i, i, i / 8 );
+		}
+
+		// return Sys.millis() - start;
+
+		return 0;
+	}
+
+}

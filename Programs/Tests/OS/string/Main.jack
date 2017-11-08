@@ -1,0 +1,281 @@
+class Main {
+
+	function void main () {
+
+		GFX.printString( "Testing..." );
+		GFX.println();
+
+		// customTest1();
+		// customTest2();
+		// customTest3();
+		// customTest4();
+		// customTest5();
+		tecsTest();
+	}
+
+	// Custom tests
+	function void customTest1 () {
+
+		var String s;
+		var String t, v;
+
+		s = String.new( 30 );
+
+		GFX.printInt( s.maxLength() );
+		GFX.println();
+
+		GFX.printInt( s.length() );
+		GFX.println();
+
+		s.appendChar( 'A' );
+		s.appendChar( 'a' );
+		s.appendChar( 'Z' );
+		s.appendChar( 'z' );
+		s.appendChar( '1' );
+		s.appendChar( '0' );
+
+		GFX.printString( s );
+		GFX.println();
+
+		GFX.printInt( s.length() );
+		GFX.println();
+
+		t = s.upper();
+		v = s.lower();
+
+		GFX.printString( t );
+		GFX.println();
+
+		GFX.printString( v );
+		GFX.println();
+
+		GFX.printString( s );
+		GFX.println();
+
+		s.dispose();
+		t.dispose();
+		v.dispose();
+	}
+
+	function void customTest2 () {
+
+		var String s;
+		var String t, v;
+
+		s = "cats-are-cool";
+		t = s.remove( '-' );
+		v = s.replace( '-', '.' );
+
+		GFX.printString( s );
+		GFX.println();		
+		GFX.printInt( s.length() );
+		GFX.println();
+
+		GFX.printString( t );
+		GFX.println();
+		GFX.printInt( t.length() );
+		GFX.println();
+
+		GFX.printString( v );
+		GFX.println();		
+		GFX.printInt( v.length() );
+		GFX.println();
+
+		s.dispose();
+		t.dispose();
+		v.dispose();
+	}
+
+	function void customTest3 () {
+
+		var String s;
+		var String t;
+
+		s = "   This is surrounded by spaces  ";
+
+		GFX.printChar( '>' );
+		GFX.printString( s );
+		GFX.printChar( '<' );
+		GFX.println();
+
+		// t = s.stripWhitespace();
+		t = s.strip( null );
+
+		GFX.printChar( '>' );
+		GFX.printString( t );
+		GFX.printChar( '<' );
+		GFX.println();
+
+		s.dispose();
+		t.dispose();
+
+		s = "~!!@~This is surrounded by fancy characters~~*@$$";
+
+		GFX.printChar( '>' );
+		GFX.printString( s );
+		GFX.printChar( '<' );
+		GFX.println();
+
+		t = s.strip( "~!@*$" );
+
+		GFX.printChar( '>' );
+		GFX.printString( t );
+		GFX.printChar( '<' );
+		GFX.println();
+
+		s.dispose();
+		t.dispose();
+	}
+
+	function void customTest4 () {
+
+		var String s;
+		var Array t;
+		var int i;
+		var int len;
+
+		// s = "---";
+		// s = "pants";
+		// s = "pants-are-cool";
+		s = "pants-are--cool";
+		// s = "pants--are-cool-----";
+
+		GFX.printString( s );
+		GFX.println();
+
+		t = s.split( '-' );
+		// t = s.split( '$' );
+
+		len = t.length();
+		// GFX.printInt( len ); GFX.println();
+
+		for ( i = 0; i < len; i += 1 ) {
+
+			GFX.printInt( i );
+			GFX.printString( ", " );
+			GFX.printString( t[i] );
+			GFX.println();
+		}
+
+		s.dispose();
+		t.dispose();
+	}
+
+	function void customTest5 () {
+
+		var String s;
+
+		s = "pants-are--cool";
+
+		GFX.printString( s.slice( 0, 4 ) );               // "pant"
+		GFX.println();
+		GFX.printString( s.slice( 0, s.length() ) );      // "pants-are--cool"
+		GFX.println();
+		GFX.printString( s.slice( - s.length(), - 4 ) );  // "pants-are--"
+		GFX.println();
+		GFX.printString( s.slice( 0, - 4 ) );             // "pants-are--"
+		GFX.println();
+		GFX.printString( s.slice( - 10, - 4 ) );          // "-are--"
+		GFX.println();
+		GFX.printString( s.slice( 2, 7 ) );               // "nts-a"
+		GFX.println();
+
+		s.dispose();
+
+		s = "A sample string";
+
+		GFX.printString( s.slice( - 4 ,   25 ) );  // "ring"
+		GFX.println();
+		GFX.printString( s.slice( - 4 , - 1  ) );  // "rin"
+		GFX.println();
+		GFX.printString( s.slice( - 4 , - 10 ) );  // ""
+		GFX.println();
+		GFX.printString( s.slice(   11,   15 ) );  // "ring"
+		GFX.println();
+		GFX.printString( s.slice(   11,   14 ) );  // "rin"
+		GFX.println();
+		GFX.printString( s.slice(   11,   0  ) );  // ""
+		GFX.println();
+		GFX.printString( s.slice(  - 4,   14 ) );  // "rin"
+		GFX.println();
+
+		s.dispose();
+	}
+
+	// TECS test
+    function void tecsTest () {
+
+		var String s;
+		var String i;
+
+		let s = String.new(0); // A zero-capacity string should be supported
+		do s.dispose();
+
+		let s = String.new(6); // capacity 6, make sure length 5 will be printed
+		let s = s.appendChar(97);
+		let s = s.appendChar(98);
+		let s = s.appendChar(99);
+		let s = s.appendChar(100);
+		let s = s.appendChar(101);
+		do GFX.printString("new,appendChar: ");
+		do GFX.printString(s);                // new, appendChar: abcde
+		do GFX.println();
+
+		let i = String.new(6);
+		do i.decimalToStr(12345);
+		do GFX.printString("setInt: ");
+		do GFX.printString(i);                // setInt: 12345
+		do GFX.println();
+
+		do i.decimalToStr(-32767);
+		do GFX.printString("setInt: ");
+		do GFX.printString(i);                // setInt: -32767
+		do GFX.println();
+
+		do GFX.printString("length: ");
+		do GFX.printInt(s.length());          // length: 5
+		do GFX.println();
+
+		do GFX.printString("charAt[2]: ");
+		do GFX.printInt(s.charAt(2));         // charAt[2]: 99
+		do GFX.println();
+
+		do s.setCharAt(2, 45);
+		do GFX.printString("setCharAt(2,'-'): ");     
+		do GFX.printString(s);                // setCharAt(2,'-'): ab-de
+		do GFX.println();
+
+		do s.eraseLastChar();        
+		do GFX.printString("eraseLastChar: ");     
+		do GFX.printString(s);                // eraseLastChar: ab-d
+		do GFX.println();
+
+		let s = "45p6";
+		do GFX.printString("intValue: ");
+		do GFX.printInt(s.strToDecimal());        // intValue: 456
+		do GFX.println();
+
+		let s = "-32123";
+		do GFX.printString("intValue: ");
+		do GFX.printInt(s.strToDecimal());        // intValue: -32123
+		do GFX.println();
+
+		do GFX.printString("backSpace: ");
+		do GFX.printInt(String.backSpace());  // backSpace: 129
+		do GFX.println();
+
+		do GFX.printString("doubleQuote: ");
+		do GFX.printInt(String.doubleQuote());// doubleQuote: 34
+		do GFX.println();
+
+		do GFX.printString("newLine: ");
+		do GFX.printInt(String.newLine());    // newLine: 128
+		do GFX.println();
+
+		do i.dispose();
+		do s.dispose();
+
+		return;
+	}
+
+}

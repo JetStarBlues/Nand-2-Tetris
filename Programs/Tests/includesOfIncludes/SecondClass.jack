@@ -1,0 +1,9 @@
+include "C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/includesOfincludes/sub/ThirdClass.jack"
+
+class SecondClass {
+
+	function void main () {
+
+		//
+	}
+}
