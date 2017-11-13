@@ -2087,6 +2087,8 @@ class VariableTable():
 				'this'   : []
 			}
 
+			self.segments_ = [ 'this', 'static', 'const' ]  # precedence lookup
+
 		elif self.type_ == 'subroutine':
 
 			self.segments = {
@@ -2095,6 +2097,8 @@ class VariableTable():
 				'argument' : [],
 				'local'    : []
 			}
+
+			self.segments_ = [ 'local', 'argument', 'const' ]  # precedence lookup
 
 	def add( self, segment, varName, dataType, value = None ):
 
@@ -2107,9 +2111,9 @@ class VariableTable():
 
 	def lookup( self, varName, checkConstants ):
 
-		for segName in self.segments:
+		for segName in self.segments_:
 
-			if not checkConstants and segName == 'const':
+			if segName == 'const' and not checkConstants:  # Todo, why is this check here?
 
 				continue  # skip segment
 
@@ -2248,8 +2252,8 @@ class CompileTo_HackVM():
 	def shiftR_ ( self ) : return 'shiftR\n'
 	def shiftL_ ( self ) : return 'shiftL\n'
 
-	def mult_   ( self ) : return 'mult\n' # temp, hardware
-	def div_    ( self ) : return 'div\n'  # temp, hardware
+	def mult_   ( self ) : return 'mult\n'
+	def div_    ( self ) : return 'div\n'
 
 
 	# -----------------------------------

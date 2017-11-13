@@ -65,7 +65,7 @@ import Components
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
-programPath = '../colorImages/lp/Main.vmx'
+# programPath = '../colorImages/lp/Main.vmx'
 # programPath = '../colorImages/sunset/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/sys/Main.vmx'
@@ -73,7 +73,7 @@ programPath = '../colorImages/lp/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/memory/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/math/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/keyboard/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/array/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/includesOfIncludes/Main.vmx'
 # programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
@@ -573,10 +573,10 @@ def call( fxName, nArgs ):
 	RAM[ addr ] = RAM[ THAT ]
 	addr += 1
 
-	# Set ARG
+	# Set ARG pointer
 	RAM[ ARG ] = RAM[ SP ] - nArgs
 
-	# Set LCL
+	# Set LCL pointer
 	RAM[ LCL ] = addr
 
 	# Set SP
@@ -593,7 +593,7 @@ def ret():
 
 	global yieldToExternal
 
-	# Save current LCL
+	# Save current LCL pointer
 	curLCL = RAM[ LCL ]
 
 	# Save return address

@@ -13,6 +13,37 @@
 # 
 # ========================================================================================
 
+'''
+	--- Notes ---
+
+	> Instruction
+
+		Instruction - 0123456789ABCDEF
+
+			0 -> opCode
+
+			if opCode == 0, address instruction
+
+				123456789ABCDEF -> address
+
+			else, computation instruction
+
+				1   -> comp, xor
+				2   -> comp, bitshift
+				3   -> y = A (0) | M (1)
+				4   -> comp, zero_x  
+				5   -> comp, not_x  
+				6   -> comp, zero_y  
+				7   -> comp, not_y  
+				8   -> comp, and (0) | add (1)  
+				9   -> comp, negate_out
+				ABC -> destination
+				DEF -> jump
+
+				comp(utation) bits are sent to ALU
+
+'''
+
 
 # == Imports =================================================
 
@@ -61,33 +92,6 @@ def debugStuff( cmdList ):
 
 
 # == Main ====================================================
-
-
-'''
-	Instruction - 0123456789ABCDEF
-
-		0 -> opCode
-
-		if opCode == 0, address instruction
-
-			123456789ABCDEF -> address
-
-		else, computation instruction
-
-			1   -> comp, xor
-			2   -> comp, bitshift
-			3   -> y = A (0) | M (1)
-			4   -> comp, zero_x  
-			5   -> comp, not_x  
-			6   -> comp, zero_y  
-			7   -> comp, not_y  
-			8   -> comp, and (0) | add (1)  
-			9   -> comp, negate_out
-			ABC -> destination
-			DEF -> jump
-
-			comp(utation) bits are sent to ALU
-'''
 
 
 # -- Lookup tables ---------------------------------

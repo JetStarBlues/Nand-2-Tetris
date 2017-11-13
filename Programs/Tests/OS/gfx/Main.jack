@@ -334,6 +334,8 @@ class Main {
 		var int n, i, i2, cx, cy;
 		var int count;
 
+		var int x1, x2, y1, y2;
+
 		cx = width / 2 - 1;
 		cy = height / 2 - 1;
 
@@ -363,6 +365,17 @@ class Main {
 			// start = Sys.millis();
 
 			GFX.fillRect( cx - i2, cy - i2, i, i );
+
+			// debug
+			/*GFX.setColor( 8 );
+			x1 = cx - i2;
+			y1 = cy - i2;
+			x2 = x1 + i - 1;
+			y2 = y1 + i - 1;
+			GFX.drawLine( x1, y1, x2, y1 );
+			GFX.drawLine( x2, y1, x2, y2 );
+			GFX.drawLine( x2, y2, x1, y2 );
+			GFX.drawLine( x1, y2, x1, y1 );*/
 
 			// t += Sys.millis() - start;
 
@@ -452,6 +465,8 @@ class Main {
 
 		// start = Sys.millis();
 
+		GFX.setColor( WHITE );
+
 		for ( i = 0; i < n; i += 5 ) {
 
 			if ( colorMode ) {
@@ -461,10 +476,6 @@ class Main {
 				GFX.setColor( c );  // ....
 				c += 1;
 				if ( c > 10 ){ c = 8; }
-			}
-			else {
-
-				GFX.setColor( WHITE );
 			}
 
 			GFX.strokeTriangle(
@@ -561,6 +572,8 @@ class Main {
 
 		// start = Sys.millis();
 
+		GFX.setColor( WHITE );
+
 		for ( i = 0; i < w; i += 6 ) {
 
 			if ( colorMode ) {
@@ -570,10 +583,6 @@ class Main {
 				GFX.setColor( c );  // ....
 				c += 1;
 				if ( c > 14 ){ c = 12; }
-			}
-			else {
-
-				GFX.setColor( WHITE );
 			}
 
 			i2 = i / 2;

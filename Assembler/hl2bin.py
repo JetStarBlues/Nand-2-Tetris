@@ -15,8 +15,8 @@
 # == Imports =======================================================
 
 import Assembler.hl2vm as hl2vm
-import Assembler.vm2asm as vm2asm
-import Assembler.asm2bin as asm2bin
+# import Assembler.vm2asm as vm2asm
+# import Assembler.asm2bin as asm2bin
 import Assembler.vm2vmx as vm2vmx
 
 
