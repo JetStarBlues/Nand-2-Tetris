@@ -25,6 +25,8 @@ import Assembler.vm2vmx as vm2vmx
 # useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
 useCompatibleVM = False
 
+compileBinaries = False
+
 
 def compileOS():
 
@@ -73,15 +75,17 @@ def hl_to_bin( inputDirPath ):
 	# vm2vmx.genVMXFile( inputDirPath )
 	vm2vmx.genVMXFile( inputDirPath, libraryPaths = VM_includes )
 
-	# Generate ASM file
-	# print( 'Generating assembly file...' )
-	# vm2asm.genASMFile( inputDirPath )
-	# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes )
-	# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = True )
+	if compileBinaries:
 
-	# Generate BIN file
-	# print( 'Generating binary file...' )
-	# asm2bin.genBINFile( inputDirPath )
-	# asm2bin.genBINFile( inputDirPath, debug = True )
+		# Generate ASM file
+		print( 'Generating assembly file...' )
+		# vm2asm.genASMFile( inputDirPath )
+		vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes )
+		# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = True )
+
+		# Generate BIN file
+		print( 'Generating binary file...' )
+		asm2bin.genBINFile( inputDirPath )
+		# asm2bin.genBINFile( inputDirPath, debug = True )
 
 	print( 'Done!' )

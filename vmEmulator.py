@@ -59,7 +59,7 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/pong/Main.vmx'
+programPath = '../tempNotes/MyCompilerOut/OS_standalone/pong/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
@@ -73,7 +73,7 @@ import Components
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/memory/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/math/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/keyboard/Main.vmx'
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
+# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/array/Main.vmx'
 # programPath = '../tempNotes/MyCompilerOut/OS_standalone/includesOfIncludes/Main.vmx'
 # programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
@@ -907,7 +907,7 @@ def GFX_drawPixel():
 
 	# If fast enough, do colorBitMode check here so that less manual work when switching modes
 
-	'''
+	''''''
 	# 1bit color mode ----------------------------
 
 	if ( fgColor ):
@@ -918,13 +918,13 @@ def GFX_drawPixel():
 
 		RAM[ screenIdx ] = curWord & ( pixelMask[ wordIdx ] ^ negativeOne )  # set bit to 0
 
-	'''
-
 	''''''
+
+	'''
 	# 4bit color mode ----------------------------
 	
 	RAM[ screenIdx ] = colorMask[ fgColor ][ wordIdx ] | ( curWord & ( pixelMask4[ wordIdx ] ^ negativeOne ) )
-	''''''
+	'''
 
 
 	# Return ---

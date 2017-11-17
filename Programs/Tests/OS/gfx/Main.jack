@@ -6,30 +6,21 @@ class Main {
 	const int width = 512;
 	const int height = 256;
 
-	// 1 bit mode
-	// const int colorMode = 0;
-	// const int BLACK     = 1;
-	// const int BLUE      = 0;
-	// const int RED       = 0;
-	// const int GREEN     = 0;
-	// const int CYAN      = 0;
-	// const int MAGENTA   = 0;
-	// const int YELLOW    = 0;
-	// const int WHITE     = 0;
+	static int colorBitMode;
+	static int BLACK;
+	static int BLUE;
+	static int RED;
+	static int GREEN;
+	static int CYAN;
+	static int MAGENTA;
+	static int YELLOW;
+	static int WHITE;
 
-	// 4 bit mode
-	const int colorMode = 4;
-	const int BLACK     = 0;
-	const int BLUE      = 1;
-	const int RED       = 8;
-	const int GREEN     = 11;
-	const int CYAN      = 12;
-	const int MAGENTA   = 14;
-	const int YELLOW    = 10;
-	const int WHITE     = 7;
-
+	static int colorMode;
 
 	function void main () {
+
+		Main.initColors();
 
 		if ( colorMode ) {
 
@@ -58,6 +49,39 @@ class Main {
 		Main.testFilledRoundRects();
 	}
 
+	function void initColors () {
+
+		colorBitMode = GlobalConstants.getColorBitMode();
+
+		if ( colorBitMode == 1 ) {
+
+			// 1 bit mode
+			BLACK   = 1;
+			BLUE    = 0;
+			RED     = 0;
+			GREEN   = 0;
+			CYAN    = 0;
+			MAGENTA = 0;
+			YELLOW  = 0;
+			WHITE   = 0;
+
+			colorMode = false;
+		}
+		else {
+
+			// 4 bit mode
+			BLACK   = 0;
+			BLUE    = 1;
+			RED     = 8;
+			GREEN   = 11;
+			CYAN    = 12;
+			MAGENTA = 14;
+			YELLOW  = 10;
+			WHITE   = 7;
+
+			colorMode = true;
+		}
+	}
 
 	function int testFillScreen () {
 

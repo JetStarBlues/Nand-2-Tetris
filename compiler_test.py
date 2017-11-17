@@ -5,7 +5,7 @@ from Assembler.hl2bin import *
 
 '''------------------------------- Main -------------------------------'''
 
-# inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/pong'
+inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/pong'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller'
@@ -20,7 +20,7 @@ from Assembler.hl2bin import *
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/memory'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/math'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/keyboard'
-inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx'
+# inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/array'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/includesOfIncludes'
 # inputDirPath = '../tempNotes/MyCompilerOut/OS_standalone/precompiled'
