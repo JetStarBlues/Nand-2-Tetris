@@ -30,7 +30,7 @@ compileBinaries = False
 
 def compileOS():
 
-	OSPath = '../tempNotes/MyCompilerOut/OS_standalone/precompiledOS'
+	OSPath = '../N2T_Code/Programs/precompiledOS'
 
 	# Generate VM files
 	print( 'Generating OS VM files...' )
@@ -55,15 +55,15 @@ def hl_to_bin( inputDirPath ):
 		# 'Programs/Libraries/OS/String.vm',
 		# 'Programs/Libraries/OS/Sys.vm'
 
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Array.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/DataMemory.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Font.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GFX.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/GlobalConstants.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Keyboard.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Math.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/String.vm',
-		'../tempNotes/MyCompilerOut/OS_standalone/precompiledOS/Sys.vm'
+		'../N2T_Code/Programs/precompiledOS/Array.vm',
+		'../N2T_Code/Programs/precompiledOS/DataMemory.vm',
+		'../N2T_Code/Programs/precompiledOS/Font.vm',
+		'../N2T_Code/Programs/precompiledOS/GFX.vm',
+		'../N2T_Code/Programs/precompiledOS/GlobalConstants.vm',
+		'../N2T_Code/Programs/precompiledOS/Keyboard.vm',
+		'../N2T_Code/Programs/precompiledOS/Math.vm',
+		'../N2T_Code/Programs/precompiledOS/String.vm',
+		'../N2T_Code/Programs/precompiledOS/Sys.vm'
 	]
 
 	# Generate VM files and return includes

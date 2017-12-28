@@ -59,23 +59,25 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-programPath = '../tempNotes/MyCompilerOut/OS_standalone/pong/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/cadet/Creature/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASchunky/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASscroller/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/gav/GASboing/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/temp_delete/Main.vmx'
+programPath = '../N2T_Code/Programs/HashTable/Main.vmx'
+# programPath = '../N2T_Code/Programs/LinkedList/Main.vmx'
+# programPath = '../N2T_Code/Programs/pong/Main.vmx'
+# programPath = '../N2T_Code/Programs/cadet/Creature/Main.vmx'
+# programPath = '../N2T_Code/Programs/gav/GASchunky/Main.vmx'
+# programPath = '../N2T_Code/Programs/gav/GASscroller/Main.vmx'
+# programPath = '../N2T_Code/Programs/gav/GASboing/Main.vmx'
+# programPath = '../N2T_Code/Programs/temp_delete/Main.vmx'
 # programPath = '../colorImages/lp/Main.vmx'
 # programPath = '../colorImages/sunset/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/hello/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/sys/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/string/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/memory/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/math/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/keyboard/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/gfx/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/OSLibTests/array/Main.vmx'
-# programPath = '../tempNotes/MyCompilerOut/OS_standalone/includesOfIncludes/Main.vmx'
+# programPath = '../N2T_Code/Programs/hello/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/sys/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/string/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/memory/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/math/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/keyboard/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/gfx/Main.vmx'
+# programPath = '../N2T_Code/Programs/OSLibTests/array/Main.vmx'
+# programPath = '../N2T_Code/Programs/includesOfIncludes/Main.vmx'
 # programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
 # programPath = 'Programs/ByOthers/GavinStewart/Games&Demos/GASscroller/modifiedCode/Main.vmx'
 
@@ -134,6 +136,8 @@ static_segment_end   = 255
 
 
 # IO Helpers ------------------------
+
+nColors = 16 if Components.COLOR_MODE_4BIT else 2
 
 class RAMWrapper():
 
@@ -685,7 +689,7 @@ def Sys_wait():
 	ret()
 
 
-def GFX_drawPixel():
+def GFX_drawPixel_old():
 
 	# Retrieve args ---
 	argBase = RAM[ ARG ]
@@ -931,10 +935,106 @@ def GFX_drawPixel():
 	push( 'constant', 0, None )
 	ret()
 
+
+def GFX_drawPixel():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+
+	# Execute ---
+	io.drawPixel( x, y )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+def GFX_setColor():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	c = RAM[ argBase ]
+
+	# Execute ---
+
+	# Update static, `fgColor = color;`
+	#  Static indices depend on the order they are listed in 'GFX.jack'
+	RAM[ staticLookup[ 'GFX_5' ] ] = c
+
+	#
+	if c == negativeOne:  # c == True
+
+		c = 1
+
+	if c > negativeOne or c >= nColors:  # c is outside 0..nColors
+
+		# raise Exception( "Color selection is not valid - {}".format( c ) )
+
+		print( "ERROR: Color selection is not valid" )
+
+		# Halt program
+		haltOnError()
+
+		return
+
+	io.setColor( c )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+def GFX_drawFastHLine():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+	w = RAM[ argBase + 2 ]
+
+	# Execute ---
+	io.drawFastHLine( x, y, w )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+def GFX_fillScreen():
+
+	# Execute ---
+	io.fillScreen()
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+def GFX_replaceDisplayWithMainMemory():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+	w = RAM[ argBase + 2 ]
+	h = RAM[ argBase + 3 ]
+
+	# Execute ---
+	io.replaceDisplayWithMainMemory( x, y, w, h )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+
 OSWrappers = {
 	
 	'Sys.wait'      : Sys_wait,
-	'GFX.drawPixel' : GFX_drawPixel  # Atm about 1 second faster
+	# 'GFX.drawPixel' : GFX_drawPixel  # Atm about 1 second faster
+
+	'GFX.setColor'        : GFX_setColor,
+	'GFX.drawPixel'       : GFX_drawPixel,
+	'GFX.drawFastHLine'   : GFX_drawFastHLine,
+	'GFX.fillScreen'      : GFX_fillScreen,
+	'GFX.replaceDisplayWithMainMemory' : GFX_replaceDisplayWithMainMemory
 }
 
 

@@ -51,17 +51,19 @@ class IO():
 		# 1Bit color mode ---
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
-		self.colors = {
-
-			'0' : self.bgColor,
-			'1' : self.fgColor
-		}
 		self.nRegistersPerRow = self.width // self.N
-		self.nPixelsPerWord = self.N
 		self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
+		if not COLOR_MODE_4BIT:
+
+			self.colors = {
+
+				'0' : self.bgColor,
+				'1' : self.fgColor
+			}
+
 		# 4Bit color mode ---
-		if COLOR_MODE_4BIT:
+		else:
 
 			self.colors = {}
 
@@ -69,17 +71,9 @@ class IO():
 
 				self.colors[ key ] = self.hex2rgb( value )
 
-			self.bgColor = self.colors[ '0000' ]
-
 			self.nRegistersPerRow *= 4
-			self.nPixelsPerWord = 4
 			self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
-
-		# wip
-		# Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
-		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.bgColor )   # np( nRows, nCols, z )
-		self.curColor = self.fgColor
 
 		# Initialize Pygame ---
 		# threading.Thread(
@@ -179,261 +173,6 @@ class IO():
 	def updateScreen( self ):
 
 		# Blit pixel values
-		pygame.surfarray.blit_array( self.surface, self.pixelArray )
-
-		# Update display
-		pygame.display.flip()
-
-
-	def setColor( self, colorCode ):
-
-		if COLOR_MODE_4BIT:
-
-			self.curColor = self.colors[ bin( colorCode )[ 2 : ].zfill( 4 ) ] # temp
-
-		else:
-
-			self.curColor = self.colors[ str( colorCode ) ] # temp
-
-	def drawPixel( self, x, y ):
-
-		''' Update only the relevant pixel '''
-
-		# Check if coordinates are valid
-		if( x < 0 | x >= self.width | y < 0 | y >= self.height ):
-
-			raise Exception( 'drawPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
-
-		# Draw pixel
-		self.pixelArray[ x ][ y ] = self.curColor
-
-	def flood( self, x, y, len ):
-
-		# Write words to display RAM
-		# Assumes display RAM allocates one register per pixel
-
-		for i in range( len ):
-
-			self.pixelArray[ x ][ y ] = self.curColor
-
-			x += 1
-
-			if ( x == self.width ):
-
-				x = 0
-				y += 1
-
-	def drawFastVLine( self, x, y, h ):
-
-		# I can easily make this fast for numpy array, but what would be hardware equivalent?
-		pass
-
-	def drawFastHLine( self, x, y, w ):
-
-		# Check if coordinates are valid
-		if(
-			w <= 0 | 
-			x <  0 | ( x + w ) >= self.width |
-			y <  0 |         y >= self.height
-		):
-			raise Exception( 'drawFastHLine received invalid argument(s): ( {}, {}, {} )'.format( x, y, w ) )
-
-		# Draw line
-		self.flood( x, y, w )
-
-	def fillScreen( self ):
-
-		self.flood( 0, 0, self.width * self.height )
-
-	def replaceMainWithDisplayMemory( self, x, y, w, h ):
-
-		mask1 = 111111111 >> ( x % 16 )
-		mask2 = ~ ( 111111111 >> ( ( x + w ) % 16 ) )
-
-		x1 = ( x // 16 ) * 16
-		x2 = ( ( x + w ) // 16 ) * 16
-
-		# fsfsf
-
-		for j in range( y, y + h ):
-
-			for i in range( x, x2 + 16, 16 ):
-
-				idx = j * wpr + ( i % 16 )
-
-				w = composeWord( idx, i, j )
-
-				if x == x1:
-
-					curW = self.main_memory[ idx ]
-
-					w = w | ( curW & mask1 )  ??
-
-				elif x == x2:
-
-					ditto
-
-				self.main_memory[ idx ] = w
-
-		pass
-
-	def composeWord( self, idx, x, y ):
-
-		w = ''
-
-		for i in range( ppw ):
-
-			color = self.pixelArray[ x ][ y ]
-			code = rgb2code[ color ]
-
-			w += color
-			
-			x += 1
-
-		w = int( w, 2 )
-
-		return w
-
-		pass
-
-
-	def replaceDisplayWithMainMemory( self, x, y, w, h ):
-
-		# Check if coordinates are valid
-		if(
-			w <= 0 |
-			h <= 0 |
-			x <  0 | ( x + w ) >= self.width |
-			y <  0 | ( y + h ) >= self.height
-		):
-			raise Exception( 'replaceDisplayWithMainMemory received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
-
-		# Replace
-		if COLOR_MODE_4BIT:
-
-			self.getPixels_4BitMode( x, y, w, h )
-
-		else:
-
-			self.getPixels_1BitMode( x, y, w, h )
-
-	def getPixels_1BitMode( self, x, y, w, h ):
-
-		x0 = x
-
-		for k in range( h ):  # traverse rows
-
-			x = x0
-
-			wIdx = x + y * self.nRegistersPerRow
-			wIdx += self.screenMemStart
-
-			for j in range( ( w - 1 ) // self.nPixelsPerWord + 1 ):  # traverse words
-
-				register = self.main_memory.read( wIdx )
-
-				register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
-
-				for i in range( self.N ):  # traverse pixels
-
-					pixel = register[ i ]
-
-					color = self.colors[ pixel ]  # look up corresponding color
-
-					self.pixelArray[ x ][ y ] = color
-
-					x += 1
-
-				wIdx += 1
-
-			y += 1
-
-
-		# x = 0
-		# y = 0
-
-		# for idx in range( self.screenMemStart, self.screenMemEnd ):
-
-		# 	register = self.main_memory.read( idx )
-
-		# 	register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
-
-		# 	for i in range( self.N ):
-
-		# 		pixel = register[ i ]
-
-		# 		color = self.colors[ pixel ]  # look up corresponding color
-
-		# 		self.pixelArray[ x ][ y ] = color
-		# 		x += 1
-
-		# 		if ( x == self.width ):
-
-		# 			x = 0
-		# 			y += 1
-
-	def getPixels_4BitMode( self, x, y, w, h ):
-
-		x0 = x
-
-		for k in range( h ):  # traverse rows
-
-			x = x0
-
-			wIdx = x + y * self.nRegistersPerRow
-			wIdx += self.screenMemStart
-
-			for j in range( ( w - 1 ) // self.nPixelsPerWord + 1 ):  # traverse words
-
-				register = self.main_memory.read( wIdx )
-
-				register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
-
-				for i in range( 0, self.N, self.nPixelsPerWord ):  # traverse pixels
-
-					pixel = register[ i : i + self.nPixelsPerWord ]
-
-					color = self.colors[ pixel ]  # look up corresponding color
-
-					self.pixelArray[ x ][ y ] = color
-
-					x += 1
-
-				wIdx += 1
-
-			y += 1
-
-
-		# x = 0
-		# y = 0
-
-		# for idx in range( self.screenMemStart, self.screenMemEnd ):
-
-		# 	register = self.main_memory.read( idx )
-
-		# 	register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
-
-		# 	for i in range( 0, self.N, 4 ):
-
-		# 		pixel = register[ i : i + 4 ]
-
-		# 		color = self.colors[ pixel ]  # look up corresponding color
-
-		# 		self.pixelArray[ x ][ y ] = color
-
-		# 		x += 1
-
-		# 		if ( x == self.width ):
-
-		# 			x = 0
-		# 			y += 1
-
-
-	# ------
-
-	def updateScreen_old( self ):
-
-		# Blit pixel values
 		pygame.surfarray.blit_array( self.surface, self.genPixelArray() )
 
 		# Update display
@@ -457,7 +196,7 @@ class IO():
 
 		return numpy.array( a ).reshape( ( self.height, self.width, 3 ) ).transpose( ( 1, 0, 2 ) )
 
-	def getPixels_1BitMode_old( self ):
+	def getPixels_1BitMode( self ):
 
 		pixels = []
 
@@ -500,7 +239,7 @@ class IO():
 
 		return pixels
 
-	def getPixels_4BitMode_old( self ):
+	def getPixels_4BitMode( self ):
 
 		pixels = []
 
