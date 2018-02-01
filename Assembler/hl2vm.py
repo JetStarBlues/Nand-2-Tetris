@@ -25,6 +25,8 @@
 #  
 # ========================================================================================
 
+# TODO: Relative includes...
+
 
 # === Imports ===================================================
 
@@ -75,7 +77,7 @@ Hack_lexicon = {
 		'&=', '|=', '^=',
 	],
 
-	'dataTypes' : [ 'int', 'char', 'boolean' ],
+	'dataTypes' : [ 'int', 'char', 'bool' ],
 
 	'statementTypes' : [ 'let', 'do', 'if', 'else', 'while', 'return', 'for', 'break', 'continue' ],
 
@@ -959,7 +961,7 @@ def testTokenizer():
 
 	classVarDec     -> ( 'static' | 'field' ) type varName ( ',' varName )* ';'
 
-	type            -> 'int' | 'char' | 'boolean' | className
+	type            -> 'int' | 'char' | 'bool' | className
 
 	subroutineDec   -> ( 'constructor' | 'function' | 'method' ) ( 'void' | type ) subroutineName '(' parameterList ')' subroutineBody
 
@@ -1215,27 +1217,27 @@ class Parser():
 
 		self.skip_kw( 'const' )
 
-		if self.is_d_type( 'int' ):
+		if self.is_d_type( 'int' ) or self.is_d_type( 'char' ):
 
 			self.input.next()
 
 		else:
 
-			self.croak( "Error: Expecting 'int' type in constant declaration. Instead got {}".format( self.input.peek() ) )
+			self.croak( "Error: Expecting 'int' or 'char' type in constant declaration. Instead got {}".format( self.input.peek() ) )
 
 		name = self.read_id( 'constDeclaration' )
 
 		self.skip_op( '=' )
 
-		if self.is_op( '-' ):
+		if self.is_op( '-' ) or self.is_op( '~' ) or self.is_op( '!' ):
 
-			self.input.next()  # -
+			op = self.input.next()[ 'value' ]
 
 			value = {
 
 				'type'    : 'unaryOp',
-				'op'      : '-',
-				'operand' : self.parse_integerConstant()
+				'op'      : op,
+				'operand' : self.parse_integerConstant()  # computed at runtime in each instance
 			}
 
 		else:
@@ -1905,7 +1907,7 @@ class Parser():
 
 			if val > largestInt:
 
-				raise Exception( 'Illegal 16-bit value' )
+				raise Exception( 'Illegal 16-bit value: {}'.format( tok[ 'value' ] ) )
 
 			return {
 
@@ -1921,7 +1923,7 @@ class Parser():
 
 			if val > largestInt:
 
-				raise Exception( 'Illegal 16-bit value' )
+				raise Exception( 'Illegal 16-bit value: {}'.format( tok[ 'value' ] ) )
 
 			return {
 
@@ -1937,7 +1939,7 @@ class Parser():
 
 			if val > largestInt:
 
-				raise Exception( 'Illegal 16-bit value' )
+				raise Exception( 'Illegal 16-bit value: {}'.format( tok[ 'value' ] ) )
 
 			return {
 
@@ -2249,10 +2251,10 @@ class CompileTo_HackVM():
 	def add_    ( self ) : return 'add\n'
 	def sub_    ( self ) : return 'sub\n'
 	def neg_    ( self ) : return 'neg\n'
-	def shiftR_ ( self ) : return 'shiftR\n'
-	def shiftL_ ( self ) : return 'shiftL\n'
+	def shiftR_ ( self ) : return 'lsr\n'
+	def shiftL_ ( self ) : return 'lsl\n'
 
-	def mult_   ( self ) : return 'mult\n'
+	def mult_   ( self ) : return 'mul\n'
 	def div_    ( self ) : return 'div\n'
 
 
@@ -2379,9 +2381,18 @@ class CompileTo_HackVM():
 
 			# Allocate field variables
 			nFields = len( self.classVarTable.segments[ 'this' ] )
-			s += self.pushConstant_( nFields )
+
+			if nFields > 0:
+
+				s += self.pushConstant_( nFields )
+
+			else:
+
+				s += self.pushConstant_( 1 )  # psuedo to support 'this' pointer
+
 			s += self.call_( 'DataMemory.alloc', 1 )
 			# s += self.call_( 'Memory.alloc', 1 )
+
 			s += self.pop_( 'pointer', 0 )
 
 		# -- Statements
@@ -2941,6 +2952,10 @@ class CompileTo_HackVM():
 
 				s = self.pushConstant_( 0 )
 				s += self.not_()
+
+				# Hmm...
+				# s = self.pushConstant_( 32768 )  # negativeOne
+
 				return s
 
 			elif kw == 'false' or kw == 'null':
@@ -3067,6 +3082,51 @@ def getJackFilesFromDir( dirPath ):
 	return filePaths
 
 
+def getDirPathFromFilePath( path ):
+
+	return path[ : - len( path.split( '/' )[ - 1 ] ) ]
+
+
+def countDirsUp( path ):
+
+	nDirsUp = 0
+
+	while path[ 0 : 2 ] == '..':
+
+		nDirsUp += 1
+
+		path = path[ 3 : ]
+
+	return nDirsUp, path
+
+
+def makePathsAbsolute( curDir, paths ):
+
+	dirs = curDir.split( '/' )
+
+	newPaths = []
+
+	for path in paths:
+
+		f2 = path[ 0 : 2 ]
+
+		if f2.upper() != "C:":  # not absolute
+
+			if f2 == '..':
+
+				nDirsUp, path = countDirsUp( path )
+
+				path = '/'.join( dirs[ : - nDirsUp ] ) + path
+
+			elif path[ 0 ].isalnum():
+
+				path = curDir + path
+
+		newPaths.append( path )
+
+	return newPaths
+
+
 def translateFile( compiler, className, inputFilePath, outputDirPath, includes ):
 
 	print( ' - Translating {}'.format( inputFilePath ) )
@@ -3084,6 +3144,9 @@ def translateFile( compiler, className, inputFilePath, outputDirPath, includes )
 	with open( outputFilePath, 'w' ) as file:
 
 		file.write( vmCode )
+
+	# Handle includes
+	includes_ = makePathsAbsolute( getDirPathFromFilePath( inputFilePath ), includes_ )
 
 	includes.extend( includes_ )
 

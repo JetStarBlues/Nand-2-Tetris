@@ -51,6 +51,7 @@ import time
 import os
 from multiprocessing import Array, Process
 import threading
+import yappi
 
 # Hack computer (will use only the Clock and IO modules)
 import Components
@@ -59,16 +60,22 @@ import Components
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-programPath = '../N2T_Code/Programs/HashTable/Main.vmx'
+# programPath = '../N2T_Code/Programs/General/gfxDriverComm/Main.vmx'
+# programPath = '../N2T_Code/Programs/CompilerTests/Point/Main.vmx'
+# programPath = '../N2T_Code/Programs/CompilerTests/nonExistMethods/Main.vmx'
+# programPath = '../N2T_Code/Programs/HashTable/Main.vmx'
 # programPath = '../N2T_Code/Programs/LinkedList/Main.vmx'
 # programPath = '../N2T_Code/Programs/pong/Main.vmx'
-# programPath = '../N2T_Code/Programs/cadet/Creature/Main.vmx'
-# programPath = '../N2T_Code/Programs/gav/GASchunky/Main.vmx'
-# programPath = '../N2T_Code/Programs/gav/GASscroller/Main.vmx'
-# programPath = '../N2T_Code/Programs/gav/GASboing/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/sanity/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/modifiedCode/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Trigonometry/modifiedCode/Main.vmx'
+programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASscroller/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASboing/Main.vmx'
 # programPath = '../N2T_Code/Programs/temp_delete/Main.vmx'
-# programPath = '../colorImages/lp/Main.vmx'
-# programPath = '../colorImages/sunset/Main.vmx'
+# programPath = '../N2T_Code/Programs/General/colorImages/lp/Main.vmx'
+# programPath = '../N2T_Code/Programs/General/colorImages/sunset/Main.vmx'
 # programPath = '../N2T_Code/Programs/hello/Main.vmx'
 # programPath = '../N2T_Code/Programs/OSLibTests/sys/Main.vmx'
 # programPath = '../N2T_Code/Programs/OSLibTests/string/Main.vmx'
@@ -88,6 +95,7 @@ debugMode = False
 
 useMultiprocessing = False  # Gains realized only if screen fps > 3
 
+runYappiProfile = False
 
 
 # Setup computer -------------------
@@ -120,7 +128,23 @@ io_process = None
 yieldToExternal = False  # Suspend tick
 
 
-# Setup stack ----------------------
+# Memory segments ------------------
+
+static_segment_start = 16
+static_segment_end   = 255
+stack_segment_start  = 256
+heap_segment_start   = 2048
+
+if Components.COLOR_MODE_4BIT:
+
+	heap_segment_end = 32762
+
+else:
+
+	heap_segment_end = 16383
+
+
+# Setup pointers -------------------
 
 SP   = 0
 LCL  = 1
@@ -131,13 +155,16 @@ TEMP = 5
 # GP   = 13
 STATIC = 16
 
-static_segment_start = 16
-static_segment_end   = 255
-
 
 # IO Helpers ------------------------
 
-nColors = 16 if Components.COLOR_MODE_4BIT else 2
+if Components.COLOR_MODE_4BIT:
+
+	nColors = 16
+
+else:
+
+	nColors = 2
 
 class RAMWrapper():
 
@@ -178,12 +205,12 @@ def isNegative( x ):
 # VM Helpers ------------------------
 
 # unaryOps = [ 'not', 'neg' ]
-# binaryOps = [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR' ]
+# binaryOps = [ 'and', 'or', 'add', 'sub', 'xor', 'lsl', 'lsr' ]
 # comparisonOps = [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ]
 # operations = [ unaryOps + binaryOps + comparisonOps ]
 unaryOps = set( [ 'not', 'neg' ] )
-# binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR' ] )
-binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'shiftL', 'shiftR', 'mult', 'div' ] )
+# binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'lsl', 'lsr' ] )
+binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'lsl', 'lsr', 'mul', 'div' ] )
 comparisonOps = set( [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ] )
 operations = unaryOps | binaryOps | comparisonOps  # Set marginally faster to lookup than list
 
@@ -283,6 +310,10 @@ def push( seg, index, cmd ):
 	# Update SP
 	RAM[ SP ] += 1
 
+	# if RAM[ SP ] >= heap_segment_start:
+
+	# 	raiseException( 'Stack overflow' )
+
 
 def pop( seg, index, cmd ):
 
@@ -361,11 +392,11 @@ def operation( op ):
 
 			value = a ^ b
 
-		elif op == 'shiftL':
+		elif op == 'lsl':
 
 			value = trim( a << b )
 
-		elif op == 'shiftR':
+		elif op == 'lsr':
 
 			value = a >> b  # logical shift
 
@@ -377,7 +408,7 @@ def operation( op ):
 
 			value = trim( a + negate( b ) )
 
-		elif op == 'mult':
+		elif op == 'mul':
 
 			value = trim( a * b )
 
@@ -654,6 +685,7 @@ def function( fxName, nLocals ):
 
 # OS Wrappers -----------------------
 
+# Sys ---
 def Sys_wait():
 
 	# Retrieve args ---
@@ -667,20 +699,20 @@ def Sys_wait():
 		if ( duration <= 0 ) {
 
 			Sys.error( 1 );
-			// Sys.raiseException( "Sys.wait duration must be greater than zero" );
+			// Sys.raiseException( 'Sys.wait duration must be greater than zero' );
 		}
 	'''
 
 	if duration <= 0:
 
-		print( "ERROR: Sys.wait duration must be greater than zero" )
+		print( 'ERROR: Sys.wait duration must be greater than zero' )
 
 		# Halt program
 		haltOnError()
 
 		return
 
-	# print( "About to sleep for {} ms".format( duration ) )
+	# print( 'About to sleep for {} ms'.format( duration ) )
 	time.sleep( duration / 1000 )  # convert msec to sec
 
 
@@ -689,253 +721,7 @@ def Sys_wait():
 	ret()
 
 
-def GFX_drawPixel_old():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-
-
-	# Subroutine body ---
-
-	'''
-		var int screenIdx, wordIdx;
-		var int curWord;
-
-		// A bit slow to do this check for every pixel drawn!
-		if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ) {
-
-			Sys.error( 7 );
-			// Sys.raiseException( "Pixel coordinates are out of bounds" );
-		}
-
-		screenIdx = ( y * wordsPerRow ) + ( x >> pixelsPerWordL2 );
-		screenIdx += screenBaseAddr;
-
-		curWord = DataMemory.peek( screenIdx );
-
-		wordIdx = x % pixelsPerWord;
-
-		/**/
-		// 1bit color mode ----------------------------
-
-		if ( fgColor ) {
-
-			DataMemory.poke( screenIdx, curWord | pixelMask[ wordIdx ] );  // set bit to 1
-		}
-		else {
-
-			DataMemory.poke( screenIdx, curWord & ( ~ pixelMask[ wordIdx ] ) );  // set bit to 0
-		}/**/
-
-
-		/*
-		// 4bit color mode ----------------------------
-		
-		DataMemory.poke(
-
-			screenIdx,
-			colorMask[ fgColor ][ wordIdx ] | ( curWord & ( ~ pixelMask4[ wordIdx ] ) )
-		);*/
-	'''
-
-	# Static indices depend on the order they are listed in 'GFX.jack'
-	colorBitMode    = RAM[ staticLookup[ 'GFX_0' ] ]
-	screenBaseAddr  = RAM[ staticLookup[ 'GFX_1' ] ]
-	wordsPerRow     = RAM[ staticLookup[ 'GFX_2' ] ]
-	pixelsPerWord   = RAM[ staticLookup[ 'GFX_3' ] ]
-	pixelsPerWordL2 = RAM[ staticLookup[ 'GFX_4' ] ]
-	fgColor         = RAM[ staticLookup[ 'GFX_5' ] ]
-
-	# print( "Got {} of value {}".format( 'colorBitMode   ', colorBitMode    ) )
-	# print( "Got {} of value {}".format( 'screenBaseAddr ', screenBaseAddr  ) )
-	# print( "Got {} of value {}".format( 'wordsPerRow    ', wordsPerRow     ) )
-	# print( "Got {} of value {}".format( 'pixelsPerWord  ', pixelsPerWord   ) )
-	# print( "Got {} of value {}".format( 'pixelsPerWordL2', pixelsPerWordL2 ) )
-	# print( "Got {} of value {}".format( 'fgColor        ', fgColor         ) )
-
-	width = 512
-	height = 256
-
-	pixelMask = (
-
-		0b1000000000000000,
-		0b0100000000000000,
-		0b0010000000000000,
-		0b0001000000000000,
-		0b0000100000000000,
-		0b0000010000000000,
-		0b0000001000000000,
-		0b0000000100000000,
-		0b0000000010000000,
-		0b0000000001000000,
-		0b0000000000100000,
-		0b0000000000010000,
-		0b0000000000001000,
-		0b0000000000000100,
-		0b0000000000000010,
-		0b0000000000000001
-	)
-	pixelMask4 = (
-
-		0b1111000000000000,
-		0b0000111100000000,
-		0b0000000011110000,
-		0b0000000000001111
-	)
-	colorMask = (
-
-		(
-			0b0000000000000000,
-			0b0000000000000000,
-			0b0000000000000000,
-			0b0000000000000000
-		),
-		(
-			0b0001000000000000,
-			0b0000000100000000,
-			0b0000000000010000,
-			0b0000000000000001
-		),
-		(
-			0b0010000000000000,
-			0b0000001000000000,
-			0b0000000000100000,
-			0b0000000000000010
-		),
-		(
-			0b0011000000000000,
-			0b0000001100000000,
-			0b0000000000110000,
-			0b0000000000000011
-		),
-		(
-			0b0100000000000000,
-			0b0000010000000000,
-			0b0000000001000000,
-			0b0000000000000100
-		),
-		(
-			0b0101000000000000,
-			0b0000010100000000,
-			0b0000000001010000,
-			0b0000000000000101
-		),
-		(
-			0b0110000000000000,
-			0b0000011000000000,
-			0b0000000001100000,
-			0b0000000000000110
-		),
-		(
-			0b0111000000000000,
-			0b0000011100000000,
-			0b0000000001110000,
-			0b0000000000000111
-		),
-		(
-			0b1000000000000000,
-			0b0000100000000000,
-			0b0000000010000000,
-			0b0000000000001000
-		),
-		(
-			0b1001000000000000,
-			0b0000100100000000,
-			0b0000000010010000,
-			0b0000000000001001
-		),
-		(
-			0b1010000000000000,
-			0b0000101000000000,
-			0b0000000010100000,
-			0b0000000000001010
-		),
-		(
-			0b1011000000000000,
-			0b0000101100000000,
-			0b0000000010110000,
-			0b0000000000001011
-		),
-		(
-			0b1100000000000000,
-			0b0000110000000000,
-			0b0000000011000000,
-			0b0000000000001100
-		),
-		(
-			0b1101000000000000,
-			0b0000110100000000,
-			0b0000000011010000,
-			0b0000000000001101
-		),
-		(
-			0b1110000000000000,
-			0b0000111000000000,
-			0b0000000011100000,
-			0b0000000000001110
-		),
-		(
-			0b1111000000000000,
-			0b0000111100000000,
-			0b0000000011110000,
-			0b0000000000001111
-		)
-	)
-
-
-	screenIdx = None
-	wordIdx   = None
-	curWord   = None
-
-	# A bit slow to do this check for every pixel drawn!
-	if ( ( y < 0 ) | ( y >= height ) | ( x < 0 ) | ( x >= width ) ):
-
-		print( "ERROR: Pixel coordinates are out of bounds ( {}, {} )".format( x, y ) )
-
-		# Halt program
-		haltOnError()
-
-		return
-
-	screenIdx = trim( trim( y * wordsPerRow ) + ( x >> pixelsPerWordL2 ) )
-	screenIdx = trim( screenIdx + screenBaseAddr )
-
-	curWord = RAM[ screenIdx ]
-
-	# Equivalent of 'x % pixelsPerWord'
-	# Assumes, 'x' is zero or positive, 'pixelsPerWord' is positive
-	wordIdx = trim( x + negate( trim( pixelsPerWord * ( x // pixelsPerWord ) ) ) )  #  x % pixelsPerWord
-
-
-	# If fast enough, do colorBitMode check here so that less manual work when switching modes
-
-	''''''
-	# 1bit color mode ----------------------------
-
-	if ( fgColor ):
-
-		RAM[ screenIdx ] = curWord | pixelMask[ wordIdx ]  # set bit to 1
-
-	else:
-
-		RAM[ screenIdx ] = curWord & ( pixelMask[ wordIdx ] ^ negativeOne )  # set bit to 0
-
-	''''''
-
-	'''
-	# 4bit color mode ----------------------------
-	
-	RAM[ screenIdx ] = colorMask[ fgColor ][ wordIdx ] | ( curWord & ( pixelMask4[ wordIdx ] ^ negativeOne ) )
-	'''
-
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-
+# Graphics ---
 def GFX_drawPixel():
 
 	# Retrieve args ---
@@ -960,18 +746,20 @@ def GFX_setColor():
 
 	# Update static, `fgColor = color;`
 	#  Static indices depend on the order they are listed in 'GFX.jack'
-	RAM[ staticLookup[ 'GFX_5' ] ] = c
+	# RAM[ staticLookup[ 'GFX_5' ] ] = c
+	RAM[ staticLookup[ 'GFX_0' ] ] = c
 
 	#
 	if c == negativeOne:  # c == True
 
 		c = 1
 
-	if c > negativeOne or c >= nColors:  # c is outside 0..nColors
+	elif c > negativeOne or c >= nColors:  # c is outside 0..nColors
 
-		# raise Exception( "Color selection is not valid - {}".format( c ) )
+		# raise Exception( 'Color selection is not valid - {}'.format( c ) )
 
-		print( "ERROR: Color selection is not valid" )
+		# print( 'ERROR: Color selection is not valid' )
+		print( 'ERROR: Color selection is not valid - {}'.format( c ) )
 
 		# Halt program
 		haltOnError()
@@ -1008,6 +796,21 @@ def GFX_fillScreen():
 	push( 'constant', 0, None )
 	ret()
 
+def GFX_getPixel():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+
+	# Execute ---
+	io.getPixel( x, y )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+
 def GFX_replaceDisplayWithMainMemory():
 
 	# Retrieve args ---
@@ -1025,15 +828,22 @@ def GFX_replaceDisplayWithMainMemory():
 	ret()
 
 
+# Math ---
+# hardware CORDIC?
+def Math_cos(): pass
+def Math_sin(): pass
+def Math_tan(): pass
+
+
 OSWrappers = {
 	
 	'Sys.wait'      : Sys_wait,
-	# 'GFX.drawPixel' : GFX_drawPixel  # Atm about 1 second faster
 
-	'GFX.setColor'        : GFX_setColor,
 	'GFX.drawPixel'       : GFX_drawPixel,
+	'GFX.setColor'        : GFX_setColor,
 	'GFX.drawFastHLine'   : GFX_drawFastHLine,
 	'GFX.fillScreen'      : GFX_fillScreen,
+	'GFX.getPixel'        : GFX_getPixel,
 	'GFX.replaceDisplayWithMainMemory' : GFX_replaceDisplayWithMainMemory
 }
 
@@ -1123,7 +933,7 @@ def extractProgram( inputFilePath ):
 
 							else:
 
-								raise Exception( "Ran out of static space" )
+								raise Exception( 'Ran out of static space' )
 
 						cmd += [ refName ]
 
@@ -1197,24 +1007,22 @@ def debug2File():
 
 		# static 16..255
 		file.write( 'Static' + '\n' )
-		for i in range( 16, 256 ):
+		for i in range( static_segment_start, stack_segment_start ):
 			file.write( '\t{:<3}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '' + '\n' )
 
 		# stack 256..2047
 		sp = RAM[ 0 ]
 		file.write( 'Stack' + '\n' )
-		for i in range( 256, sp ):
+		for i in range( stack_segment_start, sp ):
 		# for i in range( 256, 2048 ):
 			file.write( '\t{:<4}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '\t{:<4}  .. ({})'.format( sp, RAM[ sp ] ) + '\n' )
 		file.write( '' + '\n' )
 
 		# heap 2048..16383
-		# heapEnd = 16384
-		heapEnd = 32762  # 4bit color mode
 		file.write( 'Heap' + '\n' )
-		for i in range( 2048, heapEnd ):
+		for i in range( heap_segment_start, heap_segment_end + 1 ):
 			file.write( '\t{:<5}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '' + '\n' )
 
@@ -1279,7 +1087,9 @@ def setup():
 	if debugMode:
 
 		# Remove existing logs
-		for f in os.listdir( debugPath ): os.remove( debugPath + f )
+		for f in os.listdir( debugPath ):
+
+			os.remove( debugPath + f )
 
 		# Dump ROM and addresses
 		dumpROMnAddresses()
@@ -1292,8 +1102,11 @@ def setup():
 
 	# Setup callbacks
 	if debugMode:
+
 		clock.callbackRising = updateWithDebug
+
 	else:
+
 		clock.callbackRising = update
 
 	# Initialize IO
@@ -1341,15 +1154,25 @@ def update():
 		clock.stop()
 		print( 'See you later!' )
 
+		# Profile... temp
+		if runYappiProfile:
+
+			yappi.get_func_stats().print_all()
+
 	# Stop running when reach Sys.halt
 	if PC == sysHalt:
 
 		# TODO, none of these actions seem to lower processor use...
 
 		clock.stop()
-		io.maxFps = 0  # stop screen refresh
+		io.maxFps = 0  # stop screen refresh ??
 
 		print( 'Sys.halt reached' )
+
+		# Profile... temp
+		if runYappiProfile:
+
+			yappi.get_func_stats().print_all()
 
 		# Am I really killing the clock and IO threads with the above??
 		main_thread = threading.main_thread()
@@ -1368,6 +1191,34 @@ def update():
 
 # Run -------------------------------
 
+def run( programPath_ ):
+
+	global programPath
+
+	# Specify program
+	if programPath:
+		
+		programPath = programPath_ 
+
+	# Setup
+	setup()
+
+	# Profile... temp
+	if runYappiProfile:
+
+		yappi.start()
+
+	# Start IO
+	io.runAsThread()
+
+	# Start clock
+	clock.run()
+
+	print( 'Program has started' )
+
+	startTime = time.time()
+
+
 if __name__ == '__main__':
 
 	''' For whatever reason, multiprocessing.Process needs to be
@@ -1377,6 +1228,11 @@ if __name__ == '__main__':
 
 	# Setup
 	setup()
+
+	# Profile... temp
+	if runYappiProfile:
+
+		yappi.start()
 
 	# Start IO
 	if useMultiprocessing:

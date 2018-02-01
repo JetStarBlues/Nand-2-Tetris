@@ -4,7 +4,7 @@ class           -> 'class' className '{' constDec* classVarDec* subroutineDec* '
 
 classVarDec     -> ( 'static' | 'field' ) type varName ( ',' varName )* ';'
 
-type            -> 'int' | 'char' | 'boolean' | className
+type            -> 'int' | 'char' | 'bool' | className
 
 subroutineDec   -> ( 'constructor' | 'function' | 'method' ) ( 'void' | type ) subroutineName '(' parameterList ')' subroutineBody
 

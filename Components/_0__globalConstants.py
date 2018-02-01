@@ -8,8 +8,9 @@ N_BITS = 16
 
 CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
-SCREEN_FPS = 1
-# SCREEN_FPS = 3
+# SCREEN_FPS = 1
+# SCREEN_FPS = 24
+SCREEN_FPS = 30
 
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
@@ -34,11 +35,11 @@ if PERFORMANCE_MODE :
 
 
 # Color mode --
-COLOR_MODE_4BIT = False
+COLOR_MODE_4BIT = True
 if COLOR_MODE_4BIT :
 
 	# No space is left unallocated
-	heapEnd = PROGRAM_MEMORY_SIZE - 8192 * 4 - 6
+	heapEnd = DATA_MEMORY_SIZE - 8192 * 4 - 6
 
 	KBD_MEMORY_MAP      = heapEnd + 0
 	MOUSE_MEMORY_MAP    = heapEnd + 1

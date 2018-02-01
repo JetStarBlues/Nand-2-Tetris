@@ -5,6 +5,7 @@
 # Built ins
 import threading
 import pygame, numpy
+from math import ceil
 
 # Hack computer
 from ._x__components import *
@@ -47,6 +48,7 @@ class IO():
 		self.width = 512
 		self.height = 256
 		self.screenMemStart = SCREEN_MEMORY_MAP
+		self.newContent = False
 
 		# 1Bit color mode ---
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
@@ -69,16 +71,16 @@ class IO():
 
 				self.colors[ key ] = self.hex2rgb( value )
 
+			self.fgColor = self.colors[ '0111' ]
 			self.bgColor = self.colors[ '0000' ]
 
 			self.nRegistersPerRow *= 4
 			self.nPixelsPerWord = 4
 			self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
-
-		# wip
+		# Pixel array ---
 		# Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
-		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.bgColor )   # np( nRows, nCols, z )
+		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.bgColor )   # np( nCols, nRows, z )
 		self.curColor = self.fgColor
 
 		# Initialize Pygame ---
@@ -95,11 +97,18 @@ class IO():
 
 		return( r, g, b )
 
+	def toBinary( self, x, fill ):
+
+		# convert representation from integer to binary
+		return bin( x )[ 2 : ].zfill( fill )
+
 	def runAsThread( self ):
 
 		threading.Thread(
+
 			target = self.initPygame,
 			name = 'io_thread'
+
 		).start()
 
 	def initPygame( self ):
@@ -178,34 +187,62 @@ class IO():
 
 	def updateScreen( self ):
 
+		if self.newContent:  # update only if there's a change
+
+			# Blit pixel values
+			pygame.surfarray.blit_array( self.surface, self.pixelArray )
+
+			# Update display
+			pygame.display.flip()
+
+			self.newContent = False
+
+	def updateScreen_partial( self, x, y, w, h ):
+
+		# Hmmm.... also why crashes when close?
+
 		# Blit pixel values
 		pygame.surfarray.blit_array( self.surface, self.pixelArray )
 
 		# Update display
-		pygame.display.flip()
-
+		pygame.display.update( pygame.Rect( x, y, w, h ) )	
 
 	def setColor( self, colorCode ):
 
 		if COLOR_MODE_4BIT:
 
-			self.curColor = self.colors[ bin( colorCode )[ 2 : ].zfill( 4 ) ] # temp
+			key = self.toBinary( colorCode, 4 )
+
+			if not key in self.colors:
+
+				raise Exception( 'Color selection is not valid' )
+
+			self.curColor = self.colors[ key ] # temp
 
 		else:
 
-			self.curColor = self.colors[ str( colorCode ) ] # temp
+			key = str( colorCode )
+
+			if not key in self.colors:
+
+				raise Exception( 'Color selection is not valid - {}'.format( colorCode ) )
+
+			self.curColor = self.colors[ key ] # temp
 
 	def drawPixel( self, x, y ):
 
 		''' Update only the relevant pixel '''
 
 		# Check if coordinates are valid
-		if( x < 0 | x >= self.width | y < 0 | y >= self.height ):
+		if( x < 0 or x >= self.width or y < 0 or y >= self.height ):
 
 			raise Exception( 'drawPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
 
 		# Draw pixel
 		self.pixelArray[ x ][ y ] = self.curColor
+
+		# Mark screen for update
+		self.newContent = True
 
 	def flood( self, x, y, len ):
 
@@ -232,109 +269,116 @@ class IO():
 
 		# Check if coordinates are valid
 		if(
-			w <= 0 | 
-			x <  0 | ( x + w ) >= self.width |
-			y <  0 |         y >= self.height
+			w <= 0 or 
+			x <  0 or ( x + w ) > self.width or
+			y <  0 or         y > self.height
 		):
 			raise Exception( 'drawFastHLine received invalid argument(s): ( {}, {}, {} )'.format( x, y, w ) )
 
 		# Draw line
 		self.flood( x, y, w )
 
+		# Mark screen for update
+		self.newContent = True
+
 	def fillScreen( self ):
 
 		self.flood( 0, 0, self.width * self.height )
 
+		# Mark screen for update
+		self.newContent = True
+
+	def getPixel( self, x, y ):
+
+		# Check if coordinates are valid
+		if(
+			x < 0 or x >= self.width or
+			y < 0 or y >= self.height
+		):
+			raise Exception( 'getPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
+
+		# Get color
+		color = self.pixelArray[ x ][ y ]
+
+		# Lookup colorCode
+		for key, value in self.colors.items():
+
+			if value == color:
+
+				colorCode = key
+
+		# Write to memory
+		self.main_memory.write( 1, colorCode, 1, SCREEN_MEMORY_MAP )  # TODO, get better location
+
+
 	def replaceMainWithDisplayMemory( self, x, y, w, h ):
 
-		mask1 = 111111111 >> ( x % 16 )
-		mask2 = ~ ( 111111111 >> ( ( x + w ) % 16 ) )
-
-		x1 = ( x // 16 ) * 16
-		x2 = ( ( x + w ) // 16 ) * 16
-
-		# fsfsf
-
-		for j in range( y, y + h ):
-
-			for i in range( x, x2 + 16, 16 ):
-
-				idx = j * wpr + ( i % 16 )
-
-				w = composeWord( idx, i, j )
-
-				if x == x1:
-
-					curW = self.main_memory[ idx ]
-
-					w = w | ( curW & mask1 )  ??
-
-				elif x == x2:
-
-					ditto
-
-				self.main_memory[ idx ] = w
-
-		pass
-
-	def composeWord( self, idx, x, y ):
-
-		w = ''
-
-		for i in range( ppw ):
-
-			color = self.pixelArray[ x ][ y ]
-			code = rgb2code[ color ]
-
-			w += color
-			
-			x += 1
-
-		w = int( w, 2 )
-
-		return w
-
+		#TODO
 		pass
 
 
 	def replaceDisplayWithMainMemory( self, x, y, w, h ):
 
+		# TODO - make this faster...
+
 		# Check if coordinates are valid
 		if(
-			w <= 0 |
-			h <= 0 |
-			x <  0 | ( x + w ) >= self.width |
-			y <  0 | ( y + h ) >= self.height
+			w <= 0 or
+			h <= 0 or
+			x <  0 or ( x + w ) > self.width or
+			y <  0 or ( y + h ) > self.height
 		):
 			raise Exception( 'replaceDisplayWithMainMemory received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
 
 		# Replace
-		if COLOR_MODE_4BIT:
+		if( w == self.width and h == self.height ):
 
-			self.getPixels_4BitMode( x, y, w, h )
+			if COLOR_MODE_4BIT:
+
+				self.getPixelsFromMain_4BitMode_fast( x, y, w, h )
+
+			else:
+
+				self.getPixelsFromMain_1BitMode_fast( x, y, w, h )
 
 		else:
 
-			self.getPixels_1BitMode( x, y, w, h )
+			if COLOR_MODE_4BIT:
 
-	def getPixels_1BitMode( self, x, y, w, h ):
+				self.getPixelsFromMain_4BitMode( x, y, w, h )
+
+			else:
+
+				self.getPixelsFromMain_1BitMode( x, y, w, h )
+
+		# Mark screen for update
+		self.newContent = True
+
+		# Hmmm...
+		# self.updateScreen_partial( x, y, w, h )
+
+	def getPixelsFromMain_1BitMode( self, x, y, w, h ):
+
+		# Slow cause iterating per pixel?
 
 		x0 = x
+		x2 = x + w
 
-		for k in range( h ):  # traverse rows
+		for y in range( y, y + h ):
 
 			x = x0
 
-			wIdx = x + y * self.nRegistersPerRow
-			wIdx += self.screenMemStart
+			regIdx_ = self.screenMemStart + ( y * self.nRegistersPerRow )  # exp comp
 
-			for j in range( ( w - 1 ) // self.nPixelsPerWord + 1 ):  # traverse words
+			while x < x2:
 
-				register = self.main_memory.read( wIdx )
+				regIdx = regIdx_ + ( x // self.nPixelsPerWord )  # exp comp
 
-				register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
+				register = self.main_memory.read( regIdx )
 
-				for i in range( self.N ):  # traverse pixels
+				register = self.toBinary( register, self.N )
+
+				for i in range( x % self.N, self.N ):  # exp comp
 
 					pixel = register[ i ]
 
@@ -344,89 +388,66 @@ class IO():
 
 					x += 1
 
-				wIdx += 1
+					if x == x2:
 
-			y += 1
+						break
 
+	def getPixelsFromMain_1BitMode_fast( self ):
 
-		# x = 0
-		# y = 0
+		x = 0
+		y = 0
 
-		# for idx in range( self.screenMemStart, self.screenMemEnd ):
+		for regIdx in range( self.screenMemStart, self.screenMemEnd ):
 
-		# 	register = self.main_memory.read( idx )
+			register = self.main_memory.read( regIdx )
 
-		# 	register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
+			register = self.toBinary( register, self.N )
 
-		# 	for i in range( self.N ):
+			for i in range( self.N ):
 
-		# 		pixel = register[ i ]
+				pixel = register[ i ]
 
-		# 		color = self.colors[ pixel ]  # look up corresponding color
+				color = self.colors[ pixel ]  # look up corresponding color
 
-		# 		self.pixelArray[ x ][ y ] = color
-		# 		x += 1
+				self.pixelArray[ x ][ y ] = color
 
-		# 		if ( x == self.width ):
+				x += 1
 
-		# 			x = 0
-		# 			y += 1
+				if ( x == self.width ):
 
-	def getPixels_4BitMode( self, x, y, w, h ):
+					x = 0
+					y += 1
 
-		x0 = x
+	def getPixelsFromMain_4BitMode( self, x, y, w, h ):
 
-		for k in range( h ):  # traverse rows
+		# TODO, and test!
+		pass
 
-			x = x0
+	def getPixelsFromMain_4BitMode_fast( self ):
 
-			wIdx = x + y * self.nRegistersPerRow
-			wIdx += self.screenMemStart
+		x = 0
+		y = 0
 
-			for j in range( ( w - 1 ) // self.nPixelsPerWord + 1 ):  # traverse words
+		for idx in range( self.screenMemStart, self.screenMemEnd ):
 
-				register = self.main_memory.read( wIdx )
+			register = self.main_memory.read( idx )
 
-				register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
+			register = self.toBinary( register, self.N )
 
-				for i in range( 0, self.N, self.nPixelsPerWord ):  # traverse pixels
+			for i in range( 0, self.N, 4 ):
 
-					pixel = register[ i : i + self.nPixelsPerWord ]
+				pixel = register[ i : i + 4 ]
 
-					color = self.colors[ pixel ]  # look up corresponding color
+				color = self.colors[ pixel ]  # look up corresponding color
 
-					self.pixelArray[ x ][ y ] = color
+				self.pixelArray[ x ][ y ] = color
 
-					x += 1
+				x += 1
 
-				wIdx += 1
+				if ( x == self.width ):
 
-			y += 1
-
-
-		# x = 0
-		# y = 0
-
-		# for idx in range( self.screenMemStart, self.screenMemEnd ):
-
-		# 	register = self.main_memory.read( idx )
-
-		# 	register = bin( register )[ 2 : ].zfill( self.N )  # convert representation from integer to binary
-
-		# 	for i in range( 0, self.N, 4 ):
-
-		# 		pixel = register[ i : i + 4 ]
-
-		# 		color = self.colors[ pixel ]  # look up corresponding color
-
-		# 		self.pixelArray[ x ][ y ] = color
-
-		# 		x += 1
-
-		# 		if ( x == self.width ):
-
-		# 			x = 0
-		# 			y += 1
+					x = 0
+					y += 1
 
 
 	# ------
@@ -471,7 +492,7 @@ class IO():
 
 		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-		# 		register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+		# 		register = self.toBinary( register, self.N )
 
 		# 		for i in range( self.N ):
 
@@ -488,7 +509,7 @@ class IO():
 
 			register = self.main_memory.read( idx )
 
-			register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+			register = self.toBinary( register, self.N )
 
 			for i in range( self.N ):
 
@@ -514,7 +535,7 @@ class IO():
 
 		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-		# 		register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+		# 		register = self.toBinary( register, self.N )
 
 		# 		for i in range( 0, self.N, 4 ):
 
@@ -531,7 +552,7 @@ class IO():
 
 			register = self.main_memory.read( idx )
 
-			register = bin( register )[ 2 : ].zfill( self.N )  # Convert representation from integer to binary
+			register = self.toBinary( register, self.N )
 
 			for i in range( 0, self.N, 4 ):
 
@@ -556,9 +577,9 @@ class IO():
 
 			# Write to memory
 			#  clk, data, write, address
-			self.main_memory.write( 1,      1, 1,  MOUSE_MEMORY_MAP )
-			self.main_memory.write( 1, pos[0], 1, MOUSEX_MEMORY_MAP )
-			self.main_memory.write( 1, pos[1], 1, MOUSEY_MEMORY_MAP )
+			self.main_memory.write( 1,        1, 1,  MOUSE_MEMORY_MAP )
+			self.main_memory.write( 1, pos[ 0 ], 1, MOUSEX_MEMORY_MAP )
+			self.main_memory.write( 1, pos[ 1 ], 1, MOUSEY_MEMORY_MAP )
 
 	def handleMouseReleased( self, button ):
 

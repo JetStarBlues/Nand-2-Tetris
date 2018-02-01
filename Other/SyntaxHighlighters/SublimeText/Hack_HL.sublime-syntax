@@ -90,7 +90,7 @@ contexts:
         2: entity.name.function.jack
 
     # Types ----------------------------------------------------
-    - match: \b(void|boolean|char|int)\b
+    - match: \b(void|bool|char|int)\b
       scope: storage.type.primitive.jack
 
     - match: \b(class|field|static|constructor|method|function|var|const)\b

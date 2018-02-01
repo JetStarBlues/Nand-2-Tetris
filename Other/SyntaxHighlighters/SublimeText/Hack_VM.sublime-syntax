@@ -16,7 +16,7 @@ variables:
 
   identifier: '[A-Za-z_][A-Za-z_0-9]*'
   action: \b(push|pop|goto|if-goto|return)\b
-  builtin: \b(add|sub|neg|eq|gt|lt|and|or|not)\b
+  builtin: \b(add|sub|neg|eq|gt|lt|gte|lte|ne|and|or|not)\b
   memorySegment: \b(argument|constant|local|static|temp|this|that|pointer)\b
 
 contexts:

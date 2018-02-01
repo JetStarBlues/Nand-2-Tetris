@@ -36,7 +36,7 @@
 				6   -> comp, zero_y  
 				7   -> comp, not_y  
 				8   -> comp, and (0) | add (1)  
-				9   -> comp, negate_out
+				9   -> comp, not_out
 				ABC -> destination
 				DEF -> jump
 
@@ -238,7 +238,7 @@ def extractCmd( line ):
 
 	line = line.replace( ' ', '' )   # remove spaces
 	line = line.replace( '\t', '' )  # remove tabs
-	line = line.upper()              # upper case everything
+	# line = line.upper()              # upper case everything
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
@@ -475,9 +475,9 @@ def translateInstructions( cmdList ):
 
 			# print( dest, comp, jmp )
 
-			dest = lookup_dest[dest] if dest else lookup_dest[ 'NULL' ]
-			jmp = lookup_jmp[jmp] if jmp else lookup_jmp[ 'NULL' ]
-			comp = lookup_comp[comp]
+			dest = lookup_dest[ dest.upper() ] if dest else lookup_dest[ 'NULL' ]
+			jmp = lookup_jmp[ jmp.upper() ] if jmp else lookup_jmp[ 'NULL' ]
+			comp = lookup_comp[ comp.upper() ]
 
 			cmd_b = header + comp + dest + jmp
 

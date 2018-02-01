@@ -44,6 +44,11 @@
 
 '''
 
+'''
+	TODO
+	- optimize for 'x+1', 'x-1', 0, 1, -1
+'''
+
 
 # == Imports =======================================================
 
@@ -72,13 +77,13 @@ unaryOps = {
 }
 binaryOps = {
 	
-	'and'    : '&',
-	'or'     : '|',
-	'add'    : '+',
-	'sub'    : '-',
-	'xor'    : '^',
-	'shiftR' : '>>',
-	'shiftL' : '<<',
+	'and' : '&',
+	'or'  : '|',
+	'add' : '+',
+	'sub' : '-',
+	'xor' : '^',
+	'lsr' : '>>',
+	'lsl' : '<<',
 }
 comparisonOps = {
 
@@ -440,7 +445,7 @@ class Compiler():
 
 			# elif cmd2 and cmd2[0] in binaryOps:
 			elif ( cmd2 and cmd2[0] in binaryOps and
-			       cmd2[0] != 'shiftL' and cmd2[0] != 'shiftR' ):
+			       cmd2[0] != 'lsl' and cmd2[0] != 'lsr' ):
 
 				cmd3 = self.input.peekpeek()
 
@@ -710,7 +715,7 @@ class Compiler():
 
 		elif op in binaryOps:
 
-			if op == 'shiftL' or op == 'shiftR':
+			if op == 'lsl' or op == 'lsr':
 
 				# Workaround for available shift instructions ( D << M or D >> M )
 
