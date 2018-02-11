@@ -7,7 +7,7 @@ from ._x__components import *
 
 '''----------------------------- Helpers -----------------------------'''
 
-negativeOne = 2 ** N_BITS - 1  # two's complement
+negativeOne_ = 2 ** N_BITS - 1  # two's complement
 
 def toBin( x ):
 
@@ -50,4 +50,4 @@ def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 
 def notN_( x ):
 
-	return x ^ negativeOne
+	return x ^ negativeOne_

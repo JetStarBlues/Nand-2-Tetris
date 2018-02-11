@@ -16,30 +16,17 @@
 
 	Description:
 
-		Faster than emulating assembly code.
-		Infact, does not emulate nor use the Hack computer architecture.
-		Instead it executes the VM code using your machine's processor architecture.
+		Faster than emulating binary code.
+		Infact, does not emulate nor use the Hack Computer's architecture.
+		Instead it executes the VM code using your machine's processor's architecture.
 
-		While running assembly (and in turn binary) code is cycle accurate,
-		it is too slow in emulation (see runProgram.py).
-		The best I could squeeze out was around 7K instructions per second. Compare
-		this to the speed of execution in dedicated hardware. Even a 'slow' 25Mhz clock
-		would put this performance to shame.
+		While running binary code is cycle accurate,
+		it is too slow in emulation (see cpuEmulator.py).
 
 		I'm sure there are optimizations to be made that can improve the performance
-		of the assembly/binary emulation. If you have any ideas, be sure to share
+		of the binary/CPU emulation. If you have any ideas, be sure to share
 		them because the best case scenario is for the binary emulator to execute at a
 		usable speed. Till then, this exists as an inbetween.
-'''
-
-'''
-	TODO - Make if faster!
-
-	Official emulator attains speed by using OS libraries written in Java instead of Jack.
-	Is this a possible course of action?
-	E.g.
-	  - Sys.wait
-	  - GFX.drawPixel
 '''
 
 
@@ -55,6 +42,7 @@ import yappi
 
 # Hack computer (will use only the Clock and IO modules)
 import Components
+from commonHelpers import *
 
 
 # Configure computer ---------------
@@ -95,12 +83,12 @@ debugMode = False
 
 useMultiprocessing = False  # Gains realized only if screen fps > 3
 
-runYappiProfile = False
+runYappiProfile = True
 
 
 # Setup computer -------------------
 
-N_BITS = 16
+nBits = Components.N_BITS
 
 PC = 0
 PC_prev = 0
@@ -128,20 +116,11 @@ io_process = None
 yieldToExternal = False  # Suspend tick
 
 
-# Memory segments ------------------
-
-static_segment_start = 16
-static_segment_end   = 255
-stack_segment_start  = 256
-heap_segment_start   = 2048
-
-if Components.COLOR_MODE_4BIT:
-
-	heap_segment_end = 32762
-
-else:
-
-	heap_segment_end = 16383
+static_segment_start = Components.STATIC_START
+static_segment_end   = Components.STATIC_END
+stack_segment_start  = Components.STACK_END
+heap_segment_start   = Components.HEAP_START
+heap_segment_end     = Components.HEAP_END
 
 
 # Setup pointers -------------------
@@ -183,25 +162,6 @@ class RAMWrapper():
 			self.ram[ address ] = x
 
 
-# ALU Helpers -----------------------
-
-negativeOne = 2 ** N_BITS - 1
-
-largestInt = 2 ** ( N_BITS - 1 ) - 1
-
-def trim( x ):
-
-	return x & negativeOne  # discard overflow bits
-
-def negate( x ):
-
-	return trim( ( x ^ negativeOne ) + 1 )  # twos complement
-
-def isNegative( x ):
-
-	return x > largestInt
-
-
 # VM Helpers ------------------------
 
 # unaryOps = [ 'not', 'neg' ]
@@ -209,7 +169,6 @@ def isNegative( x ):
 # comparisonOps = [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ]
 # operations = [ unaryOps + binaryOps + comparisonOps ]
 unaryOps = set( [ 'not', 'neg' ] )
-# binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'lsl', 'lsr' ] )
 binaryOps = set( [ 'and', 'or', 'add', 'sub', 'xor', 'lsl', 'lsr', 'mul', 'div' ] )
 comparisonOps = set( [ 'eq', 'gt', 'lt', 'gte', 'lte', 'ne' ] )
 operations = unaryOps | binaryOps | comparisonOps  # Set marginally faster to lookup than list
@@ -1005,22 +964,21 @@ def debug2File():
 		file.write( 'GP2   {}'.format( RAM[ 15 ] ) + '\n' )
 		file.write( '' + '\n' )
 
-		# static 16..255
+		# static
 		file.write( 'Static' + '\n' )
 		for i in range( static_segment_start, stack_segment_start ):
 			file.write( '\t{:<3}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '' + '\n' )
 
-		# stack 256..2047
+		# stack
 		sp = RAM[ 0 ]
 		file.write( 'Stack' + '\n' )
 		for i in range( stack_segment_start, sp ):
-		# for i in range( 256, 2048 ):
 			file.write( '\t{:<4}  {}'.format( i, RAM[ i ] ) + '\n' )
 		file.write( '\t{:<4}  .. ({})'.format( sp, RAM[ sp ] ) + '\n' )
 		file.write( '' + '\n' )
 
-		# heap 2048..16383
+		# heap
 		file.write( 'Heap' + '\n' )
 		for i in range( heap_segment_start, heap_segment_end + 1 ):
 			file.write( '\t{:<5}  {}'.format( i, RAM[ i ] ) + '\n' )
@@ -1082,14 +1040,9 @@ def setup():
 	# Setup ROM
 	startTime = time.time()
 	extractProgram( programPath )
-	print( 'Completed ROM flash. Took {} seconds.'.format( time.time() - startTime ) )
+	print( 'Completed ROM flash. Took {0:.2f} seconds.'.format( time.time() - startTime ) )
 
 	if debugMode:
-
-		# Remove existing logs
-		for f in os.listdir( debugPath ):
-
-			os.remove( debugPath + f )
 
 		# Dump ROM and addresses
 		dumpROMnAddresses()
@@ -1110,7 +1063,10 @@ def setup():
 		clock.callbackRising = update
 
 	# Initialize IO
-	io = Components.IO( N_BITS, RAMWrapper( RAM ) )
+	io = Components.IO( nBits, RAMWrapper( RAM ) )
+
+	# Time it
+	startTime = time.time()
 
 
 def tick():
@@ -1167,7 +1123,8 @@ def update():
 		clock.stop()
 		io.maxFps = 0  # stop screen refresh ??
 
-		print( 'Sys.halt reached' )
+		# print( 'Sys.halt reached' )
+		print( 'Sys.halt reached. Took {0:.2f} seconds.'.format( time.time() - startTime ) )
 
 		# Profile... temp
 		if runYappiProfile:

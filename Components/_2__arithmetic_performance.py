@@ -9,17 +9,17 @@ from ._x__components import *
 
 '''----------------------------- Helpers -----------------------------'''
 
-largestInt = 2 ** ( N_BITS - 1 ) - 1  # two's complement
+largestInt_ = 2 ** ( N_BITS - 1 ) - 1  # two's complement
 
 def isNegative_( x ):
 
 	''' 2s complement -> MSB is one if negative '''
-	return int( x > largestInt )
+	return int( x > largestInt_ )
 
-def trim( x ):
+def trim_( x ):
 
 	''' discard overflow bits '''
-	return x & negativeOne
+	return x & negativeOne_
 
 
 

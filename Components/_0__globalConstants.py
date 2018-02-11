@@ -18,6 +18,13 @@ PROGRAM_MEMORY_SIZE = 2**16
 DATA_MEMORY_SIZE = 2**16
 
 # RAM Allocation (compatible)
+STATIC_START = 16
+STATIC_END   = 255
+STACK_START  = 256
+STACK_END    = 2047
+HEAP_START   = 2048
+HEAP_END     = 16383
+
 SCREEN_MEMORY_MAP   = 16384
 KBD_MEMORY_MAP      = 24576
 MOUSE_MEMORY_MAP    = 24577
@@ -35,19 +42,19 @@ if PERFORMANCE_MODE :
 
 
 # Color mode --
-COLOR_MODE_4BIT = True
+COLOR_MODE_4BIT = False
 if COLOR_MODE_4BIT :
 
 	# No space is left unallocated
-	heapEnd = DATA_MEMORY_SIZE - 8192 * 4 - 6
+	HEAP_END = DATA_MEMORY_SIZE - 8192 * 4 - 6
 
-	KBD_MEMORY_MAP      = heapEnd + 0
-	MOUSE_MEMORY_MAP    = heapEnd + 1
-	MOUSEX_MEMORY_MAP   = heapEnd + 2
-	MOUSEY_MEMORY_MAP   = heapEnd + 3
-	IO_BANK1_MEMORY_MAP = heapEnd + 4
-	IO_BANK2_MEMORY_MAP = heapEnd + 5
-	SCREEN_MEMORY_MAP   = heapEnd + 6
+	KBD_MEMORY_MAP      = HEAP_END + 0
+	MOUSE_MEMORY_MAP    = HEAP_END + 1
+	MOUSEX_MEMORY_MAP   = HEAP_END + 2
+	MOUSEY_MEMORY_MAP   = HEAP_END + 3
+	IO_BANK1_MEMORY_MAP = HEAP_END + 4
+	IO_BANK2_MEMORY_MAP = HEAP_END + 5
+	SCREEN_MEMORY_MAP   = HEAP_END + 6
 
 
 # --- Simulator UI -----------------------------------
