@@ -9,6 +9,7 @@ from math import ceil
 
 # Hack computer
 from ._x__components import *
+from commonHelpers import *
 
 
 
@@ -41,7 +42,7 @@ class IO():
 
 		# Pygame ---
 		self.maxFps = SCREEN_FPS
-		self.display = None
+		self.surface = None
 		self.clock = None
 
 		# Screen ---
@@ -97,11 +98,6 @@ class IO():
 
 		return( r, g, b )
 
-	def toBinary( self, x, fill ):
-
-		# convert representation from integer to binary
-		return bin( x )[ 2 : ].zfill( fill )
-
 	def runAsThread( self ):
 
 		threading.Thread(
@@ -125,6 +121,10 @@ class IO():
 		self.surface = pygame.display.get_surface()
 
 		self.clock = pygame.time.Clock()
+
+		# Init background
+		self.surface.fill( self.bgColor )
+		pygame.display.flip()
 
 		# Start loop
 		self.run()
@@ -195,23 +195,13 @@ class IO():
 			# Update display
 			pygame.display.flip()
 
-			self.newContent = False
-
-	def updateScreen_partial( self, x, y, w, h ):
-
-		# Hmmm.... also why crashes when close?
-
-		# Blit pixel values
-		pygame.surfarray.blit_array( self.surface, self.pixelArray )
-
-		# Update display
-		pygame.display.update( pygame.Rect( x, y, w, h ) )	
+			self.newContent = False	
 
 	def setColor( self, colorCode ):
 
 		if COLOR_MODE_4BIT:
 
-			key = self.toBinary( colorCode, 4 )
+			key = toBinary( colorCode, 4 )
 
 			if not key in self.colors:
 
@@ -240,14 +230,15 @@ class IO():
 
 		# Draw pixel
 		self.pixelArray[ x ][ y ] = self.curColor
+		# self.surface.set_at( ( x, y ), self.curColor )
 
 		# Mark screen for update
 		self.newContent = True
 
 	def flood( self, x, y, len ):
 
-		# Write words to display RAM
-		# Assumes display RAM allocates one register per pixel
+		''' Write words to display RAM
+		    Assumes display RAM allocates one register per pixel '''
 
 		for i in range( len ):
 
@@ -319,7 +310,7 @@ class IO():
 
 	def replaceDisplayWithMainMemory( self, x, y, w, h ):
 
-		# TODO - make this faster...
+		# Slow because iterating per pixel to convert between the two representations
 
 		# Check if coordinates are valid
 		if(
@@ -354,31 +345,39 @@ class IO():
 		# Mark screen for update
 		self.newContent = True
 
-		# Hmmm...
-		# self.updateScreen_partial( x, y, w, h )
-
 	def getPixelsFromMain_1BitMode( self, x, y, w, h ):
 
-		# Slow cause iterating per pixel?
+		startX = x
+		endX   = x + w
 
-		x0 = x
-		x2 = x + w
+		startWord = startX // self.nPixelsPerWord
+		endWord   = ceil( endX / self.nPixelsPerWord )
+
+		startWordOffset = startX % 16
+		endWordOffset   = endX % 16
+
+		regIdx = self.screenMemStart + ( y * self.nRegistersPerRow )
 
 		for y in range( y, y + h ):
 
-			x = x0
+			x = startX
+			word = startWord
 
-			regIdx_ = self.screenMemStart + ( y * self.nRegistersPerRow )  # exp comp
+			for word in range( startWord, endWord + 1 ):
 
-			while x < x2:
+				register = self.main_memory.read( regIdx + word )
 
-				regIdx = regIdx_ + ( x // self.nPixelsPerWord )  # exp comp
+				register = toBinary( register, self.N )
 
-				register = self.main_memory.read( regIdx )
+				for i in range( self.nPixelsPerWord ):
 
-				register = self.toBinary( register, self.N )
+					if word == startWord and i < startWordOffset:
 
-				for i in range( x % self.N, self.N ):  # exp comp
+						continue  # skip
+
+					elif word == endWord and i >= endWordOffset:
+
+						break  # done with word
 
 					pixel = register[ i ]
 
@@ -386,11 +385,9 @@ class IO():
 
 					self.pixelArray[ x ][ y ] = color
 
-					x += 1
+					x += 1					
 
-					if x == x2:
-
-						break
+			regIdx += self.nRegistersPerRow
 
 	def getPixelsFromMain_1BitMode_fast( self ):
 
@@ -401,7 +398,7 @@ class IO():
 
 			register = self.main_memory.read( regIdx )
 
-			register = self.toBinary( register, self.N )
+			register = toBinary( register, self.N )
 
 			for i in range( self.N ):
 
@@ -432,7 +429,7 @@ class IO():
 
 			register = self.main_memory.read( idx )
 
-			register = self.toBinary( register, self.N )
+			register = toBinary( register, self.N )
 
 			for i in range( 0, self.N, 4 ):
 
@@ -448,121 +445,6 @@ class IO():
 
 					x = 0
 					y += 1
-
-
-	# ------
-
-	def updateScreen_old( self ):
-
-		# Blit pixel values
-		pygame.surfarray.blit_array( self.surface, self.genPixelArray() )
-
-		# Update display
-		pygame.display.flip()
-
-	def genPixelArray( self ):
-
-		if COLOR_MODE_4BIT:
-
-			return self.convertToBlitArray( self.getPixels_4BitMode() )
-
-		else:
-
-			return self.convertToBlitArray( self.getPixels_1BitMode() )
-			
-	def convertToBlitArray( self, a ):
-
-		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row]) '''
-		
-		# return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )
-
-		return numpy.array( a ).reshape( ( self.height, self.width, 3 ) ).transpose( ( 1, 0, 2 ) )
-
-	def getPixels_1BitMode_old( self ):
-
-		pixels = []
-
-		# for y in range( self.height ):
-
-		# 	row = []
-
-		# 	for x in range( self.nRegistersPerRow ):
-
-		# 		idx = x + y * self.nRegistersPerRow
-
-		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
-
-		# 		register = self.toBinary( register, self.N )
-
-		# 		for i in range( self.N ):
-
-		# 			pixel = register[ i ]
-
-		# 			color = self.colors[ pixel ]  # look up corresponding color
-
-		# 			row.append( color )
-
-		# 	pixels.append( row )
-
-
-		for idx in range( self.screenMemStart, self.screenMemEnd ):
-
-			register = self.main_memory.read( idx )
-
-			register = self.toBinary( register, self.N )
-
-			for i in range( self.N ):
-
-				pixel = register[ i ]
-
-				color = self.colors[ pixel ]  # look up corresponding color
-
-				pixels.append( color )		
-
-		return pixels
-
-	def getPixels_4BitMode_old( self ):
-
-		pixels = []
-
-		# for y in range( self.height ):
-
-		# 	row = []
-
-		# 	for x in range( self.nRegistersPerRow ):
-
-		# 		idx = x + y * self.nRegistersPerRow
-
-		# 		register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
-
-		# 		register = self.toBinary( register, self.N )
-
-		# 		for i in range( 0, self.N, 4 ):
-
-		# 			pixel = register[ i : i + 4 ]
-
-		# 			color = self.colors[ pixel ]  # look up corresponding color
-
-		# 			row.append( color )
-
-		# 	pixels.append( row )
-
-
-		for idx in range( self.screenMemStart, self.screenMemEnd ):
-
-			register = self.main_memory.read( idx )
-
-			register = self.toBinary( register, self.N )
-
-			for i in range( 0, self.N, 4 ):
-
-				pixel = register[ i : i + 4 ]
-
-				color = self.colors[ pixel ]  # look up corresponding color
-
-				pixels.append( color )
-
-		return pixels
 
 
 	# Mouse -----------------------------------------------------
