@@ -24,3 +24,4 @@ def isNegative( x ):
 def toBinary( x, N ):
 
 	return bin( x )[ 2 : ].zfill( N )
+	# return '{:b}'.format( x ).zfill( N )

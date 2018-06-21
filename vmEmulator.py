@@ -58,7 +58,7 @@ from commonHelpers import *
 # programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/sanity/Main.vmx'
 # programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/modifiedCode/Main.vmx'
 # programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Trigonometry/modifiedCode/Main.vmx'
-programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky/Main.vmx'
+# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky/Main.vmx'
 # programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASscroller/Main.vmx'
 # programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASboing/Main.vmx'
 # programPath = '../N2T_Code/Programs/temp_delete/Main.vmx'
@@ -70,7 +70,7 @@ programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCo
 # programPath = '../N2T_Code/Programs/OSLibTests/memory/Main.vmx'
 # programPath = '../N2T_Code/Programs/OSLibTests/math/Main.vmx'
 # programPath = '../N2T_Code/Programs/OSLibTests/keyboard/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/gfx/Main.vmx'
+programPath = '../N2T_Code/Programs/OSLibTests/gfx/Main.vmx'
 # programPath = '../N2T_Code/Programs/OSLibTests/array/Main.vmx'
 # programPath = '../N2T_Code/Programs/includesOfIncludes/Main.vmx'
 # programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
@@ -357,7 +357,7 @@ def operation( op ):
 
 		elif op == 'lsr':
 
-			value = a >> b  # logical shift
+			value = a >> b  # logical shift (assuming a is positive)
 
 		elif op == 'add':
 
