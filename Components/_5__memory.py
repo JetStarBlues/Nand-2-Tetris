@@ -7,6 +7,11 @@ from ._x__components import *
 
 '''---------------------------- Registers ----------------------------'''
 
+''' Words are stored as tuples (array) of bits (msb to lsb).
+    Each bit is represented by an integer.
+    Ex. 6 is stored as [ 0, 0, 0, 0, 0, 1, 1, 0 ]
+'''
+
 class Register_():
 
 	''' 1 bit register '''
@@ -22,13 +27,13 @@ class Register_():
 
 		d = mux_( x, self.ff.q1, write )
 
-		self.ff.doTheThing( clk, d )
+		self.ff.doTheThing( clk, 0, 0, d )
 		
 
 	def read( self ):
 
 		# as fx cause have to wait for values to 'settle'
-		return self.ff.q1
+		return self.ff.read()
 
 
 class RegisterN_():
@@ -56,76 +61,42 @@ class RegisterN_():
 
 	def readDecimal( self ):
 
-		# used by A_register and program_counter, as haven't implemented binary indexing
-
 		out = self.read()  # index in binary
 
-		out = int( ''.join( map( str, out ) ), 2 )  # index in decimal
-
-		return out
+		return int( ''.join( map( str, out ) ), 2 )  # index in decimal
 
 
 
 '''------------------------------- RAM -------------------------------'''
 
-class RAM8_():
-
-	''' 8 register 1 bit RAM '''
-
-	def __init__( self ):
-
-		self.registers = [ Register_() for i in range( 8 ) ]
-
-
-	def write( self, clk, x, write, address ):
-
-		'''
-		 In the physical implementation, choosing which register to enable would be
-		 via combo use of decoder and tristate buffer.
-		 Unable atm to represent z-state of tristate buffer in this emulator.
-		'''
-		
-		self.registers[ address ].write( clk, x, write )
-
-
-	def read( self, address ):
-
-		return self.registers[ address ].read()
-
-
-class RAM8N_():
-
-	''' 8 register N bit RAM '''
-
-	def __init__( self, N ):
-
-		self.registers = [ RegisterN_( N ) for i in range( 8 ) ]
-
-
-	def write( self, clk, x, write, address ):
-		
-		self.registers[ address ].write( clk, x, write )
-
-
-	def read( self, address ):
-
-		return self.registers[ address ].read()
-
-
 class RAMXN_():
 
 	''' X register N bit RAM '''
+
+	'''
+		Cheating by using array.
+		In the physical implementation, choosing which register to enable would be
+		via combo of decoder and tristate buffer.
+	'''
 
 	def __init__( self, X, N ):
 
 		self.registers = [ RegisterN_( N ) for i in range( X ) ]
 
 
+	def bitArrayToInt( self, x ):
+
+		return int( ''.join( map( str, x ) ), 2 )
+
+
 	def write( self, clk, x, write, address ):
-		
-		self.registers[ address ].write( clk, x, write )
+
+		self.registers[ self.bitArrayToInt( address ) ].write( clk, x, write )
 
 
 	def read( self, address ):
 
-		return self.registers[ address ].read()
+		return self.registers[ self.bitArrayToInt( address ) ].read()
+
+
+ROMXN_ = RAMXN_  # alias

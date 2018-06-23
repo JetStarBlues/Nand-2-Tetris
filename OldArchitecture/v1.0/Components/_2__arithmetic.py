@@ -24,8 +24,8 @@ def isZero_( x ):
 
 def isNegative_( x ):
 
-	# Twos complement, MSB is one if negative
-	return x[ 0 ]
+	''' 2s complement -> MSB is one if negative '''
+	return x[0]
 
 
 
@@ -51,11 +51,10 @@ def fullAdder_( a, b, cIn ):
 def rippleCarryAdderN_( N, a, b ):
 
 	''' N bit ripple adder '''
-
 	summ = [ None ] * N
 	carry = 0
 
-	for i in range( N - 1, - 1, - 1 ):  # (N - 1)..0, R to L
+	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
 
 		summ[i], carry = fullAdder_( a[i], b[i], carry )
 
@@ -79,9 +78,9 @@ def incrementN_( N, x ):
 
 	# Use cascaded half adders --
 	summ = [ None ] * N
-	carry = 1  # add one
+	carry = 1
 
-	for i in range ( N - 1, - 1, - 1 ):  # (N - 1)..0, R to L
+	for i in range ( N - 1, -1, -1 ):  # (N - 1)..0, R to L
 
 		summ[i], carry = halfAdder_( x[i], carry )
 
@@ -97,7 +96,7 @@ def fastIncrement_( x ):
 
 	summ = list( x ) # mutable
 
-	for i in range ( len( summ ) - 1, - 1, - 1 ): # RtoL
+	for i in range ( len( summ ) - 1, -1, -1 ): # RtoL
 
 		summ[i] = not_( summ[i] )
 
@@ -114,7 +113,6 @@ def fastIncrement_( x ):
 # MSB to LSB
 
 def halfSubtractor_( a, b ):
-
 	# a - b
 	diff = xor_( a, b )
 	borrow = and_( not_( a ), b )
@@ -138,7 +136,7 @@ def subtractN_( N, a, b ):
 	diff = [ None ] * N
 	borrow = 0
 
-	for i in range( N - 1, - 1, - 1 ):  # (N - 1)..0, R to L
+	for i in range( N - 1, -1, -1 ):  # (N - 1)..0, R to L
 
 		diff[i], borrow = fullSubtractor_( a[i], b[i], borrow )
 
@@ -195,11 +193,11 @@ def shiftRightN_( N, x, y ):
 
 		y_idx = N - j - 1
 
-		for i in range( N - 1, p2 - 1, - 1 ):
+		for i in range( N - 1, p2 - 1, -1 ):
 
 			t[ j ][ i ] = mux_( h[ i - p2 ], h[ i ], y[ y_idx ] )
 
-		for k in range( p2 - 1, - 1, - 1 ):
+		for k in range( p2 - 1, -1, -1 ):
 
 			t[ j ][ k ] = mux_( 0, h[ k ], y[ y_idx ] )
 
@@ -226,11 +224,11 @@ def shiftLeftN_( N, x, y ):
 
 		y_idx = N - j - 1
 
-		for k in range( N - 1, N - 1 - p2 , - 1 ):
+		for k in range( N - 1, N - 1 - p2 , -1 ):
 
 			t[ j ][ k ] = mux_( 0, h[ k ], y[ y_idx ] )
 
-		for i in range( N - 1 - p2, - 1, - 1 ):
+		for i in range( N - 1 - p2, -1, -1 ):
 
 			t[ j ][ i ] = mux_( h[ i + p2 ], h[ i ], y[ y_idx ] )
 
@@ -242,100 +240,91 @@ def shiftLeftN_( N, x, y ):
 
 # MSB to LSB
 
-def ALU_( N, x, y, control ):
+def ALU_( N, x, y, fub1, fub0, zx, nx, zy, ny, f, no ):
 
 	''' N bit ALU '''
 
 	'''
-		fx
-			 0 -  add
-			 1 -  and
-			 2 -  xor
-			 3 -  lsr
-			 4 -  lsl
-			 5 -  mul
-			 6 -  div
-			 7 -  fpAdd
-			 8 -  fpSub
-			 9 -  fpMul
-			10 -  fpDiv
+	 out, zr, ng = [ None, 0, 0 ]
 
-		lookup ROM
-			op       fsel   flags                composite
-			-----    ----   -----                ----------
-			0        add    zx,     zy           0000 10100
-			1        add    zx, nx, zy, ny, no   0000 11111
-			- 1      add    zx, nx, zy           0000 11100
-			x        and            zy, ny       0001 00110
-			! x      and            zy, ny, no   0001 00111
-			- x      add            zy, ny, no   0000 00111
-			x + 1    add        nx, zy, ny, no   0000 01111
-			x - 1    add            zy, ny       0000 00110
-			x + y    add                         0000 00000
-			x - y    add        nx,         no   0000 01001
-			x & y    and                         0001 00000
-			x | y    and        nx,     ny, no   0001 01011
-			x ^ y    xor                         0010 00000
-			x >> y   lsr                         0011 00000
-			x << y   lsl                         0100 00000
-			x * y    mul                         0101 00000
-			x / y    div                         0110 00000
+	 if fub1 == 1 :
+	 	if fub0 == 1 :
+ 	 		if zx == 1 :   x = zeroN_( N )
+ 	 		if nx == 1 :   x = notN_( N, x )
+ 	 		if zy == 1 :   y = zeroN_( N )
+ 	 		if ny == 1 :   y = notN_( N, y )
+ 	 		if  f == 1 : out = addN_( N, x, y )  # out = x + y
+ 	 		if  f == 0 : out = andN_( N, x, y )  # out = x & y
+ 	 		if no == 1 : out = notN_( N, out )   # out = !out
 
+		if fub0 == 0 :
+			out = xorN_( N, x, y )
+
+	 if fub1 == 0 :
+	 	if fub0 == 1 : out = shiftLeftN_( N, x, y )
+	 	if fub0 == 0 : out = shiftRightN_( N, x, y )
+
+	 if out == 0 : zr = 1
+ 	 if out < 0  : ng = 1	
+	 return ( out, zr, ng ) 
 	'''
 
-	# decode
-	fx = control[ 0 : 4 ]
-	zx = control[ 4 ]
-	nx = control[ 5 ]
-	zy = control[ 6 ]
-	ny = control[ 7 ]
-	no = control[ 8 ]
+	x0 = muxN_( N,  zeroN_( N )       ,  x                 ,  zx )
+	x0 = muxN_( N,  notN_( N, x0 )    ,  x0                ,  nx )
+	y0 = muxN_( N,  zeroN_( N )       ,  y                 ,  zy )
+	y0 = muxN_( N,  notN_( N, y0 )    ,  y0                ,  ny )
+	t2 = muxN_( N,  addN_( N, x0, y0 ),  andN_( N, x0, y0 ),  f  )
+	t2 = muxN_( N,  notN_( N, t2 )    ,  t2                ,  no )
 
-	# constants, not, negate, and, or, add, sub
-	x0 = muxN_( N,  zeroN_( N ),     x,   zx )
-	x0 = muxN_( N,  notN_( N, x0 ),  x0,  nx )
-	y0 = muxN_( N,  zeroN_( N ),     y,   zy )
-	y0 = muxN_( N,  notN_( N, y0 ),  y0,  ny )
+	t1 = muxN_( N,
 
-	z0 = addN_( N, x0, y0 )
-	z0 = muxN_( N,  notN_( N, z0 ),  z0,  no )
-
-	z1 = andN_( N, x0, y0 )
-	z1 = muxN_( N,  notN_( N, z1 ),  z1,  no )
-
-	# xor
-	z2 = xorN_( N, x, y )
-
-	# logical shift
-	z3 = shiftRightN_( N, x, y )
-	z4 = shiftLeftN_( N, x, y ),
-
-	# Select output
-	out = muxN16to1_(
-
-		N,
-
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		zeroN_( N ),
-		z4,
-		z3,
-		z2,
-		z1,
-		z0,
-
-		fx[ 0 ], fx[ 1 ], fx[ 2 ], fx[ 3 ]
+		t2,
+		xorN_( N, x, y ),
+		fub0
 	)
 
-	out_zr = mux_( 1, 0, isZero_( out ) )
-	out_ng = mux_( 1, 0, isNegative_( out ) )
+	t0 = muxN_( N,
 
-	return ( out, out_zr, out_ng )
+		shiftLeftN_( N, x, y ),
+		shiftRightN_( N, x, y ),
+		fub0
+	)
+
+	out = muxN_( N, t1, t0, fub1 )
+	zr =  mux_( 1, 0, isZero_( out ) )
+	ng =  mux_( 1, 0, isNegative_( out ) )
+
+	return ( out, zr, ng )
+
+
+# def ALU_( N, x, y, zx, nx, zy, ny, f, no ):
+
+# 	''' N bit ALU '''
+
+# 	'''
+# 	 out, zr, ng = [ None, 0, 0 ]
+#  	 if zx == 1 : x = zeroN_( N )
+#  	 if nx == 1 : x = notN_( N, x )
+#  	 if zy == 1 : y = zeroN_( N )
+#  	 if ny == 1 : y = notN_( N, y )
+#  	 if  f == 1 : out = addN_( N, x, y )  # out = x + y
+#  	 if  f == 0 : out = andN_( N, x, y )  # out = x & y
+#  	 if no == 1 : out = notN_( N, out )   # out = !out
+#  	 if out == 0: zr = 1
+#  	 if out < 0 : ng = 1
+
+# 	 return ( out, zr, ng ) 
+# 	'''
+
+# 	# mux_( d1, d0, sel ) -> if( sel ): d1, else: d0
+
+# 	x =   muxN_( N,  zeroN_( N )     ,  x               ,  zx                 )
+# 	x =   muxN_( N,  notN_( N, x )   ,  x               ,  nx                 )
+# 	y =   muxN_( N,  zeroN_( N )     ,  y               ,  zy                 )
+# 	y =   muxN_( N,  notN_( N, y )   ,  y               ,  ny                 )
+# 	out = muxN_( N,  addN_( N, x, y ),  andN_( N, x, y ),  f                  )
+# 	out = muxN_( N,  notN_( N, out ) ,  out             ,  no                 )
+# 	zr =  mux_(      1               ,  0               ,  isZero_( out )     )
+# 	ng =  mux_(      1               ,  0               ,  isNegative_( out ) )
+
+# 	return ( out, zr, ng )

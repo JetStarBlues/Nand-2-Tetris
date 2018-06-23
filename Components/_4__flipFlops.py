@@ -77,7 +77,7 @@ class JKFlipFlop():
 		self._q1 = 1
 
 
-	def preset( self ):
+	def set( self ):
 
 		self.q1  = 1
 		self._q1 = 0
@@ -101,20 +101,30 @@ class DFlipFlop():
 		self.propogationDelay = CLOCK_HALF_PERIOD * 0.2 #seconds
 
 
-	def doTheThing( self, e, d ):
+	def doTheThing( self, e, clr, sett, d ):
 		
 		# execute only after delay...
 		t = threading.Timer(
 
 			self.propogationDelay,
 			self.doTheThing_,
-			args = ( e, d )
+			args = ( e, clr, sett, d )
 		)
 		t.setName( 'dff_thread' )
 		t.start()
 
 
-	def doTheThing_( self, e, d ):
+	def doTheThing_( self, e, clear_, set_, d ):
+
+		if clear_:
+
+			self.clear()
+			return
+
+		elif set_:
+
+			self.set()
+			return
 
 		#
 		r = and_( e, not_( d ) )
@@ -136,13 +146,18 @@ class DFlipFlop():
 		self._q0 = self._q1
 
 
+	def read( self ):
+
+		return self.q1
+
+
 	def clear( self ):
 
 		self.q1  = 0
 		self._q1 = 1
 
 
-	def preset( self ):
+	def set( self ):
 
 		self.q1  = 1
 		self._q1 = 0

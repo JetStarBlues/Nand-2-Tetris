@@ -101,7 +101,7 @@ class ComputerN_():
 		self.data_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
 
-		self.reset = 0  # If true(1), sets program counter value to zero
+		self.reset = 1  # Start with known state
 
 
 	def load( self, binary_file ):
@@ -113,11 +113,11 @@ class ComputerN_():
 
 		self.CPU.doTheThing( clk, self.reset, self.data_memory, self.program_memory )
 
-		# reset the reset ...
-		# if self.reset == 1: self.reset = 0
+		# Reset the reset
+		# Poll in lieu of hardware button
+		if self.reset == 1: self.reset = 0
 
 	
-	# def reset( self ):
+	def reset( self ):
 
-	# 	self.reset = 1
-
+		self.reset = 1

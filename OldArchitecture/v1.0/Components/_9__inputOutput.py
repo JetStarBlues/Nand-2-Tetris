@@ -1,15 +1,11 @@
-''' Read/write data from/to memory using integer representation instead of binary'''
-
 '''----------------------------- Imports -----------------------------'''
 
 # Built ins
 import threading
 import pygame, numpy
-from math import ceil
 
 # Hack computer
 from ._x__components import *
-from commonHelpers import *
 
 
 
@@ -40,32 +36,33 @@ class IO():
 		self.main_memory = main_memory
 		self.hasExited = False
 
+		self.zeroN = self.toBinaryTuple( 0 )
+		self.oneN  = self.toBinaryTuple( 1 )
+
 		# Pygame ---
 		self.maxFps = SCREEN_FPS
-		self.surface = None
+		self.display = None
 		self.clock = None
 
 		# Screen ---
 		self.width = 512
 		self.height = 256
-		self.screenMemStart = SCREEN_MEMORY_MAP
-		self.newContent = False
 
 		# 1Bit color mode ---
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
 		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
-		self.colors = {
-
-			'0' : self.bgColor,
-			'1' : self.fgColor
-		}
 		self.nRegistersPerRow = self.width // self.N
-		self.nPixelsPerWord = self.N
-		self.nRegisters = self.height * self.nRegistersPerRow;
-		# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+
+		if not COLOR_MODE_4BIT:
+
+			self.colors = [ 
+
+				self.bgColor,
+				self.fgColor
+			]
 
 		# 4Bit color mode ---
-		if COLOR_MODE_4BIT:
+		else:
 
 			self.colors = {}
 
@@ -73,24 +70,26 @@ class IO():
 
 				self.colors[ key ] = self.hex2rgb( value )
 
-			self.fgColor = self.colors[ '0111' ]
-			self.bgColor = self.colors[ '0000' ]
-
 			self.nRegistersPerRow *= 4
-			self.nPixelsPerWord = 4
-			self.nRegisters = self.height * self.nRegistersPerRow;
-			# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
-		# Pixel array ---
-		# Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
-		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.bgColor )   # np( nCols, nRows, z )
-		self.curColor = self.fgColor
+		# Keyboard --
+		self.lookup_keys = {}
+		self.lookup_shiftModifiedKeys = {}
+
+		for key, value in lookup_keys.items():
+
+			self.lookup_keys[ key ] = self.toBinaryTuple( value[0] )
+
+		for key, value in lookup_shiftModifiedKeys.items():
+
+			self.lookup_shiftModifiedKeys[ key ] = self.toBinaryTuple( value[0] )
+
 
 		# Initialize Pygame ---
-		# threading.Thread(
-		# 	target = self.initPygame,
-		# 	name = 'io_thread'
-		# ).start()
+		threading.Thread(
+			target = self.initPygame,
+			name = 'io_thread'
+		).start()
 
 	def hex2rgb( self, h ):
 
@@ -100,14 +99,11 @@ class IO():
 
 		return( r, g, b )
 
-	def runAsThread( self ):
+	def toBinaryTuple( self, x ):
 
-		threading.Thread(
+		bStr = bin( x )[ 2 : ].zfill( self.N )
 
-			target = self.initPygame,
-			name = 'io_thread'
-
-		).start()
+		return tuple( map( int, bStr ) )  # tuple of ints
 
 	def initPygame( self ):
 
@@ -123,10 +119,6 @@ class IO():
 		self.surface = pygame.display.get_surface()
 
 		self.clock = pygame.time.Clock()
-
-		# Init background
-		self.surface.fill( self.bgColor )
-		pygame.display.flip()
 
 		# Start loop
 		self.run()
@@ -189,275 +181,90 @@ class IO():
 
 	def updateScreen( self ):
 
-		if self.newContent:  # update only if there's a change
+		# Blit pixel values
+		pygame.surfarray.blit_array( self.surface, self.genPixelArray() )
 
-			# Blit pixel values
-			pygame.surfarray.blit_array( self.surface, self.pixelArray )
+		# Update display
+		pygame.display.flip()
 
-			# Update display
-			pygame.display.flip()
-
-			self.newContent = False	
-
-	def setColor( self, colorCode ):
+	def genPixelArray( self ):
 
 		if COLOR_MODE_4BIT:
 
-			key = toBinary( colorCode, 4 )
-
-			if not key in self.colors:
-
-				raise Exception( 'Color selection is not valid' )
-
-			self.curColor = self.colors[ key ] # temp
+			return self.convertToBlitArray( self.getPixels_4BitMode() )
 
 		else:
 
-			key = str( colorCode )
+			return self.convertToBlitArray( self.getPixels_1BitMode() )
+			
+	def convertToBlitArray( self, a ):
 
-			if not key in self.colors:
+		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row]) '''
 
-				raise Exception( 'Color selection is not valid - {}'.format( colorCode ) )
+		# return numpy.array( self.transposeArray( a ) )
+		return numpy.transpose( numpy.array( a ), ( 1, 0, 2 ) )  # marginally faster
 
-			self.curColor = self.colors[ key ] # temp
+	def transposeArray( self, a ):
 
-	def drawPixel( self, x, y ):
+		return list( map( list, zip( * a ) ) )
 
-		''' Update only the relevant pixel '''
+	def getPixels_1BitMode( self ):
 
-		# Check if coordinates are valid
-		if( x < 0 or x >= self.width or y < 0 or y >= self.height ):
+		pixels = []
 
-			raise Exception( 'drawPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
+		for y in range( self.height ):
 
-		# Draw pixel
-		self.pixelArray[ x ][ y ] = self.curColor
-		# self.surface.set_at( ( x, y ), self.curColor )
+			row = []
 
-		# Mark screen for update
-		self.newContent = True
+			for x in range( self.nRegistersPerRow ):
 
-	def flood( self, x, y, len ):
+				idx = x + y * self.nRegistersPerRow
 
-		''' Write words to display RAM
-		    Assumes display RAM allocates one register per pixel '''
+				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-		for i in range( len ):
-
-			self.pixelArray[ x ][ y ] = self.curColor
-
-			x += 1
-
-			if ( x == self.width ):
-
-				x = 0
-				y += 1
-
-	def drawFastVLine( self, x, y, h ):
-
-		# I can easily make this fast for numpy array, but what would be hardware equivalent?
-		pass
-
-	def drawFastHLine( self, x, y, w ):
-
-		# Check if coordinates are valid
-		if(
-			w <= 0 or 
-			x <  0 or ( x + w ) > self.width or
-			y <  0 or         y > self.height
-		):
-			raise Exception( 'drawFastHLine received invalid argument(s): ( {}, {}, {} )'.format( x, y, w ) )
-
-		# Draw line
-		self.flood( x, y, w )
-
-		# Mark screen for update
-		self.newContent = True
-
-	def fillScreen( self ):
-
-		self.flood( 0, 0, self.width * self.height )
-
-		# Mark screen for update
-		self.newContent = True
-
-	def getPixel( self, x, y ):
-
-		# Check if coordinates are valid
-		if(
-			x < 0 or x >= self.width or
-			y < 0 or y >= self.height
-		):
-			raise Exception( 'getPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
-
-		# Get color
-		color = self.pixelArray[ x ][ y ]
-
-		# Lookup colorCode
-		for key, value in self.colors.items():
-
-			if value == color:
-
-				colorCode = key
-
-		# Write to memory
-		self.main_memory.write( 1, colorCode, 1, SCREEN_MEMORY_MAP )  # TODO, get better location
-
-
-	def writeBuffer( self, pixBuffer, x, y, w, h ):
-
-		'''
-			Write current pixel values to main memory
-		'''
-		pass
-
-
-	def drawBuffer( self, pixBuffer, x, y, w, h ):
-
-		'''
-			Draw pixels from main memory.
-
-			'pixBuffer' is a pointer to a location in main memory.
-			Assumes pixels are stored in TECS screen memory format.
-			TODO: elaborate w/ clear example
-			      (pictures for both 1-bit and 4-bit storage)
-
-			Slow because decoding packed representation.
-		'''
-
-		# Check if coordinates are valid
-		if(
-			w <= 0 or
-			h <= 0 or
-			x <  0 or ( x + w ) > self.width or
-			y <  0 or ( y + h ) > self.height
-		):
-			raise Exception( 'drawBuffer received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
-
-		# Replace
-		if( w == self.width and h == self.height ):
-
-			if COLOR_MODE_4BIT:
-
-				self.getPixelsFromMain_4BitMode_fast( pixBuffer )
-
-			else:
-
-				self.getPixelsFromMain_1BitMode_fast( pixBuffer )
-
-		else:
-
-			if COLOR_MODE_4BIT:
-
-				self.getPixelsFromMain_4BitMode( pixBuffer, x, y, w, h )
-
-			else:
-
-				self.getPixelsFromMain_1BitMode( pixBuffer, x, y, w, h )
-
-		# Mark screen for update
-		self.newContent = True
-
-	def getPixelsFromMain_1BitMode( self, pixBuffer, x, y, w, h ):
-
-		startX = x
-		endX   = x + w
-
-		startWord = startX // self.nPixelsPerWord
-		endWord   = ceil( endX / self.nPixelsPerWord )
-
-		startWordOffset = startX % 16
-		endWordOffset   = endX % 16
-
-		regIdx = pixBuffer + ( y * self.nRegistersPerRow )
-
-		for y in range( y, y + h ):
-
-			x = startX
-			word = startWord
-
-			for word in range( startWord, endWord + 1 ):
-
-				register = self.main_memory.read( regIdx + word )
-
-				register = toBinary( register, self.N )
-
-				for i in range( self.nPixelsPerWord ):
-
-					if word == startWord and i < startWordOffset:
-
-						continue  # skip
-
-					elif word == endWord and i >= endWordOffset:
-
-						break  # done with word
-
+				for i in range( self.N ):
+				
 					pixel = register[ i ]
 
+					# color = self.get1BitColor( pixel )
 					color = self.colors[ pixel ]  # look up corresponding color
 
-					self.pixelArray[ x ][ y ] = color
+					row.append( color )
 
-					x += 1					
+			pixels.append( row )
 
-			regIdx += self.nRegistersPerRow
+		return pixels
 
-	def getPixelsFromMain_1BitMode_fast( self, pixBuffer ):
+	def getPixels_4BitMode( self ):
 
-		x = 0
-		y = 0
+		pixels = []
 
-		for regIdx in range( pixBuffer, pixBuffer + self.nRegisters ):
+		for y in range( self.height ):
 
-			register = self.main_memory.read( regIdx )
+			row = []
 
-			register = toBinary( register, self.N )
+			for x in range( self.nRegistersPerRow ):
 
-			for i in range( self.N ):
+				idx = x + y * self.nRegistersPerRow
 
-				pixel = register[ i ]
+				register = self.main_memory.read( SCREEN_MEMORY_MAP + idx )
 
-				color = self.colors[ pixel ]  # look up corresponding color
+				for i in range( 0, self.N, 4 ):
+				
+					pixel = register[ i : i + 4 ]
 
-				self.pixelArray[ x ][ y ] = color
+					color = self.get4BitColor( pixel )
 
-				x += 1
+					row.append( color )
 
-				if ( x == self.width ):
+			pixels.append( row )
 
-					x = 0
-					y += 1
+		return pixels
 
-	def getPixelsFromMain_4BitMode( self, pixBuffer, x, y, w, h ):
+	def get4BitColor( self, colorCode ):
 
-		# TODO, and test!
-		pass
-
-	def getPixelsFromMain_4BitMode_fast( self, pixBuffer ):
-
-		x = 0
-		y = 0
-
-		for idx in range( pixBuffer, pixBuffer + self.nRegisters ):
-
-			register = self.main_memory.read( idx )
-
-			register = toBinary( register, self.N )
-
-			for i in range( 0, self.N, 4 ):
-
-				pixel = register[ i : i + 4 ]
-
-				color = self.colors[ pixel ]  # look up corresponding color
-
-				self.pixelArray[ x ][ y ] = color
-
-				x += 1
-
-				if ( x == self.width ):
-
-					x = 0
-					y += 1
+		colorCode = ''.join( map( str, colorCode ) )  # convert tuple to string
+		return self.colors[ colorCode ]               # look up corresponding color
 
 
 	# Mouse -----------------------------------------------------
@@ -470,22 +277,24 @@ class IO():
 
 		if button == 1:  # left button
 
+			# Convert to binary
+			mouseX = self.toBinaryTuple( pos[0] )
+			mouseY = self.toBinaryTuple( pos[1] )
+
 			# Write to memory
 			#  clk, data, write, address
-			self.main_memory.write( 1,        1, 1,  MOUSE_MEMORY_MAP )
-			self.main_memory.write( 1, pos[ 0 ], 1, MOUSEX_MEMORY_MAP )
-			self.main_memory.write( 1, pos[ 1 ], 1, MOUSEY_MEMORY_MAP )
+			self.main_memory.write( 1, self.oneN, 1,  MOUSE_MEMORY_MAP )
+			self.main_memory.write( 1,    mouseX, 1, MOUSEX_MEMORY_MAP )
+			self.main_memory.write( 1,    mouseY, 1, MOUSEY_MEMORY_MAP )
 
 	def handleMouseReleased( self, button ):
 
 		''' If mouse button is released, write 0 '''
 
-		# if button == 1:  # left button
+		if button == 1:  # left button
 
-		# 	# Write to memory
-		# 	self.main_memory.write( 1, 0, 1, MOUSE_MEMORY_MAP )
-
-		pass  # Too fast, cleared long before Hack program has chance to see
+			# Write to memory
+			self.main_memory.write( 1, self.zeroN, 1, MOUSE_MEMORY_MAP )
 
 
 	# Keyboard --------------------------------------------------
@@ -507,21 +316,19 @@ class IO():
 		''' If key is released, write 0 '''
 
 		# Write to memory
-		# self.main_memory.write( 1, 0, 1,  KBD_MEMORY_MAP )
-
-		pass  # Too fast, cleared long before Hack program has chance to see
+		self.main_memory.write( 1, self.zeroN, 1, KBD_MEMORY_MAP )
 
 	def lookupKey( self, key, modifier ):
 
 		# If valid, return relevant keyCode
-		if key in lookup_keys:
+		if key in self.lookup_keys:
 
 			# Handle shift modified presses
-			if modifier == 3 :
+			if modifier == 1 or modifier == 2 :
 
-				if key in lookup_shiftModifiedKeys:
+				if key in self.lookup_shiftModifiedKeys:
 
-					return lookup_shiftModifiedKeys[ key ][ 0 ]
+					return self.lookup_shiftModifiedKeys[ key ]
 
 				else:
 
@@ -532,27 +339,15 @@ class IO():
 						where shift modifier is set.
 						TLDR, shift key will not register consistently unless used as a modifier
 					'''
-					return 0
-
-			# Handle caps_lock modified presses
-			elif modifier == 8192:
-
-				if key in range( 97, 123 ):  # is a letter
-
-					return lookup_shiftModifiedKeys[ key ][ 0 ]
-
-				else:
-
-					return lookup_keys[ key ][ 0 ]
+					return self.zeroN
 
 			else:
 
-				return lookup_keys[ key ][ 0 ]	
+				return self.lookup_keys[ key ]
 
 		else:
 
-			return 0
-
+			return self.zeroN
 
 
 '''
@@ -562,22 +357,14 @@ class IO():
 
 lookup_keyModifiers = [
 
-	0,     # None
-	1,     # Shift_left
-	2,     # Shift_right
-	3,     # Shift
-	8192,  # Caps
-	64,    # Ctrl_left
-	128,   # Ctrl_right
-	192,   # Ctrl
-	256,   # Alt_left
-	512,   # Alt_right
-	768,   # Alt
-	# 1024,  # Meta_left
-	# 2048,  # Meta_right
-	# 3072,  # Meta
-	# 4096,  # Num
-	# 16384, # Mode
+	#
+	  0, # None
+	  1, # Shift left
+	  2, # shift right
+	 64, # Control left
+	128, # control right
+	256, # Alt left
+	512, # Alt right
 ]
 
 lookup_keys = {
@@ -663,23 +450,6 @@ lookup_keys = {
 	305 : [ 156 , None ],  # Control right
 	308 : [ 157 , None ],  # Alt left
 	307 : [ 158 , None ],  # Alt right
-
-	268 : [  42 , '*'  ],  # keypad asterisk
-	270 : [  43 , '+'  ],  # keypad plus
-	269 : [  45 , '-'  ],  # keypad minus
-	266 : [  46 , '.'  ],  # keypad period
-	267 : [  47 , '/'  ],  # keypad slash
-	256 : [  48 , '0'  ],  # keypad 0
-	257 : [  49 , '1'  ],  # keypad 1
-	258 : [  50 , '2'  ],  # keypad 2
-	259 : [  51 , '3'  ],  # keypad 3
-	260 : [  52 , '4'  ],  # keypad 4
-	261 : [  53 , '5'  ],  # keypad 5
-	262 : [  54 , '6'  ],  # keypad 6
-	263 : [  55 , '7'  ],  # keypad 7
-	264 : [  56 , '8'  ],  # keypad 8
-	265 : [  57 , '9'  ],  # keypad 9
-	271 : [ 128 , None ],  # keypad enter
 }
 
 lookup_shiftModifiedKeys = {

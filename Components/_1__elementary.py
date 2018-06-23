@@ -172,6 +172,13 @@ def mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 	return mux_( p1, p2, s2 )
 
 
+def mux16to1_( d15, d14, d13, d12, d11, d10, d9, d8, d7, d6, d5, d4, d3, d2, d1, d0, s3, s2, s1, s0 ):
+
+	p1 = mux8to1_( d15, d14, d13, d12, d11, d10, d9, d8, s2, s1, s0 )
+	p2 = mux8to1_( d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 )
+	return mux_( p1, p2, s3 )
+
+
 def dMux_( x, sel ):
 
 	'''	out = [ 0, x ] if sel == 0
@@ -221,6 +228,16 @@ def dMux1to8_( x, s2, s1, s0 ):
 
 
 
+'''----------------------------- Buffers -----------------------------'''
+
+# Fake 'Z' state with zero
+
+def buf_( d, sel ):
+
+	return mux_( d, 0, sel ):
+
+
+
 '''------------------------- N-bit variants -------------------------'''
 
 # Basically not4() is equivalent to having 4 not gates each processing
@@ -246,6 +263,12 @@ def muxN4to1_( N, d3, d2, d1, d0, s1, s0 ):
 
 def muxN8to1_( N, d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 	return tuple( mux8to1_( d7[i], d6[i], d5[i], d4[i], d3[i], d2[i], d1[i], d0[i], s2, s1, s0 ) for i in range( N ) )
+
+def muxN16to1_( N, d15, d14, d13, d12, d11, d10, d9, d8, d7, d6, d5, d4, d3, d2, d1, d0, s3, s2, s1, s0 ):
+	return tuple( mux16to1_( d15[i], d14[i], d13[i], d12[i], d11[i], d10[i], d9[i], d8[i], d7[i], d6[i], d5[i], d4[i], d3[i], d2[i], d1[i], d0[i], s3, s2, s1, s0 ) for i in range( N ) )
+
+def bufN_ ( N, d, sel ):
+	return tuple( buf_( d[i], sel ) for i in range( N ) )
 
 
 

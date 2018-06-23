@@ -12,6 +12,8 @@ from ._x__components import *
 
 '''---------------------------- Registers ----------------------------'''
 
+# Words are stored as equivalent integer
+
 class Register_():
 
 	''' 1 bit register '''
@@ -84,3 +86,6 @@ class RAMXN_():
 		# print( 'reading,', address, self.registers[ address ] )
 
 		return self.registers[ address ]
+
+
+ROMXN_ = RAMXN_  # alias

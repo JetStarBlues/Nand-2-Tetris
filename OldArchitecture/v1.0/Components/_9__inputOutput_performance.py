@@ -61,8 +61,7 @@ class IO():
 		}
 		self.nRegistersPerRow = self.width // self.N
 		self.nPixelsPerWord = self.N
-		self.nRegisters = self.height * self.nRegistersPerRow;
-		# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+		self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
 		# 4Bit color mode ---
 		if COLOR_MODE_4BIT:
@@ -78,8 +77,7 @@ class IO():
 
 			self.nRegistersPerRow *= 4
 			self.nPixelsPerWord = 4
-			self.nRegisters = self.height * self.nRegistersPerRow;
-			# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+			self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
 
 		# Pixel array ---
 		# Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
@@ -304,26 +302,15 @@ class IO():
 		self.main_memory.write( 1, colorCode, 1, SCREEN_MEMORY_MAP )  # TODO, get better location
 
 
-	def writeBuffer( self, pixBuffer, x, y, w, h ):
+	def replaceMainWithDisplayMemory( self, x, y, w, h ):
 
-		'''
-			Write current pixel values to main memory
-		'''
+		#TODO
 		pass
 
 
-	def drawBuffer( self, pixBuffer, x, y, w, h ):
+	def replaceDisplayWithMainMemory( self, x, y, w, h ):
 
-		'''
-			Draw pixels from main memory.
-
-			'pixBuffer' is a pointer to a location in main memory.
-			Assumes pixels are stored in TECS screen memory format.
-			TODO: elaborate w/ clear example
-			      (pictures for both 1-bit and 4-bit storage)
-
-			Slow because decoding packed representation.
-		'''
+		# Slow because iterating per pixel to convert between the two representations
 
 		# Check if coordinates are valid
 		if(
@@ -332,33 +319,33 @@ class IO():
 			x <  0 or ( x + w ) > self.width or
 			y <  0 or ( y + h ) > self.height
 		):
-			raise Exception( 'drawBuffer received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
+			raise Exception( 'replaceDisplayWithMainMemory received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
 
 		# Replace
 		if( w == self.width and h == self.height ):
 
 			if COLOR_MODE_4BIT:
 
-				self.getPixelsFromMain_4BitMode_fast( pixBuffer )
+				self.getPixelsFromMain_4BitMode_fast( x, y, w, h )
 
 			else:
 
-				self.getPixelsFromMain_1BitMode_fast( pixBuffer )
+				self.getPixelsFromMain_1BitMode_fast( x, y, w, h )
 
 		else:
 
 			if COLOR_MODE_4BIT:
 
-				self.getPixelsFromMain_4BitMode( pixBuffer, x, y, w, h )
+				self.getPixelsFromMain_4BitMode( x, y, w, h )
 
 			else:
 
-				self.getPixelsFromMain_1BitMode( pixBuffer, x, y, w, h )
+				self.getPixelsFromMain_1BitMode( x, y, w, h )
 
 		# Mark screen for update
 		self.newContent = True
 
-	def getPixelsFromMain_1BitMode( self, pixBuffer, x, y, w, h ):
+	def getPixelsFromMain_1BitMode( self, x, y, w, h ):
 
 		startX = x
 		endX   = x + w
@@ -369,7 +356,7 @@ class IO():
 		startWordOffset = startX % 16
 		endWordOffset   = endX % 16
 
-		regIdx = pixBuffer + ( y * self.nRegistersPerRow )
+		regIdx = self.screenMemStart + ( y * self.nRegistersPerRow )
 
 		for y in range( y, y + h ):
 
@@ -402,12 +389,12 @@ class IO():
 
 			regIdx += self.nRegistersPerRow
 
-	def getPixelsFromMain_1BitMode_fast( self, pixBuffer ):
+	def getPixelsFromMain_1BitMode_fast( self ):
 
 		x = 0
 		y = 0
 
-		for regIdx in range( pixBuffer, pixBuffer + self.nRegisters ):
+		for regIdx in range( self.screenMemStart, self.screenMemEnd ):
 
 			register = self.main_memory.read( regIdx )
 
@@ -428,17 +415,17 @@ class IO():
 					x = 0
 					y += 1
 
-	def getPixelsFromMain_4BitMode( self, pixBuffer, x, y, w, h ):
+	def getPixelsFromMain_4BitMode( self, x, y, w, h ):
 
 		# TODO, and test!
 		pass
 
-	def getPixelsFromMain_4BitMode_fast( self, pixBuffer ):
+	def getPixelsFromMain_4BitMode_fast( self ):
 
 		x = 0
 		y = 0
 
-		for idx in range( pixBuffer, pixBuffer + self.nRegisters ):
+		for idx in range( self.screenMemStart, self.screenMemEnd ):
 
 			register = self.main_memory.read( idx )
 
