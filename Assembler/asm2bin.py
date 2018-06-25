@@ -14,33 +14,51 @@
 # ========================================================================================
 
 '''
-	--- Notes ---
+	Instruction - FEDCBA9876543210  // msb to lsb
+	              0123456789ABCDEF  // array indexing
 
-	> Instruction
+		F . 0  -> TECS instruction type (C if 1, @ if 0)
+		E . 1  -> op
+		D . 2  -> op
+		C . 3  -> op
+		B . 4  -> op
+		A . 5  -> op
+		9 . 6  -> xSel
+		8 . 7  -> xSel
+		7 . 8  -> ySel
+		6 . 9  -> ySel
+		5 . A  -> dst
+		4 . B  -> dst
+		3 . C  -> dst
+		2 . D  -> jmp
+		1 . E  -> jmp
+		0 . F  -> jmp
 
-		Instruction - 0123456789ABCDEF
+	x/y sel
+		0     D
+		1     A
+		2     B
+		3     M
 
-			0 -> opCode
+	dst
+		0     NULL
+		1     D
+		2     A
+		3     B
+		4     M
+		5     unused
+		6     unused
+		7     unused
 
-			if opCode == 0, address instruction
-
-				123456789ABCDEF -> address
-
-			else, computation instruction
-
-				1   -> comp, xor
-				2   -> comp, bitshift
-				3   -> y = A (0) | M (1)
-				4   -> comp, zero_x  
-				5   -> comp, not_x  
-				6   -> comp, zero_y  
-				7   -> comp, not_y  
-				8   -> comp, and (0) | add (1)  
-				9   -> comp, not_out
-				ABC -> destination
-				DEF -> jump
-
-				comp(utation) bits are sent to ALU
+	jmp
+		0     NULL
+		1     JGT
+		2     JEQ
+		3     JGE
+		4     JLT
+		5     JNE
+		6     JLE
+		7     JMP
 
 '''
 
@@ -90,9 +108,10 @@ def debugStuff( cmdList ):
 # == Main ====================================================
 
 
-# -- ... -------------------------------------------
+# -- Constants -------------------------------------
 
-nBits = GC.N_BITS
+# nBits = GC.N_BITS
+nBits = 16
 
 static_segment_start = GC.STATIC_START
 static_segment_end   = GC.STATIC_END
@@ -100,6 +119,7 @@ static_segment_size  = static_segment_end - static_segment_start + 1
 
 largest_immediate = 2 ** ( nBits - 1 ) - 1
 negative_one = 2 ** nBits - 1
+largest_address = 2 ** 16 - 1
 
 
 
@@ -120,7 +140,6 @@ def extractCmd( line ):
 
 	line = line.replace( ' ', '' )   # remove spaces
 	line = line.replace( '\t', '' )  # remove tabs
-	# line = line.upper()              # upper case everything
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
@@ -131,13 +150,6 @@ def extractCmd( line ):
 	else:
 
 		return None
-
-
-# Without regex (Todo) --
-
-	# extract non commment
-	# remove spaces and tabs
-	# capitalize
 
 
 def extractCmds( inputFile ):
@@ -160,27 +172,43 @@ def extractCmds( inputFile ):
 
 # -- Translation -------------------------------------
 
-
 knownAddresses_ProgramMemory = {}
 knownAddresses_DataMemory = {}
 knownAddresses_DataMemory.update( LT.globalAddresses )  # fill with global addresses
 
+# TODO: Come up with more elegant algorithm instead of tripling every '@label'
 
-def doubleLabels_P1( cmdList ):
+def tripleLabels_P1( cmdList ):
 
 	''' Allow for labels greater than largest_immediate.
-		
-		For example,
 
-			@4301
-			A = !A  // A = 61234
+			For example,
 
-			@555
-			A = A  // redundancy for simplicity
+				// A = 262143  (3, 65535)
+				@0
+				A = !A
+				@@3
 
-		Idea by @cadet1620
+				// A = 65536  (1, 0)
+				@0
+				NOP      // redundancy for simplicity
+				@@1
+				
+				// A = 61234   (0, 61234)
+				@4301
+				A = !A
+				NOP      // redundancy for simplicity
+				
+				// A = 555     (0, 555)
+				@555
+				NOP      // redundancy for simplicity
+				NOP      // redundancy for simplicity
+
+		Bit flip idea by @cadet1620
 		  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Is-it-possible-to-have-programs-longer-than-32K-with-the-Hack-instruction-set-td4031378.html
 	'''
+
+	''' Allocate space '''
 
 	cmdList2 = []
 
@@ -197,7 +225,7 @@ def doubleLabels_P1( cmdList ):
 
 			labels.append( label )
 
-	# Double references
+	# Triple references
 	for i in range( len( cmdList ) ):
 
 		cmd = cmdList[ i ]
@@ -208,12 +236,20 @@ def doubleLabels_P1( cmdList ):
 
 			if cmd[ 1 : ] in labels:
 
-				cmdList2.append( 'A=A' )
+				cmdList2.append( 'NOP' )
+				cmdList2.append( 'NOP' )
+
+	# Check size
+	if len( cmdList2 ) > largest_address:
+
+		raise Exception( 'Program exceeds directly addressable memory by {} instructions'.format( len( cmdList2 ) - largest_address ) )
 
 	return cmdList2
 
 
-def doubleLabels_P2( cmdList ):
+def tripleLabels_P2( cmdList ):
+
+	''' Compute values '''
 
 	for i in range( len( cmdList ) ):
 
@@ -221,19 +257,34 @@ def doubleLabels_P2( cmdList ):
 
 		if cmd[ 0 ] == '@':
 
-			addr = cmd[ 1 : ]
+			addr = int( cmd[ 1 : ] )
 
-			if addr.isdigit():
+			if addr > largest_immediate and addr <= negative_one:
 
-				addr = int( addr )
+				addr ^= negative_one  # flip bits
 
-				if addr > largest_immediate:
+				cmdList[ i ] = '@{}'.format( addr )
 
-					n_addr = addr ^ negative_one  # flip bits
+				cmdList[ i + 1 ] = 'A=!A'
 
-					cmdList[ i ] = '@{}'.format( n_addr )
+			elif addr > negative_one:
+
+				lo = addr & negative_one
+				hi = addr >> 16
+
+				if lo > largest_immediate:
+
+					lo ^= negative_one  # flip bits
+
+					cmdList[ i ] = '@{}'.format( lo )
 
 					cmdList[ i + 1 ] = 'A=!A'
+
+				else:
+
+					cmdList[ i ] = '@{}'.format( lo )
+
+				cmdList[ i + 2 ] = '@@{}'.format( hi )
 
 	return cmdList
 
@@ -303,14 +354,11 @@ def handleVariables( cmdList ):
 
 				freeAddress += 1 	# register is no longer unallocated
 
-	# print( 'Assembled program has {} global variables.'.format( freeAddress - static_segment_start ) )
 	print( 'Assembled program has {} global variables. Maximum is {}.'.format( freeAddress - static_segment_start, static_segment_size ) )
 
 	if freeAddress > static_segment_end:
 
-		# print( 'Assembled program exceeds maximum number of global variables.' )
 		print( 'Assembled program exceeds maximum number of global variables by {}.'.format( freeAddress - static_segment_end ) )
-		# print( 'Assembled program exceeds static segment size by {}.'.format( freeAddress - static_segment_end ) )
 
 	return cmdList
 
@@ -328,22 +376,41 @@ def translateInstructions( cmdList ):
 		cmd_b = None
 
 
-		# A instruction
-		if cmd_s[0] == '@':
+		# NOP instruction
+		if cmd_s.upper() == 'NOP':
 
-			opcode = '0'
-			addr = int( cmd_s[ 1 : ] )
-			addr = toBinary( addr, nBits - 1 )
-			cmd_b = opcode + addr
+			opcode = LT.fxType[ 'NOP' ]
+			cmd_b = '1' + opcode + '0' * 10
+
+
+		# RETI instruction
+		elif cmd_s.upper() == 'RETI':
+
+			opcode = LT.fxType[ 'RETI' ]
+			cmd_b = '1' + opcode + '0' * 10
+
+
+		# A and AA instruction
+		elif cmd_s[ 0 ] == '@':
+
+			# AA instruction
+			if cmd_s[ 1 ] == '@':
+
+				opcode = LT.fxType[ 'AAImmed' ]
+				addr = int( cmd_s[ 2 : ] )
+				addr = toBinary( addr, 10 )
+				cmd_b = '1' + opcode + addr
+
+			else:
+
+				addr = int( cmd_s[ 1 : ] )
+				addr = toBinary( addr, nBits - 1 )
+				cmd_b = '0' + addr
 
 
 		# C instruction
 		else:
-			
-			opcode = '1'
-			nUnusedBits = ( nBits - 16 )  # 16 bits used to encode opcode(1), dest(3), comp( 2 + 1 + 6 ), jump(3)
-			header = opcode + '1' * nUnusedBits
-			
+
 			dest, comp, jump = [ None ] * 3
 
 			if '=' in cmd_s and ';' in cmd_s:
@@ -359,16 +426,53 @@ def translateInstructions( cmdList ):
 
 			dest = LT.dest[ dest.upper() ] if dest else LT.dest[ 'NULL' ]
 			jump = LT.jump[ jump.upper() ] if jump else LT.jump[ 'NULL' ]
-			comp = LT.comp[ comp.upper() ]
 
-			cmd_b = header + comp + dest + jump
+			if comp == 'IOBUS':
+
+				opcode = LT.fxType[ 'DST_EQ_IOBUS' ]
+
+				xSel = '00'
+				ySel = '00'
+
+			else:
+
+				z = None
+
+				for k,v in LT.comp.items():
+
+					z = re.fullmatch( k, comp )
+
+					if z:
+
+						z = z.groups()
+
+						if len( z ) == 0:
+
+							xSel = '00'
+							ySel = '00'
+
+						if len( z ) == 1:
+
+							xSel = LT.xySel[ z[ 0 ].upper() ]
+							ySel = '00'
+
+						elif len( z ) == 2:
+
+							xSel = LT.xySel[ z[ 0 ].upper() ]
+							ySel = LT.xySel[ z[ 1 ].upper() ]
+
+						opcode = v
+
+				if z == None:
+
+					raise Exception ( 'Unrecognized comp - {}'.format( comp ) )
+
+			cmd_b = '1' + opcode + xSel + ySel + dest + jump
 
 
 		#
-		# cmdList[ i ] = cmd_b
 		binCmdList.append( cmd_b )
 
-	# return cmdList
 	return binCmdList
 
 
@@ -381,10 +485,10 @@ def translateCmds( cmdList, debug ):
 	# binCmdList = translateInstructions( cmdList )
 
 	# Support for programs greater than largest_immediate lines long
-	cmdList = doubleLabels_P1( cmdList )
+	cmdList = tripleLabels_P1( cmdList )
 	cmdList = handleLabels( cmdList )
 	cmdList = handleVariables( cmdList )
-	cmdList = doubleLabels_P2( cmdList )
+	cmdList = tripleLabels_P2( cmdList )
 	binCmdList = translateInstructions( cmdList )
 
 	if debug: debugStuff( cmdList )

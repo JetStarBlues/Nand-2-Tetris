@@ -1,3 +1,8 @@
+'''
+	TODO:
+		. CS (chip select) equivalent when write to memory mapped IO address
+'''
+
 '''----------------------------- Imports -----------------------------'''
 
 # Hack computer
@@ -123,10 +128,10 @@ class CPU_():
 		self.nBitsInOp = 5
 
 		# Corresponds to encoding in instruction...
-		self.op_AAimmed     = ( 0, 0, 0, 0, 0 )
-		self.op_reti        = ( 0, 0, 0, 0, 0 )
-		self.op_nop         = ( 0, 0, 0, 0, 0 )
-		self.op_dstEqIOBus  = ( 0, 0, 0, 0, 0 )
+		self.op_AAimmed     = ( 1, 1, 1, 0, 0 )
+		self.op_dstEqIOBus  = ( 1, 1, 1, 0, 1 )
+		self.op_reti        = ( 1, 1, 1, 1, 0 )
+		self.op_nop         = ( 1, 1, 1, 1, 1 )
 
 		# Corresponds to microcode ROM base address...
 		self.opType_Aimmed      = self.intToBitArray( 0, nBitsInOpType )

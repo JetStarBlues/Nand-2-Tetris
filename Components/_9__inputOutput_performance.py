@@ -48,8 +48,16 @@ class IO():
 		# Screen ---
 		self.width = 512
 		self.height = 256
-		self.screenMemStart = SCREEN_MEMORY_MAP
 		self.newContent = False
+
+		# Memory map ---
+		# self.screenMemStart = SCREEN_MEMORY_MAP
+		self.cmdNum = SCREEN_MEMORY_MAP + 0
+		self.arg0   = SCREEN_MEMORY_MAP + 1
+		self.arg1   = SCREEN_MEMORY_MAP + 2
+		self.arg2   = SCREEN_MEMORY_MAP + 3
+		self.arg3   = SCREEN_MEMORY_MAP + 4
+		self.arg4   = SCREEN_MEMORY_MAP + 5
 
 		# 1Bit color mode ---
 		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
@@ -187,6 +195,8 @@ class IO():
 
 	# Screen ----------------------------------------------------
 
+	def handleScreenCS( self ): pass
+
 	def updateScreen( self ):
 
 		if self.newContent:  # update only if there's a change
@@ -304,15 +314,15 @@ class IO():
 		self.main_memory.write( 1, colorCode, 1, SCREEN_MEMORY_MAP )  # TODO, get better location
 
 
-	def writeBuffer( self, pixBuffer, x, y, w, h ):
+	def writePixelBuffer( self, pixBuffer, x, y, w, h ):
 
 		'''
 			Write current pixel values to main memory
 		'''
-		pass
+		pass  # TODO, and test!
 
 
-	def drawBuffer( self, pixBuffer, x, y, w, h ):
+	def drawPixelBuffer( self, pixBuffer, x, y, w, h ):
 
 		'''
 			Draw pixels from main memory.
@@ -430,8 +440,7 @@ class IO():
 
 	def getPixelsFromMain_4BitMode( self, pixBuffer, x, y, w, h ):
 
-		# TODO, and test!
-		pass
+		pass  # TODO, and test!
 
 	def getPixelsFromMain_4BitMode_fast( self, pixBuffer ):
 

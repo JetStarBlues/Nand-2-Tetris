@@ -5,85 +5,61 @@ import Components._0__globalConstants as GC
 
 '''----------------------------- Main -----------------------------------'''
 
+xySel = {
+
+	'D' : '00',
+	'A' : '01',
+	'B' : '10',
+	'M' : '11',
+}
+
+fxType = {
+	
+	'AA_IMMED'     : '11100',
+	'DST_EQ_IOBUS' : '11101',
+	'RETI'         : '11110',
+	'NOP'          : '11111',
+}
+
 comp = {
 
-	# fub1, fub0, ySel, zx, nx, zy, ny, f, no
-	'0'    : '110101010',
-	'1'    : '110111111',
-	'-1'   : '110111010',
-	'D'    : '110001100',
-	'A'    : '110110000',
-	'!D'   : '110001101',
-	'!A'   : '110110001',
-	'-D'   : '110001111',
-	'-A'   : '110110011',
-	'D+1'  : '110011111',
-	'A+1'  : '110110111',
-	'D-1'  : '110001110',
-	'A-1'  : '110110010',
-	'D+A'  : '110000010',
-	'A+D'  : '110000010',  # order doesn't matter
-	'D-A'  : '110010011',
-	'A-D'  : '110000111',
-	'D&A'  : '110000000',
-	'A&D'  : '110000000',  # order doesn't matter
-	'D|A'  : '110010101',
-	'A|D'  : '110010101',  # order doesn't matter
-	'M'    : '111110000',
-	'!M'   : '111110001',
-	'-M'   : '111110011',
-	'M+1'  : '111110111',
-	'M-1'  : '111110010',
-	'D+M'  : '111000010',
-	'M+D'  : '111000010',  # order doesn't matter
-	'D-M'  : '111010011',
-	'M-D'  : '111000111',
-	'D&M'  : '111000000',
-	'M&D'  : '111000000',  # order doesn't matter
-	'D|M'  : '111010101',
-	'M|D'  : '111010101',  # order doesn't matter
-
-	'D^M'  : '101000000',
-	'M^D'  : '101000000',  # order doesn't matter
-	'D^A'  : '100000000',
-	'A^D'  : '100000000',  # order doesn't matter
-	'D<<M' : '011000000',
-	'D<<A' : '010000000',  # not used, can omit to free instruction code
-	'D>>M' : '001000000',
-	'D>>A' : '000000000',  # not used, can omit to free instruction code
+	'0'                   : '00000',
+	'1'                   : '00001',
+	'-1'                  : '00010',
+	'([DABM])'            : '00011',  # x
+	'!([DABM])'           : '00100',  # ! x
+	'-([DABM])'           : '00101',  # - x
+	'([DABM])\+1'         : '00110',  # x + 1
+	'([DABM])-1'          : '00111',  # x - 1
+	'([DABM])\+([DABM])'  : '01000',  # x + y
+	'([DABM])-([DABM])'   : '01001',  # x - y
+	'([DABM])&([DABM])'   : '01010',  # x & y
+	'([DABM])\|([DABM])'  : '01011',  # x | y
+	'([DABM])\^([DABM])'  : '01100',  # x ^ y
+	'([DABM])>>([DABM])'  : '01101',  # x >> y
+	'([DABM])<<([DABM])'  : '01110',  # x << y
+	'([DABM])\*([DABM])'  : '01111',  # x * y
+	'([DABM])/([DABM])'   : '10000',  # x / y
 }
 
 dest = {
-	
-	# d3, d2, d1
+
 	'NULL' : '000',
-	'M'    : '001',
-	'D'    : '010',
-	'A'    : '100',
-	'DM'   : '011',
-	'MD'   : '011',  # order doesn't matter
-	'AM'   : '101',
-	'MA'   : '101',  # order doesn't matter
-	'AD'   : '110',
-	'DA'   : '110',  # order doesn't matter
-	'MDA'  : '111',
-	'MAD'  : '111',  # order doesn't matter
-	'AMD'  : '111',  # order doesn't matter
-	'ADM'  : '111',  # order doesn't matter
-	'DMA'  : '111',  # order doesn't matter
-	'DAM'  : '111'   # order doesn't matter
+	'D'    : '001',
+	'A'    : '010',
+	'B'    : '011',
+	'M'    : '100',
 }
 
 jump = {
-	
-	# j3, j2, j1
+
 	'NULL' : '000',
 	'JGT'  : '001',
 	'JEQ'  : '010',
-	'JLT'  : '100',
 	'JGE'  : '011',
-	'JLE'  : '110',
+	'JLT'  : '100',
 	'JNE'  : '101',
+	'JLE'  : '110',
 	'JMP'  : '111'
 }
 

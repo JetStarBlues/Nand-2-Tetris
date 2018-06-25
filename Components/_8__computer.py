@@ -97,9 +97,12 @@ class ComputerN_():
 
 	def __init__( self, N, RAM_size, ROM_size ):
 
-		self.CPU = CPU_( N )
 		self.data_memory = MemoryRAMXN_( RAM_size, N )
 		self.program_memory = MemoryROMXN_( ROM_size, N )
+
+		self.screenCS = 0  # Thinking allow CPU to alert LCD Driver...
+
+		self.CPU = CPU_( N )
 
 		self.reset = 1  # Start with known state
 
