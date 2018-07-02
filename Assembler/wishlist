@@ -1,0 +1,39 @@
+Array initialization
+
+	a = [ 1, 2, 3 ]
+
+
+	push const len
+	call Array.new 1
+	pop left
+
+
+	push left
+	push ??  expression_0??
+	pop temp 0
+	pop pointer 1
+	push temp 0
+	pop that 0
+
+
+
+	push left
+	push constant 1
+	add
+	push ??  expression_1??
+	pop temp 0
+	pop pointer 1
+	push temp 0
+	pop that 0
+
+	push left
+	push constant 1
+	add
+	push ??  expression_2??
+	pop temp 0
+	pop pointer 1
+	push temp 0
+	pop that 0
+	...
+
+

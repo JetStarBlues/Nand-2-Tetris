@@ -15,17 +15,18 @@
 # == Imports =======================================================
 
 import Assembler.hl2vm as hl2vm
-# import Assembler.vm2asm as vm2asm
-# import Assembler.asm2bin as asm2bin
+import Assembler.vm2asm as vm2asm
 import Assembler.vm2vmx as vm2vmx
+import Assembler.asm2bin as asm2bin
 
 
 # == Main ==========================================================
 
-# useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
-useCompatibleVM = False
+useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
+# useCompatibleVM = False
 
-compileBinaries = False
+compileBinaries = True  # Generate assembly and binary files
+# compileBinaries = False
 
 
 def compileOS():

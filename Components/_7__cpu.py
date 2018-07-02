@@ -76,7 +76,7 @@ class CPU_():
 		# Internal ROM
 		nInstructionTypes = 7
 		nEntriesM         = nInstructionTypes * nStepsPerInstruction
-		nControlSignals   = 18 ?
+		nControlSignals   = 17
 		nBitsInOpType     = 3
 		nBitsInStep       = 2
 		self.microcodeROM = ROMXN_( nEntriesM, nControlSignals )
@@ -385,23 +385,23 @@ class CPU_():
 
 		# Control signals -
 
-		c_cInst                              = microInstruction[ .. ]
-		c_ARegisterWr                        = microInstruction[ .. ]
-		c_ARegisterInSel_instructionRegister = microInstruction[ .. ]
-		c_AARegisterWr                       = microInstruction[ .. ]
-		c_instructionRegisterWr              = microInstruction[ .. ]
-		c_PCIncrement                        = microInstruction[ .. ]
-		c_PCWr                               = microInstruction[ .. ]
-		c_PCInSel_ISRHandler                 = microInstruction[ .. ]
-		c_readIODatabus                      = microInstruction[ .. ]
-		c_dstInSel_IOInputRegister           = microInstruction[ .. ]
-		c_enableInterrupts                   = microInstruction[ .. ]
-		c_disableInterrupts                  = microInstruction[ .. ]
-		c_acknowledgeInterrupt               = microInstruction[ .. ]
-		c_servicedInterrupt                  = microInstruction[ .. ]
-		c_enableRegisterBackup               = microInstruction[ .. ]
-		c_disableRegisterBackup              = microInstruction[ .. ]
-		c_restoreRegisters                   = microInstruction[ .. ]
+		c_cInst                              = microInstruction[  0 ]
+		c_ARegisterWr                        = microInstruction[  1 ]
+		c_ARegisterInSel_instructionRegister = microInstruction[  2 ]
+		c_AARegisterWr                       = microInstruction[  3 ]
+		c_instructionRegisterWr              = microInstruction[  4 ]
+		c_PCIncrement                        = microInstruction[  5 ]
+		c_PCWr                               = microInstruction[  6 ]
+		c_PCInSel_ISRHandler                 = microInstruction[  7 ]
+		c_readIODatabus                      = microInstruction[  8 ]
+		c_dstInSel_IOInputRegister           = microInstruction[  9 ]
+		c_enableInterrupts                   = microInstruction[ 10 ]
+		c_disableInterrupts                  = microInstruction[ 11 ]
+		c_acknowledgeInterrupt               = microInstruction[ 12 ]
+		c_servicedInterrupt                  = microInstruction[ 13 ]
+		c_enableRegisterBackup               = microInstruction[ 14 ]
+		c_disableRegisterBackup              = microInstruction[ 15 ]
+		c_restoreRegisters                   = microInstruction[ 16 ]
 
 
 		# Hold value over time (via register), but switch immediately with control signal

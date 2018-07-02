@@ -234,7 +234,7 @@ def dMux1to8_( x, s2, s1, s0 ):
 
 def buf_( d, sel ):
 
-	return mux_( d, 0, sel ):
+	return mux_( d, 0, sel )
 
 
 

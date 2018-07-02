@@ -68,8 +68,10 @@
 # Built ins
 import re
 import os
+import sys
 
 # Hack computer
+sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
 import Components._0__globalConstants as GC
 import Assembler.lookupTables as LT
 from commonHelpers import *
@@ -119,7 +121,7 @@ static_segment_size  = static_segment_end - static_segment_start + 1
 
 largest_immediate = 2 ** ( nBits - 1 ) - 1
 negative_one = 2 ** nBits - 1
-largest_address = 2 ** 16 - 1
+largest_address = 2 ** 26 - 1
 
 
 
@@ -236,8 +238,8 @@ def tripleLabels_P1( cmdList ):
 
 			if cmd[ 1 : ] in labels:
 
-				cmdList2.append( 'NOP' )
-				cmdList2.append( 'NOP' )
+				cmdList2.append( 'placeholder' )
+				cmdList2.append( 'placeholder' )
 
 	# Check size
 	if len( cmdList2 ) > largest_address:
@@ -251,11 +253,21 @@ def tripleLabels_P2( cmdList ):
 
 	''' Compute values '''
 
-	for i in range( len( cmdList ) ):
+	i = 0
+
+	n = len( cmdList )
+	
+	while i < n:
 
 		cmd = cmdList[ i ]
 
-		if cmd[ 0 ] == '@':
+		if ( cmd[ 0 ] == '@'                   and
+			 i < ( n - 2 )                     and
+			 cmdList[ i + 1 ] == 'placeholder' and
+			 cmdList[ i + 2 ] == 'placeholder' ):
+
+			cmdList[ i + 1 ] = 'NOP'
+			cmdList[ i + 2 ] = 'NOP'
 
 			addr = int( cmd[ 1 : ] )
 
@@ -285,6 +297,10 @@ def tripleLabels_P2( cmdList ):
 					cmdList[ i ] = '@{}'.format( lo )
 
 				cmdList[ i + 2 ] = '@@{}'.format( hi )
+
+			i += 2  # skip subsequent associated @ instructions
+
+		i += 1
 
 	return cmdList
 
@@ -396,7 +412,7 @@ def translateInstructions( cmdList ):
 			# AA instruction
 			if cmd_s[ 1 ] == '@':
 
-				opcode = LT.fxType[ 'AAImmed' ]
+				opcode = LT.fxType[ 'AA_IMMED' ]
 				addr = int( cmd_s[ 2 : ] )
 				addr = toBinary( addr, 10 )
 				cmd_b = '1' + opcode + addr
@@ -427,6 +443,7 @@ def translateInstructions( cmdList ):
 			dest = LT.dest[ dest.upper() ] if dest else LT.dest[ 'NULL' ]
 			jump = LT.jump[ jump.upper() ] if jump else LT.jump[ 'NULL' ]
 
+			# dst=IOBus instruction
 			if comp == 'IOBUS':
 
 				opcode = LT.fxType[ 'DST_EQ_IOBUS' ]
@@ -434,6 +451,7 @@ def translateInstructions( cmdList ):
 				xSel = '00'
 				ySel = '00'
 
+			# dst=cmp;jmp instruction
 			else:
 
 				z = None
@@ -463,9 +481,11 @@ def translateInstructions( cmdList ):
 
 						opcode = v
 
+						break
+
 				if z == None:
 
-					raise Exception ( 'Unrecognized comp - {}'.format( comp ) )
+					raise Exception ( 'Unrecognized computation - {}'.format( comp ) )
 
 			cmd_b = '1' + opcode + xSel + ySel + dest + jump
 
@@ -485,10 +505,10 @@ def translateCmds( cmdList, debug ):
 	# binCmdList = translateInstructions( cmdList )
 
 	# Support for programs greater than largest_immediate lines long
-	cmdList = tripleLabels_P1( cmdList )
-	cmdList = handleLabels( cmdList )
-	cmdList = handleVariables( cmdList )
-	cmdList = tripleLabels_P2( cmdList )
+	cmdList    = tripleLabels_P1( cmdList )
+	cmdList    = handleLabels( cmdList )
+	cmdList    = handleVariables( cmdList )
+	cmdList    = tripleLabels_P2( cmdList )
 	binCmdList = translateInstructions( cmdList )
 
 	if debug: debugStuff( cmdList )
@@ -524,14 +544,12 @@ def asm_to_bin( inputFile, outputFile, debug = False ):
 	# Translate
 	cmds_binary = translateCmds( cmds_assembly, debug )
 
-	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), PROGRAM_MEMORY_SIZE ) )
+	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
 
 	# Check size
-	if len( cmds_binary ) > GC.PROGRAM_MEMORY_SIZE:
+	if len( cmds_binary ) > largest_address:
 
-		# print( 'Assembled program exceeds maximum length.' )
-		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) )
-		# raise Exception( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - PROGRAM_MEMORY_SIZE ) ) )
+		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
 
 	# Write
 	writeToOutputFile( cmds_binary, outputFile )

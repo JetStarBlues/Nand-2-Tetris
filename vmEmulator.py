@@ -43,6 +43,7 @@ import yappi
 # Hack computer (will use only the Clock and IO modules)
 import Components
 from commonHelpers import *
+from pythonNBitArithmetic import *
 
 
 # Configure computer ---------------
@@ -81,7 +82,7 @@ debugPath = 'C:/Users/Janet/Desktop/Temp/DumpDebug2/'  # Folder where logs go
 
 debugMode = False
 
-useMultiprocessing = False  # Gains realized only if screen fps > 3
+useMultiprocessing = True  # Gains realized only if screen fps > 3
 
 runYappiProfile = True
 
@@ -89,6 +90,8 @@ runYappiProfile = True
 # Setup computer -------------------
 
 nBits = Components.N_BITS
+
+ALU = NBitArithmetic( nBits )
 
 PC = 0
 PC_prev = 0
@@ -325,11 +328,11 @@ def operation( op ):
 
 		if op == 'not':
 
-			RAM[ addr ] = a ^ negativeOne  # flip bits
+			RAM[ addr ] = ALU._not( a )
 
 		elif op == 'neg':
 
-			RAM[ addr ] = negate( a )
+			RAM[ addr ] = ALU._neg( a )
 
 	elif op in binaryOps:
 
@@ -341,66 +344,39 @@ def operation( op ):
 
 		if op == 'and':
 
-			value = a & b
+			value = ALU._and( a, b )
 
 		elif op == 'or':
 
-			value = a | b
+			value = ALU._or( a, b )
 
 		elif op == 'xor':
 
-			value = a ^ b
+			value = ALU._xor( a, b )
 
 		elif op == 'lsl':
 
-			value = trim( a << b )
+			value = ALU._lsl( a, b )
 
 		elif op == 'lsr':
 
-			value = a >> b  # logical shift (assuming a is positive)
+			value = ALU._lsr( a, b )
 
 		elif op == 'add':
 
-			value = trim( a + b )
+			value = ALU._add( a, b )
 
 		elif op == 'sub':
 
-			value = trim( a + negate( b ) )
+			value = ALU._sub( a, b )
 
 		elif op == 'mul':
 
-			value = trim( a * b )
+			value = ALU._mul( a, b )
 
 		elif op == 'div':
 
-			# value = a // b  # floor
-
-			# Divide using absolutes and add signs after
-			if a > largestInt:
-
-				a = negate( a )
-
-				if b > largestInt:
-
-					b = negate( b )
-
-					value = a // b
-
-				else:
-
-					value = negate( a // b )
-
-			else:
-
-				if b > largestInt:
-
-					b = negate( b )
-
-					value = negate( a // b )
-
-				else:
-
-					value = a // b
+			value = ALU._div( a, b )
 
 
 		RAM[ addr_a ] = value
@@ -416,97 +392,30 @@ def operation( op ):
 		b = RAM[ addr_b ]
 		value = None
 
-		diff = trim( a + negate( b ) )
-		zr = diff == 0
-		ng = diff > largestInt
-
 		if op == 'eq':
 
-			value = zr
+			value = ALU._eq( a, b )
 
 		elif op == 'ne':
 
-			value = not( zr )
+			value = ALU._ne( a, b )
 
-		else:
+		elif op == 'gt':
 
-			# For gt, gte, lt, lte see discussion here,
-			#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
+			value = ALU._gt( a, b )
 
-			oppositeSigns = ( a > largestInt ) ^ ( b > largestInt )
-			aIsNeg = a > largestInt
+		elif op == 'gte':
 
-			if op == 'gt':
+			value = ALU._gte( a, b )
 
-				# value = not( zr or ng )
+		elif op == 'lt':
 
-				if oppositeSigns:  # opposite signs and,
+			value = ALU._lt( a, b )
 
-					if aIsNeg:     # a is negative
+		elif op == 'lte':
 
-						value = False
+			value = ALU._lte( a, b )
 
-					else:          # a is zero or positive
-
-						value = True
-
-				else:  # same signs
-
-					value = not( zr or ng )
-
-			elif op == 'gte':
-
-				# value = not( ng )
-
-				if oppositeSigns:  # opposite signs and,
-
-					if aIsNeg:     # a is negative
-
-						value = False
-
-					else:          # a is zero or positive
-
-						value = True
-
-				else:  # same signs
-
-					value = not( ng )
-
-			elif op == 'lt':
-
-				# value = ng
-
-				if oppositeSigns:  # opposite signs and,
-
-					if aIsNeg:     # a is negative
-
-						value = True
-
-					else:          # a is zero or positive
-
-						value = False
-
-				else:  # same signs
-
-					value = ng
-
-			elif op == 'lte':
-
-				# value = zr or ng
-
-				if oppositeSigns:  # opposite signs and,
-
-					if aIsNeg:     # a is negative
-
-						value = True
-
-					else:          # a is zero or positive
-
-						value = False
-
-				else:  # same signs
-
-					value = zr or ng
 
 		if value:
 

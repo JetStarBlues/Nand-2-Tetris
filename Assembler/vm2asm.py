@@ -46,7 +46,12 @@
 
 '''
 	TODO
-	- optimize for 'x+1', 'x-1', 0, 1, -1
+	- optimize for 0, 1, -1, 'x+1', 'x-1',
+		push constant 0/1
+		(neg/add/sub)
+		pop static/local/arg idx
+
+	- correct comparison ops
 '''
 
 
@@ -380,7 +385,12 @@ class Compiler():
 
 		# Decrement address held by SP, and get the value
 		s.append( '@SP' )
-		s.append( 'AM = M - 1' )
+
+		# s.append( 'AM = M - 1' )
+		s.append( 'D = M - 1' )
+		s.append( 'M = D' )
+		s.append( 'A = D' )
+
 		s.append( 'D = M' )
 
 		return self.a2s( s )
@@ -781,7 +791,11 @@ class Compiler():
 		# Get prevprev value, and
 		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
 		s.append( '@SP' )
-		s.append( 'AM = M - 1' )  # aReg = prevprev_addr
+
+		# s.append( 'AM = M - 1' )  # aReg = prevprev_addr
+		s.append( 'D = M - 1' )
+		s.append( 'M = D' )
+		s.append( 'A = D' )
 
 		# Apply op
 		s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
@@ -826,7 +840,12 @@ class Compiler():
 		# Apply op, and
 		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result) 
 		s.append( '@SP' )
-		s.append( 'AM = M - 1' )
+
+		# s.append( 'AM = M - 1' )
+		s.append( 'D = M - 1' )
+		s.append( 'M = D' )
+		s.append( 'A = D' )
+
 		s.append( 'D = {} M'.format( unaryOps[ op ] ) )
 
 		# Conditional jump
@@ -834,7 +853,6 @@ class Compiler():
 
 		return self.a2s( s )		
 
-'''
 	def compile_comparisonOp_( self, op ):
 
 		s = []
@@ -860,6 +878,8 @@ class Compiler():
 		# End/continue
 		s.append( self.label( cEnd ) )
 
+		return self.a2s( s )
+
 
 	def compile_comparisonOp( self, op ):
 
@@ -880,164 +900,163 @@ class Compiler():
 		s.append( 'M = D' )
 
 		return self.a2s( s )
-'''
 
-	def compile_comparisonOp2_generic( self, op ):
+	# TODO - Change gt, gte, lt, lte to reflect,
+	#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
 
-		# TODO - Change gt, gte, lt, lte to reflect,
-		#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
+	# def compile_comparisonOp2_generic( self, op ):
 
-		s = []
+	# 	s = []
 
-		# Diff
-		self.atTemp( 2 )  # b
-		'D = M'
-		self.atTemp( 1 )  # a
-		s.append( 'D = M - D' )
+	# 	# Diff
+	# 	self.atTemp( 2 )  # b
+	# 	'D = M'
+	# 	self.atTemp( 1 )  # a
+	# 	s.append( 'D = M - D' )
 
-		# Diff is zero
-		self.at( '..._true{}' )
-		'D ; JEQ'
-		self.atTemp( 3 )
-		'M = 0'
-		self.at( '..._end{}' )
-		'0 ; JMP'
-		self.label( '..._true{}' )
-		self.atTemp( 3 )
-		'M = - 1'
-		self.label( '..._end{}' )
+	# 	# Diff is zero
+	# 	self.at( '..._true{}' )
+	# 	'D ; JEQ'
+	# 	self.atTemp( 3 )
+	# 	'M = 0'
+	# 	self.at( '..._end{}' )
+	# 	'0 ; JMP'
+	# 	self.label( '..._true{}' )
+	# 	self.atTemp( 3 )
+	# 	'M = - 1'
+	# 	self.label( '..._end{}' )
 
-		# Diff is negative
-		self.at( '..._true{}' )
-		'D ; JLT'
-		self.atTemp( 4 )
-		'M = 0'
-		self.at( '..._end{}' )
-		'0 ; JMP'
-		self.label( '..._true{}' )
-		self.atTemp( 4 )
-		'M = - 1'
-		self.label( '..._end{}' )
+	# 	# Diff is negative
+	# 	self.at( '..._true{}' )
+	# 	'D ; JLT'
+	# 	self.atTemp( 4 )
+	# 	'M = 0'
+	# 	self.at( '..._end{}' )
+	# 	'0 ; JMP'
+	# 	self.label( '..._true{}' )
+	# 	self.atTemp( 4 )
+	# 	'M = - 1'
+	# 	self.label( '..._end{}' )
 
-		# a is negative
-		self.atTemp( 1 )
-		'D = M'
-		self.at( '..._true{}' )
-		'D ; JLT'
-		self.atTemp( 1 )
-		'M = 0'
-		self.at( '..._end{}' )
-		self.label( '..._true{}' )
-		self.atTemp( 1 )
-		'M = - 1'
-		self.label( '..._end{}' )
+	# 	# a is negative
+	# 	self.atTemp( 1 )
+	# 	'D = M'
+	# 	self.at( '..._true{}' )
+	# 	'D ; JLT'
+	# 	self.atTemp( 1 )
+	# 	'M = 0'
+	# 	self.at( '..._end{}' )
+	# 	self.label( '..._true{}' )
+	# 	self.atTemp( 1 )
+	# 	'M = - 1'
+	# 	self.label( '..._end{}' )
 
-		# b is negative
-		self.atTemp( 2 )
-		'D = M'
-		self.at( '..._true{}' )
-		'D ; JLT'
-		self.atTemp( 2 )
-		'M = 0'
-		self.at( '..._end{}' )
-		self.label( '..._true{}' )
-		self.atTemp( 2 )
-		'M = - 1'
-		self.label( '..._end{}' )
+	# 	# b is negative
+	# 	self.atTemp( 2 )
+	# 	'D = M'
+	# 	self.at( '..._true{}' )
+	# 	'D ; JLT'
+	# 	self.atTemp( 2 )
+	# 	'M = 0'
+	# 	self.at( '..._end{}' )
+	# 	self.label( '..._true{}' )
+	# 	self.atTemp( 2 )
+	# 	'M = - 1'
+	# 	self.label( '..._end{}' )
 
-		# Signs are opposite
-		self.atTemp( 1 )
-		'D = M'
-		self.atTemp( 2 )
-		'M = M ^ D'
+	# 	# Signs are opposite
+	# 	self.atTemp( 1 )
+	# 	'D = M'
+	# 	self.atTemp( 2 )
+	# 	'M = M ^ D'
 
-		if op == 'gt':
+	# 	if op == 'gt':
 
-			# if opposite signs
-			self.atTemp( 2 )
-			'D = M'
-			self.at( '..false1' )
-			'D ; JEQ'
-			# true1
-				self.atTemp( 1 )
-				'D = M'
-				self.at( '..false2' )
-				'D : JEQ'
-				#true2
-					'D = 0'
+	# 		# if opposite signs
+	# 		self.atTemp( 2 )
+	# 		'D = M'
+	# 		self.at( '..false1' )
+	# 		'D ; JEQ'
+	# 		# true1
+	# 			self.atTemp( 1 )
+	# 			'D = M'
+	# 			self.at( '..false2' )
+	# 			'D : JEQ'
+	# 			#true2
+	# 				'D = 0'
 
-					self.at( '..end2' )
-					'0 ; JMP'
-				#false2
-					self.label( '..false2' )
-					'D = - 1'
-				#end2
-				self.label( '..end2' )
+	# 				self.at( '..end2' )
+	# 				'0 ; JMP'
+	# 			#false2
+	# 				self.label( '..false2' )
+	# 				'D = - 1'
+	# 			#end2
+	# 			self.label( '..end2' )
 
-				self.at( '..end1' )
-				'0 ; JMP'
-			# false1
-				self.label( '..false1' )
-				self.atTemp( 3 )
-				'D = M'
-				self.atTemp( 4 )
-				'D = M | D'
-				'D = ! D'
-			# end1
-			self.label( '..end1' )
-
-
-			# _ if aIsNeg : value = 0
-
-			# _ else : value = -1
-
-			# else : value = ! ( zr | ng )
-
-		elif op == 'gte': pass
-		elif op == 'lt': pass
-		elif op == 'lte': pass
-
-		return self.a2s( s )
+	# 			self.at( '..end1' )
+	# 			'0 ; JMP'
+	# 		# false1
+	# 			self.label( '..false1' )
+	# 			self.atTemp( 3 )
+	# 			'D = M'
+	# 			self.atTemp( 4 )
+	# 			'D = M | D'
+	# 			'D = ! D'
+	# 		# end1
+	# 		self.label( '..end1' )
 
 
-	def compile_comparisonOp( self, op ):
+	# 		# _ if aIsNeg : value = 0
 
-		s = []
+	# 		# _ else : value = -1
 
-		if op == 'eq' or op == 'ne':
+	# 		# else : value = ! ( zr | ng )
 
-			# Get prev value
-			s.append( self.popStackToD() )  # D = prev_val
+	# 	elif op == 'gte': pass
+	# 	elif op == 'lt': pass
+	# 	elif op == 'lte': pass
 
-			# Get prevprev value
-			s.append( 'A = A - 1' )  # aReg = prevprev_addr
+	# 	return self.a2s( s )
 
-			# Compare
-			s.append( self.compile_comparisonOp_( op ) )
 
-		else:
+	# def compile_comparisonOp( self, op ):
 
-			# Get prev value
-			s.append( self.popStackToD() )  # D = prev_val
-			self.atTemp( 2 )  # b
-			'M = D'
+	# 	s = []
 
-			# Get prevprev value
-			'@SP'
-			'A = M - 1'  # aReg = prevprev_addr
-			'D = M'
-			self.atTemp( 1 )  # a
-			'M = D'
+	# 	if op == 'eq' or op == 'ne':
 
-			# Compare
-			s.append( self.compile_comparisonOp2_( op ) )
+	# 		# Get prev value
+	# 		s.append( self.popStackToD() )  # D = prev_val
 
-		# Update stack
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )
-		s.append( 'M = D' )
+	# 		# Get prevprev value
+	# 		s.append( 'A = A - 1' )  # aReg = prevprev_addr
 
-		return self.a2s( s )
+	# 		# Compare
+	# 		s.append( self.compile_comparisonOp_( op ) )
+
+	# 	else:
+
+	# 		# Get prev value
+	# 		s.append( self.popStackToD() )  # D = prev_val
+	# 		self.atTemp( 2 )  # b
+	# 		'M = D'
+
+	# 		# Get prevprev value
+	# 		'@SP'
+	# 		'A = M - 1'  # aReg = prevprev_addr
+	# 		'D = M'
+	# 		self.atTemp( 1 )  # a
+	# 		'M = D'
+
+	# 		# Compare
+	# 		s.append( self.compile_comparisonOp2_( op ) )
+
+	# 	# Update stack
+	# 	s.append( '@SP' )
+	# 	s.append( 'A = M - 1' )
+	# 	s.append( 'M = D' )
+
+	# 	return self.a2s( s )
 
 
 	def compile_push_comparisonOp( self, seg, index, op ):
@@ -1312,7 +1331,12 @@ class Compiler():
 
 			for i in range( nLocals - 1 ):
 				s.append( '@SP' )
-				s.append( 'AM = M + 1' )
+
+				# s.append( 'AM = M + 1' )
+				s.append( 'D = M + 1' )
+				s.append( 'M = D' )
+				s.append( 'A = D' )
+
 				s.append( 'M = 0' )
 
 			s.append( '@SP' )

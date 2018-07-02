@@ -8,7 +8,7 @@ if PERFORMANCE_MODE:
 	from ._2__arithmetic_performance import *
 	from ._3__clock_performance import *
 	from ._5__memory_performance import *
-	from ._6__counter_performance import *
+	# from ._6__counter_performance import *
 	from ._7__cpu_performance import *
 	from ._9__inputOutput_performance import *
 
