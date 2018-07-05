@@ -2346,10 +2346,10 @@ class CompileTo_HackVM():
 
 		s = ''
 		
-		fx_type = exp[ 'fx_type' ]
+		fxType = exp[ 'fx_type' ]
 
 		# -- Add variables to table
-		if fx_type == 'method':
+		if fxType == 'method':
 
 			# Add placeholder for 'self' arg
 			self.subroutineVarTable.add( 
@@ -2371,13 +2371,13 @@ class CompileTo_HackVM():
 		s = 'function {} {}\n'.format( fxName, nLocals )
 
 		# -- Header
-		if fx_type == 'method':
+		if fxType == 'method':
 
 			# Position THIS pointer
 			s += self.push_( 'argument', 0 )
 			s += self.pop_( 'pointer', 0 )
 
-		elif fx_type == 'constructor':
+		elif fxType == 'constructor':
 
 			# Allocate field variables
 			nFields = len( self.classVarTable.segments[ 'this' ] )
@@ -2488,11 +2488,6 @@ class CompileTo_HackVM():
 			nArgs += 1
 
 			name = '{}.{}'.format( self.curClassName, name )
-
-			# TODO, anyway to differentiate between function and method
-			#  of current class... so that instead of assuming, push
-			#  pointer only when method... and thus can also call functions
-			#  without including className
 		
 		# -- Push passed in args onto stack
 		args = exp[ 'args' ]
@@ -2546,7 +2541,7 @@ class CompileTo_HackVM():
 
 				s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
 				s += right
-				s += self.compile_binaryOp( op[ : -1 ] )
+				s += self.compile_binaryOp( op[ : - 1 ] )
 
 			s += self.pop_( 'temp', 0 )
 
@@ -2568,7 +2563,7 @@ class CompileTo_HackVM():
 
 				s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
 				s += right
-				s += self.compile_binaryOp( op[ : -1 ] )
+				s += self.compile_binaryOp( op[ : - 1 ] )
 
 			# Set var to value
 			s += self.pop_( left[ 'segName' ], left[ 'segIdx' ] )
@@ -2787,13 +2782,13 @@ class CompileTo_HackVM():
 
 	def compile_breakStatement( self, exp ):
 
-		s = 'goto {}_END{}\n'.format( *self.currentContext[ -1 ] )
+		s = 'goto {}_END{}\n'.format( *self.currentContext[ - 1 ] )
 
 		return s
 
 	def compile_continueStatement( self, exp ):
 
-		context = self.currentContext[ -1 ]
+		context = self.currentContext[ - 1 ]
 
 		print( context )
 
