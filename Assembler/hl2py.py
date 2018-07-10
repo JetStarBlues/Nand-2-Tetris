@@ -1,5 +1,17 @@
 # TODO
 '''
+	Python class not same as Jack class...
+	this does not refer to same thing as self
+	this
+		. Array idx 0
+		. Object instance field 0
+	self
+		. ???
+
+	Need some kind of custom Python class that emulates Jack class
+'''
+
+'''
 	For perfomance, bypass vm language
 	
 	Generate equivalent python code
@@ -30,7 +42,7 @@
 'ALU = NBitArithmetic( nBits )'
 
 
-def compile_classDeclaration( self, exp ):
+def compile_classDeclaration ( self, exp ):
 
 	s = ''
 
@@ -61,7 +73,7 @@ def compile_classDeclaration( self, exp ):
 	return s
 
 
-def compile_subroutineDeclaration( self, exp ):
+def compile_subroutineDeclaration ( self, exp ):
 
 	s = ''
 
@@ -74,8 +86,33 @@ def compile_subroutineDeclaration( self, exp ):
 		params.append( param[ 'name' ] )
 
 
+	'''
+		Super kludgy
+		1) Treat quirky 'Array.new' as 'constructor' instead of 'function'
+		   Kludgy because any code that seeks to exploit behaviour similarly will not work
+		   ... no __init__ unless 'constructor'
+		2) Overwriting whole function so that can change
+		   'return DataMemory.alloc( size )' to
+		   self.base = DataMemory.alloc( size )
+		   This means any changes in Array.new code need to be mirrored here
+	'''
+	if self.curClassName == 'Array' and fxName == 'new':
+
+		s += '\tdef __init__ ( self, size ):\n'
+		s += '\t\n'
+		s += '\t\tif ALU._lte( size, 0 ):\n'
+		s += '\t\n'
+		s += '\t\t\tSys.error( 2 )\n'
+		s += '\t\n'
+		s += '\t\tself.base = DataMemory.alloc( size )\n'
+
+		s += '\n'
+
+		return s
+
+
 	# def
-	if fx_type == 'method':
+	if fxType == 'method':
 
 		s += 'def {} ( self{} ):\n'.format( 
 
@@ -83,14 +120,14 @@ def compile_subroutineDeclaration( self, exp ):
 			( ', ' + ', '.join( params ) ) if params else ''
 		)
 
-	elif fx_type == 'constructor':
+	elif fxType == 'constructor':  # TODO... check multiple constructors in class???
 
 		s += 'def __init__ ( self{} ):\n'.format(
 
 			( ', ' + ', '.join( params ) ) if params else ''
 		)
 
-	elif fx_type == 'function':
+	elif fxType == 'function':
 
 		s += 'def {} ({}):\n'.format(
 
@@ -120,7 +157,7 @@ def compile_subroutineDeclaration( self, exp ):
 	return s
 
 
-def compile_statements( self, statements ):
+def compile_statements ( self, statements ):
 
 	s = ''
 
@@ -133,7 +170,7 @@ def compile_statements( self, statements ):
 	return s
 
 
-def compile_statement( self, exp ):
+def compile_statement ( self, exp ):
 
 	if   exp[ 'type' ] == 'subroutineCall'    : return self.compile_subroutineCall( exp )
 	elif exp[ 'type' ] == 'assignment'        : return self.compile_letStatement( exp )
@@ -145,10 +182,10 @@ def compile_statement( self, exp ):
 	elif exp[ 'type' ] == 'continueStatement' : return self.compile_continueStatement( exp )
 
 	else:
-		self.croak( "Error: Don't know how to compile the statement " + exp[ 'type' ] )
+		raise Exception ( "Error: Don't know how to compile the statement " + exp[ 'type' ] )
 
 
-def compile_subroutineCall( self, exp ):
+def compile_subroutineCall ( self, exp ):
 
 	s = ''
 
@@ -159,68 +196,206 @@ def compile_subroutineCall( self, exp ):
 		# Method of current class
 		subName = 'self.' + subName
 
+	# Kludgy workaround for use of 'this' to reference an array's base address
+	if subName == 'DataMemory.dealloc':
+
+		if self.curClassName == 'Array':
+
+			# replace 'this' keyword with 'self.base'
+			s = 'DataMemory.dealloc( self.base )'
+
+		else:
+
+			# ignore all other calls (typically by object instances to dispose self)
+			s = ''
+
+		return
 
 	# args
 	args = exp[ 'args' ]
 
-	s_args = ''  # TODO ???
+	s_args = []
 
 	if args:
 		
 		for expr in args:
 
-			s += self.compile_expression( expr )
+			s.append( self.compile_expression( expr ) )
 
 
-	s = '{}({})'.format(  # tab levels??
+	s = '{}({})'.format(
 
 		subName,
-		( ' ' + ', '.join( args ) + ' ' ) if args else ''
+		( ' ' + ', '.join( s_args ) + ' ' ) if args else ''
 	)
 
 	return s
 
 
-....
-
-
-def compile_binaryOp( self, op ):
-
-	# Logic ---
-	if   op == '&':
-	elif op == '|':
-	elif op == '^':
-
-	# Arithmetic ---
-	elif op == '+':
-	elif op == '-':
-	elif op == '%':
-	elif op == '*':
-	elif op == '/':
-	elif op == '>>':
-	elif op == '<<':
-
-	# Comparison ---
-	elif op == '=' or op == '==':
-	elif op == '>':
-	elif op == '<':
-	elif op == '>=':
-	elif op == '<=':
-	elif op == '!=':
-
-	# ---
-	else:
-		self.croak( "Error: Don't know how to compile the binaryOp " + op )
-
-
-def compile_expression( self, exp ):
+def compile_letStatement ( self, exp ):
 
 	s = ''
-
 
 
 
 	return s
 
 
+
+
+....
+
+ALUFxLookup_unary = {
+
+	'!'  : '_not',
+	'~'  : '_not',
+	'-'  : '_neg'
+}
+
+ALUFxLookup_binary = {
+
+	# logic
+	'&'  : '_and',
+	'|'  : '_or',
+	'^'  : '_xor',
+
+	# arithmetic
+	'+'  : '_add',
+	'-'  : '_sub',
+	'*'  : '_mul',
+	'/'  : '_div',
+	'>>' : '_lsr',
+	'<<' : '_lsl',
+	'%'  : ?,
+
+	# comparison
+	'='  : '_eq',
+	'==' : '_eq',
+	'>'  : '_gt',
+	'<'  : '_lt',
+	'>=' : '_gte',
+	'<=' : '_lte',
+	'!=' : '_ne'
+}
+
+def compile_binaryOp ( self, op, a, b ):
+
+	if op in ALUFxLookup_binary():
+
+		ALUFx = ALUFxLookup_binary[ op ]
+
+		return 'ALU.{}( {}, {} )'.format( ALUFx, a, b )
+
+	elif op == '%':
+
+		return 'Math.mod( {}, {} )'.format( a, b )
+
+	else:
+
+		raise Exception ( "Error: Don't know how to compile the binaryOp " + op )
+
+
+def compile_expression ( self, exp ):
+
+	s = ''
+
+	if exp == None:
+
+		return ''
+
+	elif isinstance( exp, dict ):
+
+		return self.compile_expressionTerm( exp )
+
+	else:
+
+		s_a = self.compile_expression( exp[ 0 ] )
+
+		for i in range( 1, len( exp ), 2 ):
+
+			s_b = self.compile_expression( exp[ i + 1 ] )
+
+			s_ab = self.compile_binaryOp( exp[ i ][ 'value' ], s_a, s_b )
+
+			s += s_ab
+
+			s_a = s_ab
+
+	return s
+
+
+def compile_expressionTerm ( self, exp ):
+
+	s = ''
+
+	expType  = exp[ 'type' ]
+	expValue = exp[ 'value' ]
+
+	if expType == 'integerConstant':
+
+		s = exp[ 'value' ]
+
+	elif expType == 'stringConstant':
+
+		'String()' ... ??
+
+		for c in expValue:
+
+			'?.appendChar( {} )'.format( ord( c ) )
+
+	elif expType == 'charConstant':
+
+		s = str( ord( expValue ) )  # Ascii code
+
+	elif expType == 'keywordConstant':
+
+		if expValue == 'true':
+
+			s = 'ALU.negativeOne'
+
+		elif expValue == 'false' or expValue == 'null':
+
+			s = '0'
+
+		elif expValue == 'this':
+
+			... self?
+
+	elif expType == 'identifier':
+
+		name = exp[ 'name' ]
+
+		arrIdx = exp[ 'arrIdx' ]
+
+		if arrIdx:
+
+			s_idx = self.compile_expression( arrIdx )
+
+			s = '{}[ {} ]'.format( name, s_idx )
+
+			... ???
+
+		else:
+
+			s = name
+
+	elif expType == 'subroutineCall':
+
+		return self.compile_subroutineCall( exp )
+
+	elif expType == 'unaryOp':
+
+		s_operand = self.compile_expression( exp[ 'operand' ] )
+
+		op = exp[ 'op' ]
+
+		ALUFx = ALUFxLookup_unary[ op ]
+
+		s = 'ALU.{}( {} )'.format( ALUFx, s_operand )
+
+	else:
+
+		raise Exception ( "Error: Don't know how to compile the expressionTerm " + expType )
+
+	return s
 

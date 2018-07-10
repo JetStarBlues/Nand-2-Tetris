@@ -20,6 +20,14 @@ class AClass:
 
 		print( 'Oy', AClass.a )
 
+	def getSelf( self ):
+
+		return self
+
+	def overrideTest( self ):  # https://stackoverflow.com/a/17757360
+
+		print( 'Override failed' )
+
 
 
 print( AClass.a )
@@ -35,3 +43,17 @@ AClass.notSpecific()
 B.specific()
 
 B.specific2()
+
+C = B.getSelf()
+print( B == C )
+print( C.a )
+C.a = 50
+print( B.a )
+
+def overrideTest( self ):
+
+	print( 'Override success' )
+
+AClass.overrideTest = overrideTest
+
+B.overrideTest()

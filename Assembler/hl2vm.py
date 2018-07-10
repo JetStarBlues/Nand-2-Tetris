@@ -89,7 +89,7 @@ Hack_lexicon = {
 	
 	'keywordConstants' : [ 'true', 'false', 'null', 'this' ],
 
-	'memoryPointers' : [ '_SCREEN','_KEYBOARD', '_MOUSEX', '_MOUSEY', '_IOBANK1', '_IOBANK2' ],
+	# 'memoryPointers' : [ '_SCREEN','_KEYBOARD', '_MOUSEX', '_MOUSEY', '_IOBANK1', '_IOBANK2' ],
 
 	'punctuation' : '.,;(){}[]',
 }
@@ -100,8 +100,8 @@ Hack_lexicon[ 'keywords' ] = set (
 	Hack_lexicon[ 'functionTypes'    ] + 
 	Hack_lexicon[ 'variableTypes'    ] + 
 	Hack_lexicon[ 'other'            ] + 
-	Hack_lexicon[ 'keywordConstants' ] + 
-	Hack_lexicon[ 'memoryPointers'   ]
+	Hack_lexicon[ 'keywordConstants' ]
+	# Hack_lexicon[ 'memoryPointers'   ]
 )
 
 Hack_lexicon[ 'ops' ] = set (
@@ -1046,7 +1046,7 @@ class Parser():
 
 		self.keywordConstants = Hack_lexicon[ 'keywordConstants' ]
 
-		self.memoryPointers = Hack_lexicon[ 'memoryPointers' ]
+		# self.memoryPointers = Hack_lexicon[ 'memoryPointers' ]
 
 		self.unaryOps = Hack_lexicon[ 'unaryOps' ]
 
@@ -1758,7 +1758,7 @@ class Parser():
 
 		if len( exps ) == 1:
 
-			return exps[0]
+			return exps[ 0 ]
 
 		else:
 
@@ -1800,15 +1800,15 @@ class Parser():
 				'value' : tok[ 'value' ]
 			}
 
-		elif tok[ 'type' ] == 'kw' and tok[ 'value' ] in self.memoryPointers:
+		# elif tok[ 'type' ] == 'kw' and tok[ 'value' ] in self.memoryPointers:
 
-			self.input.next()
+		# 	self.input.next()
 
-			return {
+		# 	return {
 
-				'type'  : 'memoryPointer',
-				'value' : tok[ 'value' ]
-			}
+		# 		'type'  : 'memoryPointer',
+		# 		'value' : tok[ 'value' ]
+		# 	}
 
 		elif tok[ 'type' ] == 'id':
 
@@ -2399,7 +2399,7 @@ class CompileTo_HackVM():
 		s += self.compile_statements( exp[ 'statements' ] )
 
 		# -- Check if return statement present
-		if s[ -7 : ] != 'return\n':
+		if s[ - 7 : ] != 'return\n':
 
 			# Allow users to omit return statemens in void subroutines
 			if exp[ 'ret_type' ] == 'void':
@@ -2766,7 +2766,7 @@ class CompileTo_HackVM():
 
 		s = ''
 
-		value = exp[ 'value' ]
+		value = expValue
 
 		if value == 0:
 
@@ -2872,7 +2872,7 @@ class CompileTo_HackVM():
 
 		else:
 
-			s += self.compile_expression( exp[0] )
+			s += self.compile_expression( exp[ 0 ] )
 
 			for i in range( 1, len( exp ), 2 ):
 
@@ -2883,13 +2883,16 @@ class CompileTo_HackVM():
 
 	def compile_expressionTerm( self, exp ):
 
-		if exp[ 'type' ] == 'integerConstant':
+		expType  = exp[ 'type' ]
+		expValue = exp[ 'value' ]
 
-			return self.pushConstant_( exp[ 'value' ] )
+		if expType == 'integerConstant':
 
-		elif exp[ 'type' ] == 'stringConstant':
+			return self.pushConstant_( expValue )
 
-			msg = exp[ 'value' ]
+		elif expType == 'stringConstant':
+
+			msg = expValue
 
 			# Create String instance
 			s = self.pushConstant_( len( msg ) )
@@ -2934,14 +2937,14 @@ class CompileTo_HackVM():
 			#
 			return s
 
-		elif exp[ 'type' ] == 'charConstant':
+		elif expType == 'charConstant':
 
-			return self.pushConstant_( ord( exp[ 'value' ] ) )  # Ascii code
+			return self.pushConstant_( ord( expValue ) )  # Ascii code
 
 
-		elif exp[ 'type' ] == 'keywordConstant':
+		elif expType == 'keywordConstant':
 
-			kw = exp[ 'value' ]
+			kw = expValue
 
 			if kw == 'true':
 
@@ -2961,11 +2964,11 @@ class CompileTo_HackVM():
 
 				return self.push_( 'pointer', 0 )
 
-		elif exp[ 'type' ] == 'memoryPointer':
+		# elif expType == 'memoryPointer':
 
-			return self.pushConstant_( Hack_pointerMap[ exp[ 'value' ] ] )
+		# 	return self.pushConstant_( Hack_pointerMap[ expValue ] )
 		
-		elif exp[ 'type' ] == 'identifier':
+		elif expType == 'identifier':
 
 			name = exp[ 'name' ]
 
@@ -2975,7 +2978,7 @@ class CompileTo_HackVM():
 
 				raise Exception( 'Error: Undefined variable - ' + name )
 
-			arrIdx = exp.get( 'arrIdx' )
+			arrIdx = exp[ 'arrIdx' ]
 
 			if arrIdx:
 
@@ -2998,11 +3001,11 @@ class CompileTo_HackVM():
 
 					return self.push_( loc[ 'segName' ], loc[ 'segIdx' ] )
 
-		elif exp[ 'type' ] == 'subroutineCall':
+		elif expType == 'subroutineCall':
 
 			return self.compile_subroutineCall( exp )
 
-		elif exp[ 'type' ] == 'unaryOp':
+		elif expType == 'unaryOp':
 
 			s = self.compile_expression( exp[ 'operand' ] )
 
@@ -3020,7 +3023,7 @@ class CompileTo_HackVM():
 
 		else:
 
-			self.croak( "Error: Don't know how to compile the expressionTerm " + exp[ 'type' ] )
+			self.croak( "Error: Don't know how to compile the expressionTerm " + expType )
 
 
 
