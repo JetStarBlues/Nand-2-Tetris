@@ -36,49 +36,24 @@
 import re
 import time
 import os
+import sys
 from multiprocessing import Array, Process
 import threading
 import yappi
 
-# Hack computer (will use only the Clock and IO modules)
+# Hack computer
+sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
 import Components
 from commonHelpers import *
-from pythonNBitArithmetic import *
+from .pythonNBitArithmetic import *
 
 
 # Configure computer ---------------
 
 # VMX file containing all necessary program code
-# programPath = '../N2T_Code/Programs/General/gfxDriverComm/Main.vmx'
-# programPath = '../N2T_Code/Programs/CompilerTests/Point/Main.vmx'
-# programPath = '../N2T_Code/Programs/CompilerTests/nonExistMethods/Main.vmx'
-# programPath = '../N2T_Code/Programs/HashTable/Main.vmx'
-# programPath = '../N2T_Code/Programs/LinkedList/Main.vmx'
-# programPath = '../N2T_Code/Programs/pong/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/sanity/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/modifiedCode/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Trigonometry/modifiedCode/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASscroller/Main.vmx'
-# programPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASboing/Main.vmx'
-# programPath = '../N2T_Code/Programs/temp_delete/Main.vmx'
-# programPath = '../N2T_Code/Programs/General/colorImages/lp/Main.vmx'
-# programPath = '../N2T_Code/Programs/General/colorImages/sunset/Main.vmx'
-# programPath = '../N2T_Code/Programs/hello/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/sys/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/string/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/memory/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/math/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/keyboard/Main.vmx'
-programPath = '../N2T_Code/Programs/OSLibTests/gfx/Main.vmx'
-# programPath = '../N2T_Code/Programs/OSLibTests/array/Main.vmx'
-# programPath = '../N2T_Code/Programs/includesOfIncludes/Main.vmx'
-# programPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode/Main.vmx'
-# programPath = 'Programs/ByOthers/GavinStewart/Games&Demos/GASscroller/modifiedCode/Main.vmx'
+programPath = ''
 
-
-debugPath = 'C:/Users/Janet/Desktop/Temp/DumpDebug2/'  # Folder where logs go
+debugPath = 'VMEmulatorDebug/'  # Folder where logs go
 
 debugMode = False
 

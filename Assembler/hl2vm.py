@@ -1031,7 +1031,7 @@ def testTokenizer():
 
 	binConstant       -> ( '0b' | '0B' ) ( 0 | 1 )+
 
-	constDec          -> 'const' 'int' varName '=' '-'? integerConstant ';'
+	constDec          -> 'const' 'int' varName '=' unaryOp? integerConstant ';'
 
 	statementBlock    -> statement | ( '{' statements '}' )
 
@@ -1212,7 +1212,7 @@ class Parser():
 
 	def parse_constDeclaration( self ):
 		'''
-			'const' 'int' varName '=' '-'? integerConstant ';'
+			'const' 'int' varName '=' unaryOp? integerConstant ';'
 		'''
 
 		self.skip_kw( 'const' )

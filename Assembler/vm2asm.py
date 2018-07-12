@@ -60,6 +60,11 @@
 # Built ins
 import re
 import os
+import sys
+
+# Hack computer
+sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
+import Components
 
 
 
@@ -108,8 +113,6 @@ operations.update( comparisonOps )
 
 # -- Extraction -------------------------------------
 
-# With regex --
-
 # Select everything that is not a comment
 cmdPattern = '''
 	^                # from beginning of string
@@ -118,7 +121,6 @@ cmdPattern = '''
 '''
 cmdPattern = re.compile( cmdPattern, re.X )
 
-# def extractCmd_wRe( line ):
 def extractCmd( line ):
 
 	found = re.search( cmdPattern, line )  # select everything that is not a comment
@@ -128,92 +130,6 @@ def extractCmd( line ):
 		cmd = found.group( 0 )
 		cmd = cmd.strip()  # remove leading and trailing whitespace
 		return cmd.split( ' ' )  # split on spaces
-
-	else:
-
-		return None
-
-
-# Without regex --
-
-def strip ( s ):
-
-	# Remove leading and trailing whitespace
-
-	whitespace = ' \t\r\n\f'
-
-	start = 0
-	end = len( s ) - 1
-
-	while s[ start ] in whitespace:
-
-		start += 1
-
-	while s[ end ] in whitespace:
-
-		end -= 1
-
-	return s[ start : end + 1 ]
-
-def split ( s, sep ):
-
-	# Split into substirings using sep (single char) as delimiter
-
-	items = []
-
-	i = 0
-
-	sLen = len( s )
-
-	while i < sLen:
-
-		item = ''
-
-		while i < sLen and s[ i ] != sep:
-
-			item += s[i]
-
-			i += 1
-
-		items.append( item )
-
-		i += 1  # skip sep
-
-	if s[ sLen - 1 ] == sep:
-
-		items.append( '' )  # make return length consistent
-
-	return items
-
-# s = 'pants'
-# s = "----"
-# s = 'pants-are-cool'
-# s = 'pants-are--cool'
-# s = 'pants--are-cool-----'
-# print( split( s, '-' ) )
-# print( s.split( '-' ) )
-
-def extractCmd_woutRe( line ):
-# def extractCmd( line ):
-
-	s = ''
-
-	i = 0
-	tok = line[ i ]
-
-	# Select everything that is not a comment
-	while tok != '\n' and tok != '/':
-
-		s += tok
-
-		i += 1
-
-		tok = line[ i ]
-
-	if i: 
-
-		s = strip( s )  # remove leading and trailing whitespace
-		return split( s, ' ' )  # split on spaces
 
 	else:
 
@@ -274,11 +190,7 @@ class Compiler():
 	def __init__( self ):
 
 		# Set SP
-		self.SP   = 256
-
-		# Set corresponding RAM addresses
-		self.TEMP = 5   # 5..12
-		self.GP   = 13  # 13..15
+		self.SP = Components.STACK_START
 
 		# Track scope
 		self.curClassName = None
@@ -290,6 +202,9 @@ class Compiler():
 		# Include comments in generated asm file
 		self.debug = False
 
+		# Optimize generated assembly
+		self.optimize = False
+
 		# Skip cmd
 		self.skip = False
 		self.skip2 = False
@@ -297,8 +212,8 @@ class Compiler():
 
 	def setup( self ):
 
-		self.compCount = 0  # track jump positions of comparison operations
-		self.returnPosCount = 0  # track return positions of calls
+		self.compCount = 0              # track jump positions of comparison operations
+		self.returnPosCount = 0         # track return positions of calls
 		self.returnGenericPosCount = 0  # track return positions of generic ASM calls
 
 
@@ -318,7 +233,7 @@ class Compiler():
 
 				out.append( '\n// === {} ===\n'.format( className ) )
 
-			out.append( self.compile_topLevel( className, cmds[ className ] )	 )
+			out.append( self.compile_topLevel( className, cmds[ className ] ) )
 
 		return self.a2s( out )
 
@@ -346,13 +261,12 @@ class Compiler():
 
 	def atTemp( self, index ):
 
-		return self.at( self.TEMP + index )
+		return '@TEMP{}'.format( index )
 
 	def atGP( self, index ):
 
-		return self.at( self.GP + index )
+		return '@GP{}'.format( index )
 
-	# def atStatic( self, index ):
 	def atStatic( self, index, className = None ):
 
 		return '@{}.{}'.format( self.curClassName, index )
@@ -442,64 +356,68 @@ class Compiler():
 
 		if cmdType == 'push':
 
-			cmd2 = self.input.peek()
+			return self.compile_push( cmd[1], int( cmd[2] ) )
 
-			if ( cmd2 and cmd2[0] == 'pop' and
-			   ( cmd2[1] == 'pointer' or cmd2[1] == 'static' or cmd2[1] == 'temp' ) ):
+		# if cmdType == 'push':
 
-				# 'compile_push_pop' generates less code than seperate 'compile_push' and 'compile_pop'
+		# 	cmd2 = self.input.peek()
 
-				self.skip = True
+		# 	if ( cmd2 and cmd2[0] == 'pop' and
+		# 	   ( cmd2[1] == 'pointer' or cmd2[1] == 'static' or cmd2[1] == 'temp' ) ):
 
-				return self.compile_push_pop( cmd[1], int( cmd[2] ), cmd2[1], int( cmd2[2] ) )
+		# 		# 'compile_push_pop' generates less code than seperate 'compile_push' and 'compile_pop'
 
-			# elif cmd2 and cmd2[0] in binaryOps:
-			elif ( cmd2 and cmd2[0] in binaryOps and
-			       cmd2[0] != 'lsl' and cmd2[0] != 'lsr' ):
+		# 		self.skip = True
 
-				cmd3 = self.input.peekpeek()
+		# 		return self.compile_push_pop( cmd[1], int( cmd[2] ), cmd2[1], int( cmd2[2] ) )
 
-				if cmd3 and cmd3[0] == 'if-goto':
+		# 	# elif cmd2 and cmd2[0] in binaryOps:
+		# 	elif ( cmd2 and cmd2[0] in binaryOps and
+		# 	       cmd2[0] != 'lsl' and cmd2[0] != 'lsr' ):
 
-					# compile_push_binaryOp_ifgoto generates less code than seperate
-					# 'compile_push', 'compile_operation', and 'compile_ifgoto'
+		# 		cmd3 = self.input.peekpeek()
+
+		# 		if cmd3 and cmd3[0] == 'if-goto':
+
+		# 			# compile_push_binaryOp_ifgoto generates less code than seperate
+		# 			# 'compile_push', 'compile_operation', and 'compile_ifgoto'
 					
-					self.skip2 = True
+		# 			self.skip2 = True
 
-					return self.compile_push_binaryOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
+		# 			return self.compile_push_binaryOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
 
-				else:
+		# 		else:
 
-					# compile_push_binaryOp generates less code than seperate 'compile_push' and 'compile_operation'
+		# 			# compile_push_binaryOp generates less code than seperate 'compile_push' and 'compile_operation'
 
-					self.skip = True
+		# 			self.skip = True
 
-					return self.compile_push_binaryOp( cmd[1], int( cmd[2] ), cmd2[0] )
+		# 			return self.compile_push_binaryOp( cmd[1], int( cmd[2] ), cmd2[0] )
 
-			elif cmd2 and cmd2[0] in comparisonOps:
+		# 	elif cmd2 and cmd2[0] in comparisonOps:
 
-				cmd3 = self.input.peekpeek()
+		# 		cmd3 = self.input.peekpeek()
 
-				if cmd3 and cmd3[0] == 'if-goto':
+		# 		if cmd3 and cmd3[0] == 'if-goto':
 
-					# compile_push_comparisonOp_ifgoto generates less code than seperate
-					# 'compile_push', 'compile_operation', and 'compile_ifgoto'
+		# 			# compile_push_comparisonOp_ifgoto generates less code than seperate
+		# 			# 'compile_push', 'compile_operation', and 'compile_ifgoto'
 					
-					self.skip2 = True
+		# 			self.skip2 = True
 
-					return self.compile_push_comparisonOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
+		# 			return self.compile_push_comparisonOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
 
-				else:
+		# 		else:
 
-					# compile_push_comparisonOp generates less code than seperate 'compile_push' and 'compile_operation'
+		# 			# compile_push_comparisonOp generates less code than seperate 'compile_push' and 'compile_operation'
 
-					self.skip = True
+		# 			self.skip = True
 
-					return self.compile_push_comparisonOp( cmd[1], int( cmd[2] ), cmd2[0] )
+		# 			return self.compile_push_comparisonOp( cmd[1], int( cmd[2] ), cmd2[0] )
 
-			else:
+		# 	else:
 
-				return self.compile_push( cmd[1], int( cmd[2] ) )
+		# 		return self.compile_push( cmd[1], int( cmd[2] ) )
 
 		elif cmdType == 'pop':
 
@@ -507,29 +425,33 @@ class Compiler():
 
 		elif cmdType in operations:
 
-			cmd2 = self.input.peek()
+			return self.compile_operation( cmdType )
 
-			if cmd2 and cmd2[0] == 'if-goto':
+		# elif cmdType in operations:
 
-				# compile_yyyyOp_ifgoto generates less code than seperate compile_operation' and 'compile_ifgoto'
+		# 	cmd2 = self.input.peek()
+
+		# 	if cmd2 and cmd2[0] == 'if-goto':
+
+		# 		# compile_yyyyOp_ifgoto generates less code than seperate compile_operation' and 'compile_ifgoto'
 				
-				self.skip = True
+		# 		self.skip = True
 
-				if cmdType in unaryOps:
+		# 		if cmdType in unaryOps:
 
-					return self.compile_unaryOp_ifgoto( cmdType, cmd2[1] )
+		# 			return self.compile_unaryOp_ifgoto( cmdType, cmd2[1] )
 
-				elif cmdType in binaryOps:
+		# 		elif cmdType in binaryOps:
 
-					return self.compile_binaryOp_ifgoto( cmdType, cmd2[1] )
+		# 			return self.compile_binaryOp_ifgoto( cmdType, cmd2[1] )
 
-				elif cmdType in comparisonOps:
+		# 		elif cmdType in comparisonOps:
 
-					return self.compile_comparisonOp_ifgoto( cmdType, cmd2[1] )
+		# 			return self.compile_comparisonOp_ifgoto( cmdType, cmd2[1] )
 
-			else:
+		# 	else:
 
-				return self.compile_operation( cmdType )
+		# 		return self.compile_operation( cmdType )
 
 		elif cmdType == 'label':
 
@@ -675,37 +597,6 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_push_pop( self, seg1, index1, seg2, index2 ):
-
-		s = []
-
-		# Get value from segment
-		s.append( self.compile_push_( seg1, index1 ) )
-
-		# Get target address
-		if seg2 == 'pointer':
-
-			if index2 == 0: s.append( '@THIS' )
-			else:           s.append( '@THAT' )
-
-		elif seg2 == 'static':
-
-			s.append( self.atStatic( index2 ) )
-
-		elif seg2 == 'temp':
-
-			s.append( self.atTemp( index2 ) )
-
-		else:
-
-			raise Exception( "Shouldn't reach here" )
-
-		# Pop value to target address
-		s.append( 'M = D' )
-
-		return self.a2s( s )
-
-
 	def compile_operation( self, op ):
 
 		'''
@@ -764,95 +655,6 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_push_binaryOp( self, seg, index, op ):
-
-		s = []
-
-		# Get value from segment
-		s.append( self.compile_push_( seg, index ) )
-
-		# Get prevprev value
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-		# Apply op
-		s.append( 'M = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
-
-		return self.a2s( s )
-
-
-	def compile_push_binaryOp_ifgoto( self, seg, index, op, loc ):
-
-		s = []
-
-		# Get value from segment
-		s.append( self.compile_push_( seg, index ) )
-
-		# Get prevprev value, and
-		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		s.append( '@SP' )
-
-		# s.append( 'AM = M - 1' )  # aReg = prevprev_addr
-		s.append( 'D = M - 1' )
-		s.append( 'M = D' )
-		s.append( 'A = D' )
-
-		# Apply op
-		s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
-
-		# Conditional jump
-		s.append( self.compile_ifgoto_( loc ) )
-
-		return self.a2s( s )
-
-
-	def compile_binaryOp_ifgoto( self, op, loc ):
-
-		# Only one line saved by doing this instead of using popStackToD in ifgoto
-
-		s = []
-
-		# Get prev value
-		s.append( self.popStackToD() )  # D = prev_val
-
-		# Get prevprev value 
-		s.append( 'A = A - 1' )  # aReg = prevprev_addr
-
-		# Apply op
-		s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op prev_val
-
-		# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		s.append( '@SP' )
-		s.append( 'M = M - 1' )
-
-		# Conditional jump
-		s.append( self.compile_ifgoto_( loc ) )
-
-		return self.a2s( s )
-
-
-	def compile_unaryOp_ifgoto( self, op, loc ):
-
-		# Three lines saved by doing this instead of using popStackToD in ifgoto
-
-		s = []
-
-		# Apply op, and
-		# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result) 
-		s.append( '@SP' )
-
-		# s.append( 'AM = M - 1' )
-		s.append( 'D = M - 1' )
-		s.append( 'M = D' )
-		s.append( 'A = D' )
-
-		s.append( 'D = {} M'.format( unaryOps[ op ] ) )
-
-		# Conditional jump
-		s.append( self.compile_ifgoto_( loc ) )
-
-		return self.a2s( s )		
-
 	def compile_comparisonOp_( self, op ):
 
 		s = []
@@ -892,13 +694,19 @@ class Compiler():
 		s.append( 'A = A - 1' )  # aReg = prevprev_addr
 
 		# Compare
-		if op == 'eq' or op == 'ne':
-			
-			s.append( self.compile_comparisonOp_( op ) )  # simple
+		if self.useGenerics:
+
+			if op == 'eq' or op == 'ne':
+				
+				s.append( self.compile_comparisonOp_( op ) )  # simple
+
+			else:
+
+				s.append( self.compile_comparisonOp2_( op ) )  # not so simple, but correct
 
 		else:
-
-			s.append( self.compile_comparisonOp2_( op ) )  # not so simple
+		
+			s.append( self.compile_comparisonOp_( op ) )  # simple
 
 		# Update stack
 		s.append( '@SP' )
@@ -986,7 +794,7 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_comparisonOp2_generic_( self ):
+	def compile_comparisonOp2_bootstrap( self ):
 
 		'''
 			Python equivalent of what subsequent assembly code aims to do
@@ -1046,35 +854,35 @@ class Compiler():
 
 		# Calc difference is zr
 		s.append( 'D = B - D' )
-		s.append( self.at( 'comparisonOp_generic_isZero' ) )
+		s.append( self.at( 'genericComparisonOp_isZero' ) )
 		s.append( 'D ; JEQ' )                                    # (a - b) eq zero
 
 		s.append( self.at( 'zr' ) )
 		s.append( 'M = 0' )                                      # false
-		s.append( self.at( 'comparisonOp_generic_cont0' ) )
+		s.append( self.at( 'genericComparisonOp_cont0' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_generic_isZero' ) )
+		s.append( self.label( 'genericComparisonOp_isZero' ) )
 		s.append( self.at( 'zr' ) )
 		s.append( 'M = 1' )                                      # true
 
-		s.append( self.label( 'comparisonOp_generic_cont0' ) )
+		s.append( self.label( 'genericComparisonOp_cont0' ) )
 
 
 		# Calc difference is ng
-		s.append( self.at( 'comparisonOp_generic_isNeg' ) )
+		s.append( self.at( 'genericComparisonOp_isNeg' ) )
 		s.append( 'D ; JLT ' )                                   # (a - b) lt zero
 
 		s.append( self.at( 'ng' ) )
 		s.append( 'M = 0' )                                      # false
-		s.append( self.at( 'comparisonOp_generic_cont1' ) )
+		s.append( self.at( 'genericComparisonOp_cont1' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_generic_isNeg' ) )
+		s.append( self.label( 'genericComparisonOp_isNeg' ) )
 		s.append( self.at( 'ng' ) )
 		s.append( 'M = 1' )                                      # true
 
-		s.append( self.label( 'comparisonOp_generic_cont1' ) )
+		s.append( self.label( 'genericComparisonOp_cont1' ) )
 
 
 		# Calc aIsNeg
@@ -1082,19 +890,19 @@ class Compiler():
 		s.append( 'D = ! A' )                                    # 32768
 		s.append( self.atTemp( 1 ) )
 		s.append( 'D = M & D' )                                  # a & 32768
-		s.append( self.at( 'comparisonOp_generic_aIsPos' ) )
+		s.append( self.at( 'genericComparisonOp_aIsPos' ) )
 		s.append( 'D ; JEQ' )                                    # msb = 0
 
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'M = 1' )
-		s.append( self.at( 'comparisonOp_generic_cont2' ) )
+		s.append( self.at( 'genericComparisonOp_cont2' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_generic_aIsPos' ) )
+		s.append( self.label( 'genericComparisonOp_aIsPos' ) )
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'M = 0' )
 
-		s.append( self.label( 'comparisonOp_generic_cont2' ) )
+		s.append( self.label( 'genericComparisonOp_cont2' ) )
 
 
 		# Calc bIsNeg
@@ -1102,17 +910,17 @@ class Compiler():
 		s.append( 'D = ! A' )                                    # 32768
 		s.append( self.atTemp( 2 ) )
 		s.append( 'D = M & D' )                                  # b & 32768
-		s.append( self.at( 'comparisonOp_generic_aIsPos' ) )
+		s.append( self.at( 'genericComparisonOp_aIsPos' ) )
 		s.append( 'D ; JEQ' )                                    # msb = 0
 
 		s.append( 'D = 1' )
-		s.append( self.at( 'comparisonOp_generic_cont2' ) )
+		s.append( self.at( 'genericComparisonOp_cont2' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_generic_aIsPos' ) )
+		s.append( self.label( 'genericComparisonOp_aIsPos' ) )
 		s.append( 'D = 0' )
 
-		s.append( self.label( 'comparisonOp_generic_cont2' ) )
+		s.append( self.label( 'genericComparisonOp_cont2' ) )
 
 
 		# Calc opposite signs
@@ -1126,187 +934,115 @@ class Compiler():
 
 		s.append( self.at( 'compType' ) )
 		s.append( 'D = M' )
-		s.append( self.at( 'comparisonOp_generic_gt' ) )
+		s.append( self.at( 'genericComparisonOp_gt' ) )
 		s.append( 'D ; JEQ' )
-		s.append( self.at( 'comparisonOp_generic_gte' ) )
+		s.append( self.at( 'genericComparisonOp_gte' ) )
 		s.append( 'D - 1; JEQ' )
 		s.append( self.at( 2 ) )
 		s.append( 'B = D - A' )
-		s.append( self.at( 'comparisonOp_generic_lt' ) )
+		s.append( self.at( 'genericComparisonOp_lt' ) )
 		s.append( 'B ; JEQ' )
 		s.append( self.at( 3 ) )
 		s.append( 'B = D - A' )
-		s.append( self.at( 'comparisonOp_generic_lte' ) )
+		s.append( self.at( 'genericComparisonOp_lte' ) )
 		s.append( 'B ; JEQ' )
 
 
 		# ___ Comparison logic _________________________________________________
 
 		# gt
-		s.append( self.label( 'comparisonOp_generic_gt' ) )
+		s.append( self.label( 'genericComparisonOp_gt' ) )
 
 		s.append( self.at( 'oppSigns' ) )
 		s.append( 'D = M' )
-		s.append( self.at( 'comparisonOp_gt_sameSigns' ) )
+		s.append( self.at( 'genericComparisonOp_gt_sameSigns' ) )
 
 		s.append( 'D ; JEQ' )
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'D = ! M' )                                    # ! aIsNeg
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_gt_sameSigns' ) )
+		s.append( self.label( 'genericComparisonOp_gt_sameSigns' ) )
 		s.append( self.at( 'zr' ) )
 		s.append( 'D = M' )
 		s.append( self.at( 'ng' ) )
 		s.append( 'D = M | D' )
 		s.append( 'D = ! D' )                                    # ! ( zr | ng )
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
 
 		# gte
-		s.append( self.label( 'comparisonOp_generic_gte' ) )
+		s.append( self.label( 'genericComparisonOp_gte' ) )
 
 		s.append( self.at( 'oppSigns' ) )
 		s.append( 'D = M' )
-		s.append( self.at( 'comparisonOp_gte_sameSigns' ) )
+		s.append( self.at( 'genericComparisonOp_gte_sameSigns' ) )
 
 		s.append( 'D ; JEQ' )
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'D = ! M' )                                    # ! aIsNeg
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_gte_sameSigns' ) )
+		s.append( self.label( 'genericComparisonOp_gte_sameSigns' ) )
 		s.append( self.at( 'ng' ) )
 		s.append( 'D = ! M' )                                    # ! ng
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
 
 		# lt
-		s.append( self.label( 'comparisonOp_generic_lt' ) )
+		s.append( self.label( 'genericComparisonOp_lt' ) )
 
 		s.append( self.at( 'oppSigns' ) )
 		s.append( 'D = M' )
-		s.append( self.at( 'comparisonOp_lt_sameSigns' ) )
+		s.append( self.at( 'genericComparisonOp_lt_sameSigns' ) )
 
 		s.append( 'D ; JEQ' )
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'D = M' )                                      # aIsNeg
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_lt_sameSigns' ) )
+		s.append( self.label( 'genericComparisonOp_lt_sameSigns' ) )
 		s.append( self.at( 'ng' ) )
 		s.append( 'D = M' )                                      # ng
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
 
 		# lte
-		s.append( self.label( 'comparisonOp_generic_lte' ) )
+		s.append( self.label( 'genericComparisonOp_lte' ) )
 
 		s.append( self.at( 'oppSigns' ) )
 		s.append( 'D = M' )
-		s.append( self.at( 'comparisonOp_lte_sameSigns' ) )
+		s.append( self.at( 'genericComparisonOp_lte_sameSigns' ) )
 
 		s.append( 'D ; JEQ' )
 		s.append( self.at( 'aIsNeg' ) )
 		s.append( 'D = M' )                                      # aIsNeg
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
-		s.append( self.label( 'comparisonOp_lte_sameSigns' ) )
+		s.append( self.label( 'genericComparisonOp_lte_sameSigns' ) )
 		s.append( self.at( 'zr' ) )
 		s.append( 'D = M' )
 		s.append( self.at( 'ng' ) )
 		s.append( 'D = M | D' )                                  # zr | ng
-		s.append( self.at( 'comparisonOp_generic_return' ) )
+		s.append( self.at( 'genericComparisonOp_return' ) )
 		s.append( '0 ; JMP' )
 
 
 		# ___ Return ___________________________________________________________
 
 		# Jump to saved return position
-		s.append( self.label( 'comparisonOp_generic_return' ) )
+		s.append( self.label( 'genericComparisonOp_return' ) )
 		s.append( self.atTemp( 0 ) )
 		s.append( 'A = M' )
 		s.append( '0 ; JMP' )
 
-
-		return self.a2s( s )
-
-
-	def compile_push_comparisonOp( self, seg, index, op ):
-
-		s = []
-
-		# Get value from segment
-		s.append( self.compile_push_( seg, index ) )
-
-		# Get prevprev value
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-		# Compare
-		s.append( self.compile_comparisonOp_( op ) )
-
-		# Update stack
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )
-		s.append( 'M = D' )
-
-		return self.a2s( s )
-
-
-	def compile_push_comparisonOp_ifgoto( self, seg, index, op, loc ):
-
-		s = []
-
-		# Get value from segment
-		s.append( self.compile_push_( seg, index ) )
-
-		# Get prevprev value
-		s.append( '@SP' )
-		s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-		# Compare
-		s.append( self.compile_comparisonOp_( op ) )
-
-		# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		s.append( '@SP' )
-		s.append( 'M = M - 1' )
-
-		# Conditional jump
-		s.append( self.compile_ifgoto_( loc ) )
-
-		return self.a2s( s )
-
-
-	def compile_comparisonOp_ifgoto( self, op, loc ):
-
-		# Only one line saved by doing this instead of using popStackToD in ifgoto.
-		# However, also save 3 lines by not pushing comparison result onto stack
-
-		s = []
-
-		# Get prev value
-		s.append( self.popStackToD() )  # D = prev_val
-
-		# Get prevprev value 
-		s.append( 'A = A - 1' )  # aReg = prevprev_addr
-
-		# Compare
-		s.append( self.compile_comparisonOp_( op ) )
-
-		# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-		s.append( '@SP' )
-		s.append( 'M = M - 1' )
-
-		# Conditional jump
-		s.append( self.compile_ifgoto_( loc ) )
 
 		return self.a2s( s )
 
@@ -1668,7 +1404,7 @@ class Compiler():
 
 
 
-	# --------------------------------------
+	# Bootstrap ---------------------------------------
 
 	def compile_bootstrap( self ):
 
@@ -1753,7 +1489,13 @@ class Compiler():
 				s.append( '\n// genericCall' )
 
 			s.append( self.compile_call_bootstrap() )
-						
+
+			if self.debug:
+
+				s.append( '\n// genericComparisonOp' )
+
+			s.append( self.compile_comparisonOp2_bootstrap() )
+
 			if self.debug: 
 
 				s.append( '\n// --- end generic functions\n' )
@@ -1763,15 +1505,211 @@ class Compiler():
 
 
 
+	# Optimizations -----------------------------------
+
+	# def compile_push_pop( self, seg1, index1, seg2, index2 ):
+
+	# 	s = []
+
+	# 	# Get value from segment
+	# 	s.append( self.compile_push_( seg1, index1 ) )
+
+	# 	# Get target address
+	# 	if seg2 == 'pointer':
+
+	# 		if index2 == 0: s.append( '@THIS' )
+	# 		else:           s.append( '@THAT' )
+
+	# 	elif seg2 == 'static':
+
+	# 		s.append( self.atStatic( index2 ) )
+
+	# 	elif seg2 == 'temp':
+
+	# 		s.append( self.atTemp( index2 ) )
+
+	# 	else:
+
+	# 		raise Exception( "Shouldn't reach here" )
+
+	# 	# Pop value to target address
+	# 	s.append( 'M = D' )
+
+	# 	return self.a2s( s )
+
+
+	# def compile_push_binaryOp( self, seg, index, op ):
+
+	# 	s = []
+
+	# 	# Get value from segment
+	# 	s.append( self.compile_push_( seg, index ) )
+
+	# 	# Get prevprev value
+	# 	s.append( '@SP' )
+	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
+
+	# 	# Apply op
+	# 	s.append( 'M = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
+
+	# 	return self.a2s( s )
+
+
+	# def compile_push_binaryOp_ifgoto( self, seg, index, op, loc ):
+
+	# 	s = []
+
+	# 	# Get value from segment
+	# 	s.append( self.compile_push_( seg, index ) )
+
+	# 	# Get prevprev value, and
+	# 	# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
+	# 	s.append( '@SP' )
+
+	# 	# s.append( 'AM = M - 1' )  # aReg = prevprev_addr
+	# 	s.append( 'D = M - 1' )
+	# 	s.append( 'M = D' )
+	# 	s.append( 'A = D' )
+
+	# 	# Apply op
+	# 	s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
+
+	# 	# Conditional jump
+	# 	s.append( self.compile_ifgoto_( loc ) )
+
+	# 	return self.a2s( s )
+
+
+	# def compile_binaryOp_ifgoto( self, op, loc ):
+
+	# 	# Only one line saved by doing this instead of using popStackToD in ifgoto
+
+	# 	s = []
+
+	# 	# Get prev value
+	# 	s.append( self.popStackToD() )  # D = prev_val
+
+	# 	# Get prevprev value 
+	# 	s.append( 'A = A - 1' )  # aReg = prevprev_addr
+
+	# 	# Apply op
+	# 	s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op prev_val
+
+	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
+	# 	s.append( '@SP' )
+	# 	s.append( 'M = M - 1' )
+
+	# 	# Conditional jump
+	# 	s.append( self.compile_ifgoto_( loc ) )
+
+	# 	return self.a2s( s )
+
+
+	# def compile_unaryOp_ifgoto( self, op, loc ):
+
+	# 	# Three lines saved by doing this instead of using popStackToD in ifgoto
+
+	# 	s = []
+
+	# 	# Apply op, and
+	# 	# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result) 
+	# 	s.append( '@SP' )
+
+	# 	# s.append( 'AM = M - 1' )
+	# 	s.append( 'D = M - 1' )
+	# 	s.append( 'M = D' )
+	# 	s.append( 'A = D' )
+
+	# 	s.append( 'D = {} M'.format( unaryOps[ op ] ) )
+
+	# 	# Conditional jump
+	# 	s.append( self.compile_ifgoto_( loc ) )
+
+	# 	return self.a2s( s )		
+
+
+	# def compile_push_comparisonOp( self, seg, index, op ):
+
+	# 	s = []
+
+	# 	# Get value from segment
+	# 	s.append( self.compile_push_( seg, index ) )
+
+	# 	# Get prevprev value
+	# 	s.append( '@SP' )
+	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
+
+	# 	# Compare
+	# 	s.append( self.compile_comparisonOp_( op ) )
+
+	# 	# Update stack
+	# 	s.append( '@SP' )
+	# 	s.append( 'A = M - 1' )
+	# 	s.append( 'M = D' )
+
+	# 	return self.a2s( s )
+
+
+	# def compile_push_comparisonOp_ifgoto( self, seg, index, op, loc ):
+
+	# 	s = []
+
+	# 	# Get value from segment
+	# 	s.append( self.compile_push_( seg, index ) )
+
+	# 	# Get prevprev value
+	# 	s.append( '@SP' )
+	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
+
+	# 	# Compare
+	# 	s.append( self.compile_comparisonOp_( op ) )
+
+	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
+	# 	s.append( '@SP' )
+	# 	s.append( 'M = M - 1' )
+
+	# 	# Conditional jump
+	# 	s.append( self.compile_ifgoto_( loc ) )
+
+	# 	return self.a2s( s )
+
+
+	# def compile_comparisonOp_ifgoto( self, op, loc ):
+
+	# 	# Only one line saved by doing this instead of using popStackToD in ifgoto.
+	# 	# However, also save 3 lines by not pushing comparison result onto stack
+
+	# 	s = []
+
+	# 	# Get prev value
+	# 	s.append( self.popStackToD() )  # D = prev_val
+
+	# 	# Get prevprev value 
+	# 	s.append( 'A = A - 1' )  # aReg = prevprev_addr
+
+	# 	# Compare
+	# 	s.append( self.compile_comparisonOp_( op ) )
+
+	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
+	# 	s.append( '@SP' )
+	# 	s.append( 'M = M - 1' )
+
+	# 	# Conditional jump
+	# 	s.append( self.compile_ifgoto_( loc ) )
+
+	# 	return self.a2s( s )
+
+
+
 # -- Run ------------------------------------------
 
 def genASMFile_single( inputFilePath, outputFilePath, debug = False ):
 
 	compiler = Compiler()  # init compiler
 
-	fileName = inputFilePath.split( '/' )[ -1 ]
+	fileName = inputFilePath.split( '/' )[ - 1 ]
 
-	className = fileName[ : -3 ]
+	className = fileName[ : - 3 ]
 
 	vmCode = { className : [] }
 
@@ -1796,7 +1734,6 @@ def genASMFile_single( inputFilePath, outputFilePath, debug = False ):
 		file.write( '\n' )
 
 	print( 'Done' )
-
 
 
 def getVMFilesFromDir( dirPath ):
