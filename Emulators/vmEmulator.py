@@ -36,13 +36,11 @@
 import re
 import time
 import os
-import sys
 from multiprocessing import Array, Process
 import threading
 import yappi
 
 # Hack computer
-sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
 import Components
 from commonHelpers import *
 from .pythonNBitArithmetic import *
@@ -654,7 +652,7 @@ def GFX_getPixel():
 	ret()
 
 
-def GFX_replaceDisplayWithMainMemory():
+def GFX_drawBuffer():
 
 	# Retrieve args ---
 	argBase = RAM[ ARG ]
@@ -664,7 +662,24 @@ def GFX_replaceDisplayWithMainMemory():
 	h = RAM[ argBase + 3 ]
 
 	# Execute ---
-	io.replaceDisplayWithMainMemory( x, y, w, h )
+	io.??( x, y, w, h )
+
+	# Return ---
+	push( 'constant', 0, None )
+	ret()
+
+
+def GFX_fillRect():
+
+	# Retrieve args ---
+	argBase = RAM[ ARG ]
+	x = RAM[ argBase ]
+	y = RAM[ argBase + 1 ]
+	w = RAM[ argBase + 2 ]
+	h = RAM[ argBase + 3 ]
+
+	# Execute ---
+	io.??( x, y, w, h )
 
 	# Return ---
 	push( 'constant', 0, None )
@@ -913,6 +928,11 @@ def setup():
 	global io
 	global startTime
 	global sysHalt
+
+	#
+	if not Components.PERFORMANCE_MODE:
+
+		raise Exception( 'The VM Emulator only works when GC.PERFORMANCE_MODE is True' )
 
 	# Setup RAM
 	RAM[ SP   ] = 256

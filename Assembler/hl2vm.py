@@ -41,8 +41,9 @@ import Components._0__globalConstants as GC
 
 # === Settings ==================================================
 
-USE_COMPATIBLE = None  # Use VM instructions that are compatible with the official TECS VMEmulator
-                       # Value is set by caller of 'genVMFiles'
+# Value is set by caller of 'genVMFiles'
+USE_TECS_COMPATIBLE    = None  # Use VM instructions that are compatible with the official TECS specifications
+USE_BESPOKE_COMPATIBLE = None  # Use VM instructions that are compatible with our bespoke CPU
 
 
 # === Helpers ===================================================
@@ -89,8 +90,6 @@ Hack_lexicon = {
 	
 	'keywordConstants' : [ 'true', 'false', 'null', 'this' ],
 
-	# 'memoryPointers' : [ '_SCREEN','_KEYBOARD', '_MOUSEX', '_MOUSEY', '_IOBANK1', '_IOBANK2' ],
-
 	'punctuation' : '.,;(){}[]',
 }
 
@@ -101,7 +100,6 @@ Hack_lexicon[ 'keywords' ] = set (
 	Hack_lexicon[ 'variableTypes'    ] + 
 	Hack_lexicon[ 'other'            ] + 
 	Hack_lexicon[ 'keywordConstants' ]
-	# Hack_lexicon[ 'memoryPointers'   ]
 )
 
 Hack_lexicon[ 'ops' ] = set (
@@ -312,7 +310,7 @@ class TokenStream():
 
 		def is_valid_number( ch ):
 
-			# No support for decimals...
+			# No support for decimal points...
 
 			return self.is_digit( ch )
 
@@ -925,11 +923,6 @@ def testTokenizer():
 		}
 			|
 		{
-			type  : 'memoryPointer'
-			value : STRING
-		}
-			|
-		{
 			type   : 'identifier'
 			name   : STRING
 			arrIdx : exp
@@ -1045,8 +1038,6 @@ class Parser():
 		self.input = input_
 
 		self.keywordConstants = Hack_lexicon[ 'keywordConstants' ]
-
-		# self.memoryPointers = Hack_lexicon[ 'memoryPointers' ]
 
 		self.unaryOps = Hack_lexicon[ 'unaryOps' ]
 
@@ -1800,16 +1791,6 @@ class Parser():
 				'value' : tok[ 'value' ]
 			}
 
-		# elif tok[ 'type' ] == 'kw' and tok[ 'value' ] in self.memoryPointers:
-
-		# 	self.input.next()
-
-		# 	return {
-
-		# 		'type'  : 'memoryPointer',
-		# 		'value' : tok[ 'value' ]
-		# 	}
-
 		elif tok[ 'type' ] == 'id':
 
 			tok2 = self.input.peekpeek()[ 'value' ]
@@ -2137,7 +2118,7 @@ class VariableTable():
 
 	def clear( self ):
 
-		# self.segmenst = {}  # clear
+		# self.segments = {}  # clear
 
 		self.setup()
 
@@ -2168,9 +2149,11 @@ class CompileTo_HackVM():
 		self.forStmtCountStack = []
 		self.currentContext = []		
 
+
 	def compile( self, tree ):
 
 		return self.compile_toplevel( tree )
+
 
 	def croak( self, msg ):
 
@@ -2291,6 +2274,7 @@ class CompileTo_HackVM():
 					# Assume argument
 					table.add( 'argument', vDec[ 'name' ], dataType )
 
+
 	def lookupVar( self, varName, checkConstants = False ):
 
 		# Check subroutine table
@@ -2310,6 +2294,7 @@ class CompileTo_HackVM():
 		
 		self.classVarTable.clear()
 
+
 	def compile_classDeclaration( self, exp ):
 
 		self.setupForClassDeclaration()
@@ -2328,6 +2313,7 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def setupForSubroutineDeclaration( self ):
 
 		self.subroutineVarTable.clear()
@@ -2339,6 +2325,7 @@ class CompileTo_HackVM():
 		self.ifStmtCountStack = []
 		self.forStmtCountStack = []
 		self.currentContext = []
+
 
 	def compile_subroutineDeclaration( self, exp ):
 
@@ -2417,6 +2404,7 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_statements( self, statements ):
 
 		s = ''
@@ -2428,6 +2416,7 @@ class CompileTo_HackVM():
 				s += self.compile_statement( statement )
 
 		return s
+
 
 	def compile_statement( self, exp ):
 
@@ -2443,12 +2432,14 @@ class CompileTo_HackVM():
 		else:
 			self.croak( "Error: Don't know how to compile the statement " + exp[ 'type' ] )
 
+
 	def compile_doStatement( self, exp ):
 
 		s = self.compile_subroutineCall( exp )
 		s += self.pop_( 'temp', 0 )
 
 		return s
+
 
 	def compile_subroutineCall( self, exp ):
 
@@ -2504,6 +2495,7 @@ class CompileTo_HackVM():
 		s += self.call_( name, nArgs )
 
 		return s
+
 
 	def compile_letStatement( self, exp ):
 
@@ -2570,6 +2562,7 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_statementBlock( self, exp ):
 
 		if isinstance( exp, list ):
@@ -2579,6 +2572,7 @@ class CompileTo_HackVM():
 		else:
 
 			return self.compile_statement( exp )
+
 
 	def compile_whileStatement( self, exp ):
 
@@ -2628,6 +2622,7 @@ class CompileTo_HackVM():
 		self.currentContext.pop()
 		
 		return s
+
 
 	def compile_ifStatement( self, exp ):
 
@@ -2705,6 +2700,7 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_forStatement( self, exp ):
 
 		'''
@@ -2762,11 +2758,12 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_returnStatement( self, exp ):
 
 		s = ''
 
-		value = expValue
+		value = exp[ 'value' ]
 
 		if value == 0:
 
@@ -2780,11 +2777,13 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_breakStatement( self, exp ):
 
 		s = 'goto {}_END{}\n'.format( *self.currentContext[ - 1 ] )
 
 		return s
+
 
 	def compile_continueStatement( self, exp ):
 
@@ -2802,6 +2801,7 @@ class CompileTo_HackVM():
 
 		return s
 
+
 	def compile_binaryOp( self, op ):
 
 		# Logic ---
@@ -2809,8 +2809,14 @@ class CompileTo_HackVM():
 		elif op == '|': return self.or_()
 
 		elif op == '^':
-			if USE_COMPATIBLE: return self.call_( 'Math.xor', 2 )
-			else:              return self.xor_()
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.xor', 2 )
+
+			else:
+
+				return self.xor_()
 
 
 		# Arithmetic ---
@@ -2820,20 +2826,44 @@ class CompileTo_HackVM():
 		elif op == '%': return self.call_( 'Math.mod', 2 )
 
 		elif op == '*':
-			if USE_COMPATIBLE: return self.call_( 'Math.multiply', 2 )
-			else:              return self.mult_()
+
+			if USE_TECS_COMPATIBLE or USE_BESPOKE_COMPATIBLE:
+
+				return self.call_( 'Math.multiply', 2 )
+
+			else:
+
+				return self.mult_()
 
 		elif op == '/':
-			if USE_COMPATIBLE: return self.call_( 'Math.divide', 2 )
-			else:              return self.div_()
 
-		elif op == '>>': 
-			if USE_COMPATIBLE: return self.call_( 'Math.lsr', 2 )
-			else:              return self.shiftR_()
+			if USE_TECS_COMPATIBLE or USE_BESPOKE_COMPATIBLE:
 
-		elif op == '<<': 
-			if USE_COMPATIBLE: return self.call_( 'Math.lsl', 2 )
-			else:              return self.shiftL_()
+				return self.call_( 'Math.divide', 2 )
+
+			else:
+
+				return self.div_()
+
+		elif op == '>>':
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.lsr', 2 )
+
+			else:
+
+				return self.shiftR_()
+
+		elif op == '<<':
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.lsl', 2 )
+
+			else:
+
+				return self.shiftL_()
 
 
 		# Comparison ---
@@ -2842,21 +2872,41 @@ class CompileTo_HackVM():
 		elif op == '<': return self.lt_()
 
 		elif op == '>=':
-			if USE_COMPATIBLE: return self.call_( 'Math.gte', 2 )
-			else:              return self.gte_()
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.gte', 2 )
+
+			else:
+
+				return self.gte_()
 
 		elif op == '<=':
-			if USE_COMPATIBLE: return self.call_( 'Math.lte', 2 )
-			else:              return self.lte_()
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.lte', 2 )
+
+			else:
+
+				return self.lte_()
 
 		elif op == '!=':
-			if USE_COMPATIBLE: return self.call_( 'Math.ne', 2 )
-			else:              return self.ne_()
+
+			if USE_TECS_COMPATIBLE:
+
+				return self.call_( 'Math.ne', 2 )
+
+			else:
+
+				return self.ne_()
 
 
 		# ---
 		else:
+
 			self.croak( "Error: Don't know how to compile the binaryOp " + op )
+
 
 	def compile_expression( self, exp ):
 
@@ -2881,10 +2931,16 @@ class CompileTo_HackVM():
 
 			return s
 
+
 	def compile_expressionTerm( self, exp ):
 
+		# prettyPrint( exp )
+
 		expType  = exp[ 'type' ]
-		expValue = exp[ 'value' ]
+
+		if 'value' in exp:
+			
+			expValue = exp[ 'value' ]
 
 		if expType == 'integerConstant':
 
@@ -2963,11 +3019,7 @@ class CompileTo_HackVM():
 			elif kw == 'this':
 
 				return self.push_( 'pointer', 0 )
-
-		# elif expType == 'memoryPointer':
-
-		# 	return self.pushConstant_( Hack_pointerMap[ expValue ] )
-		
+	
 		elif expType == 'identifier':
 
 			name = exp[ 'name' ]
@@ -2978,13 +3030,11 @@ class CompileTo_HackVM():
 
 				raise Exception( 'Error: Undefined variable - ' + name )
 
-			arrIdx = exp[ 'arrIdx' ]
-
-			if arrIdx:
+			if 'arrIdx' in exp:
 
 				# Retrieve value and push to stack
 				s  = self.push_( loc[ 'segName' ], loc[ 'segIdx' ] )
-				s += self.compile_expression( arrIdx )
+				s += self.compile_expression( exp[ 'arrIdx' ] )
 				s += self.add_()
 				s += self.pop_( 'pointer', 1 )
 				s += self.push_( 'that', 0 )
@@ -3036,12 +3086,14 @@ class CompileTo_HackVM():
 
 # -- Run -----------------------------------------
 
-def genVMFile( inputFilePath, outputFilePath, useCompatibleVM = False ):
+def genVMFile( inputFilePath, outputFilePath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
 
-	global USE_COMPATIBLE
+	global USE_TECS_COMPATIBLE
+	global USE_BESPOKE_COMPATIBLE
 
 	# Setup compatibility
-	USE_COMPATIBLE = useCompatibleVM
+	USE_TECS_COMPATIBLE    = useTECSCompatibleVM
+	USE_BESPOKE_COMPATIBLE = useBespokeCompatibleVM
 
 	# Init compiler
 	compiler = Compiler()
@@ -3149,12 +3201,14 @@ def translateFile( compiler, className, inputFilePath, outputDirPath, includes )
 	includes.extend( includes_ )
 
 
-def genVMFiles( inputDirPath, useCompatibleVM = False ):
+def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
 
-	global USE_COMPATIBLE
+	global USE_TECS_COMPATIBLE
+	global USE_BESPOKE_COMPATIBLE
 
 	# Setup compatibility
-	USE_COMPATIBLE = useCompatibleVM
+	USE_TECS_COMPATIBLE    = useTECSCompatibleVM
+	USE_BESPOKE_COMPATIBLE = useBespokeCompatibleVM
 
 	# Init compiler
 	compiler = Compiler()

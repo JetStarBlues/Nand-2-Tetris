@@ -71,7 +71,6 @@ import os
 import sys
 
 # Hack computer
-sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
 import Components._0__globalConstants as GC
 import Assembler.lookupTables as LT
 from commonHelpers import *

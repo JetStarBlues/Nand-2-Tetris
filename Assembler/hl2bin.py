@@ -22,20 +22,25 @@ import Assembler.asm2bin as asm2bin
 
 # == Main ==========================================================
 
-useCompatibleVM = True  # Use VM instructions that are compatible with the official TECS VMEmulator
-# useCompatibleVM = False
+# Use VM instructions that are compatible with the official TECS specifications
+# useTECSCompatibleVM = True
+useTECSCompatibleVM = False
+
+# Use VM instructions that are compatible with our bespoke CPU
+useBespokeCompatibleVM = True
+# useBespokeCompatibleVM = False
 
 compileBinaries = True  # Generate assembly and binary files
 # compileBinaries = False
 
+OSPath = '../N2T_Code/Programs/precompiledOS'
+
 
 def compileOS():
 
-	OSPath = '../N2T_Code/Programs/precompiledOS'
-
 	# Generate VM files
 	print( 'Generating OS VM files...' )
-	hl2vm.genVMFiles( OSPath, useCompatibleVM )
+	hl2vm.genVMFiles( OSPath, useTECSCompatibleVM, useBespokeCompatibleVM )
 
 
 def hl_to_bin( inputDirPath ):
@@ -45,31 +50,20 @@ def hl_to_bin( inputDirPath ):
 
 	VM_includes = [
 
-		# OS files
-		# 'Programs/Libraries/OS/Array.vm',
-		# 'Programs/Libraries/OS/DataMemory.vm',
-		# 'Programs/Libraries/OS/Font.vm',
-		# 'Programs/Libraries/OS/GFX.vm',
-		# 'Programs/Libraries/OS/GlobalConstants.vm',
-		# 'Programs/Libraries/OS/Keyboard.vm',
-		# 'Programs/Libraries/OS/Math.vm',
-		# 'Programs/Libraries/OS/String.vm',
-		# 'Programs/Libraries/OS/Sys.vm'
-
-		'../N2T_Code/Programs/precompiledOS/Array.vm',
-		'../N2T_Code/Programs/precompiledOS/DataMemory.vm',
-		'../N2T_Code/Programs/precompiledOS/Font.vm',
-		'../N2T_Code/Programs/precompiledOS/GFX.vm',
-		'../N2T_Code/Programs/precompiledOS/GlobalConstants.vm',
-		'../N2T_Code/Programs/precompiledOS/Keyboard.vm',
-		'../N2T_Code/Programs/precompiledOS/Math.vm',
-		'../N2T_Code/Programs/precompiledOS/String.vm',
-		'../N2T_Code/Programs/precompiledOS/Sys.vm'
+		OSPath + '/Array.vm',
+		OSPath + '/DataMemory.vm',
+		OSPath + '/Font.vm',
+		OSPath + '/GFX.vm',
+		OSPath + '/GlobalConstants.vm',
+		OSPath + '/Keyboard.vm',
+		OSPath + '/Math.vm',
+		OSPath + '/String.vm',
+		OSPath + '/Sys.vm',
 	]
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
-	VM_includes.extend( hl2vm.genVMFiles( inputDirPath, useCompatibleVM ) )
+	VM_includes.extend( hl2vm.genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM ) )
 
 	# Generate VMX file
 	print( 'Generating VMX file...' )

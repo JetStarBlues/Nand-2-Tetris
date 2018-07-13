@@ -1,6 +1,10 @@
 '''------------------------------ Imports ------------------------------'''
 
-from Assembler.hl2bin import *
+# import Assembler.hl2vm
+# import Assembler.vm2asm
+# import Assembler.asm2bin
+
+import Assembler.hl2bin
 
 
 '''------------------------------- Main -------------------------------'''
@@ -35,4 +39,7 @@ inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode
 # inputDirPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode'
 # inputDirPath = 'Programs/ByOthers/GavinStewart/Games&Demos/GASscroller/modifiedCode'
 
-hl_to_bin( inputDirPath )
+Assembler.hl2bin.hl_to_bin( inputDirPath )
+
+# TODO: Compile diagram assembly
+# Assembler.asm2bin.genBINFile( '../../t' )

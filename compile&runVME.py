@@ -39,7 +39,7 @@ inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode
 
 
 # Compile
-# Assembler.hl2bin.hl_to_bin( inputDirPath )
+Assembler.hl2bin.hl_to_bin( inputDirPath )
 print()
 
 # Run

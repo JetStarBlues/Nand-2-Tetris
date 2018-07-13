@@ -1,3 +1,5 @@
+# TODO: Update for new ISA
+
 # == Imports =================================================
 
 import Assembler.lookupTables as LT

@@ -60,11 +60,9 @@
 # Built ins
 import re
 import os
-import sys
 
 # Hack computer
-sys.path.insert( 0, os.path.abspath( '..' ) )  # https://stackoverflow.com/a/9446075
-import Components
+import Components._0__globalConstants as GC
 
 
 
@@ -190,7 +188,7 @@ class Compiler():
 	def __init__( self ):
 
 		# Set SP
-		self.SP = Components.STACK_START
+		self.SP = GC.STACK_START
 
 		# Track scope
 		self.curClassName = None
@@ -734,11 +732,11 @@ class Compiler():
 		self.compCount += 1
 
 		# Save a and b values
-		s.apppend( 'B = M' )
+		s.append( 'B = M' )
 		s.append( self.atTemp( 1 ) )
-		s.apppend( 'M = B' )          # a
+		s.append( 'M = B' )          # a
 		s.append( self.atTemp( 2 ) )
-		s.apppend( 'M = D' )          # b
+		s.append( 'M = D' )          # b
 
 		# Save return position
 		s.append( self.at( returnPos ) )
