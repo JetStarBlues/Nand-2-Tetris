@@ -55,11 +55,11 @@ def hl_to_bin( inputDirPath ):
 		OSPath + '/GlobalConstants.vm',
 		OSPath + '/Array.vm',
 		OSPath + '/DataMemory.vm',
+		OSPath + '/Math.vm',
 		OSPath + '/Font.vm',
 		OSPath + '/Colors.vm',
 		OSPath + '/GFX.vm',
 		OSPath + '/Keyboard.vm',
-		OSPath + '/Math.vm',
 		OSPath + '/String.vm',
 		OSPath + '/Sys.vm',
 	]

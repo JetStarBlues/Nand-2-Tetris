@@ -369,7 +369,7 @@ def handleVariables( cmdList ):
 
 				freeAddress += 1 	# register is no longer unallocated
 
-	print( 'Assembled program has {} global variables. Maximum is {}.'.format(
+	print( 'Assembled program has {} global static variables. Maximum is {}.'.format(
 
 		freeAddress - static_segment_start,
 		static_segment_size
