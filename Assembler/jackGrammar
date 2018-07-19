@@ -14,9 +14,9 @@ subroutineBody  -> '{' constDec* varDec* statements '}'
 
 varDec          -> 'var' type varName ( ',' varName )* ';'
 
-className       -> identifier
-subroutineName  -> identifier
-varName         -> identifier
+className       -> label
+subroutineName  -> label
+varName         -> label
 
 statements      -> statement*
 
@@ -34,9 +34,11 @@ returnStatement -> 'return' expression? ';'
 
 expression      -> expressionTerm ( binaryOp expressionTerm )*
 
-expressionTerm  -> integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOp expressionTerm
+expressionTerm  -> integerConstant | stringConstant | keywordConstant | cVarName | cVarName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOp expressionTerm
 
-subroutineCall  -> ( ( className | varName ) '.' )? subroutineName '(' expressionList ')'
+cSubroutineName -> ( ( className | varName ) '.' )? subroutineName
+
+subroutineCall  -> cSubroutineName subroutineName '(' expressionList ')'
 
 expressionList  -> ( expression ( ',' expression )* )?
 
@@ -49,12 +51,16 @@ integerConstant -> number in range 0..32767 | hexConstant | binConstant | charCo
 
 stringConstant  -> sequence wrapped in double quotes
 
-identifier      -> sequence of letters, digits, and underscore not starting with a digit
+label           -> sequence of letters, digits, and underscore not starting with a digit
 
 
 -- Stuff I added -------------------------------------------------------------------------
 
-assignment        -> varName ( '[' expression ']' )? assignmentOp expression
+cVarName          -> ( className '.' )? varName
+
+assignment        -> cVarName ( '[' expression ']' )? assignmentOp expression
+
+identifier        -> cVarName | cSubroutineName
 
 assignmentOp      -> '=' | +=' | '-=' | '/=' | ...
 

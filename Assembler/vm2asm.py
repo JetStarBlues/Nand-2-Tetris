@@ -1,21 +1,21 @@
 # ========================================================================================
-# 
+#
 #  Description:
 #
 #     Compiles Hack VM (virtual machine) code to Hack ASM (assembly) code
-# 
+#
 #  Attribution:
 #
 #     Code by www.jk-quantized.com
-# 
+#
 #     Design is based on:
-# 
+#
 #        Lecture notes from the Nand To Tetris course
 #         www.nand2tetris.org
-# 
+#
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-# 
+#
 # ========================================================================================
 
 '''
@@ -267,10 +267,9 @@ class Compiler():
 
 	def atStatic( self, index, className = None ):
 
-		return '@{}.{}'.format( self.curClassName, index )
+		className_ = className if className else self.curClassName
 
-		# TODO, support for static access outside class
-		# return '@{}.{}'.format( className, index )
+		return '@{}.{}'.format( className, index )  # support external access
 
 	def label( self, loc ):
 
@@ -350,126 +349,51 @@ class Compiler():
 
 	def compile_statement( self, cmd ):
 
-		cmdType = cmd[0]
+		cmdType = cmd[ 0 ]
 
 		if cmdType == 'push':
 
-			return self.compile_push( cmd[1], int( cmd[2] ) )
+			if len( cmd ) == 4:
 
-		# if cmdType == 'push':
+				return self.compile_push( cmd[ 1 ], int( cmd[ 2 ] ), cmd[ 3 ] )
 
-		# 	cmd2 = self.input.peek()
+			else:
 
-		# 	if ( cmd2 and cmd2[0] == 'pop' and
-		# 	   ( cmd2[1] == 'pointer' or cmd2[1] == 'static' or cmd2[1] == 'temp' ) ):
-
-		# 		# 'compile_push_pop' generates less code than seperate 'compile_push' and 'compile_pop'
-
-		# 		self.skip = True
-
-		# 		return self.compile_push_pop( cmd[1], int( cmd[2] ), cmd2[1], int( cmd2[2] ) )
-
-		# 	# elif cmd2 and cmd2[0] in binaryOps:
-		# 	elif ( cmd2 and cmd2[0] in binaryOps and
-		# 	       cmd2[0] != 'lsl' and cmd2[0] != 'lsr' ):
-
-		# 		cmd3 = self.input.peekpeek()
-
-		# 		if cmd3 and cmd3[0] == 'if-goto':
-
-		# 			# compile_push_binaryOp_ifgoto generates less code than seperate
-		# 			# 'compile_push', 'compile_operation', and 'compile_ifgoto'
-					
-		# 			self.skip2 = True
-
-		# 			return self.compile_push_binaryOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
-
-		# 		else:
-
-		# 			# compile_push_binaryOp generates less code than seperate 'compile_push' and 'compile_operation'
-
-		# 			self.skip = True
-
-		# 			return self.compile_push_binaryOp( cmd[1], int( cmd[2] ), cmd2[0] )
-
-		# 	elif cmd2 and cmd2[0] in comparisonOps:
-
-		# 		cmd3 = self.input.peekpeek()
-
-		# 		if cmd3 and cmd3[0] == 'if-goto':
-
-		# 			# compile_push_comparisonOp_ifgoto generates less code than seperate
-		# 			# 'compile_push', 'compile_operation', and 'compile_ifgoto'
-					
-		# 			self.skip2 = True
-
-		# 			return self.compile_push_comparisonOp_ifgoto( cmd[1], int( cmd[2] ), cmd2[0], cmd3[1] )
-
-		# 		else:
-
-		# 			# compile_push_comparisonOp generates less code than seperate 'compile_push' and 'compile_operation'
-
-		# 			self.skip = True
-
-		# 			return self.compile_push_comparisonOp( cmd[1], int( cmd[2] ), cmd2[0] )
-
-		# 	else:
-
-		# 		return self.compile_push( cmd[1], int( cmd[2] ) )
+				return self.compile_push( cmd[ 1 ], int( cmd[ 2 ] ) )
 
 		elif cmdType == 'pop':
 
-			return self.compile_pop( cmd[1], int( cmd[2] ) )
+			if len( cmd ) == 4:
+
+				return self.compile_pop( cmd[ 1 ], int( cmd[ 2 ] ), cmd[ 3 ] )
+
+			else:
+
+				return self.compile_pop( cmd[ 1 ], int( cmd[ 2 ] ) )
 
 		elif cmdType in operations:
 
 			return self.compile_operation( cmdType )
 
-		# elif cmdType in operations:
-
-		# 	cmd2 = self.input.peek()
-
-		# 	if cmd2 and cmd2[0] == 'if-goto':
-
-		# 		# compile_yyyyOp_ifgoto generates less code than seperate compile_operation' and 'compile_ifgoto'
-				
-		# 		self.skip = True
-
-		# 		if cmdType in unaryOps:
-
-		# 			return self.compile_unaryOp_ifgoto( cmdType, cmd2[1] )
-
-		# 		elif cmdType in binaryOps:
-
-		# 			return self.compile_binaryOp_ifgoto( cmdType, cmd2[1] )
-
-		# 		elif cmdType in comparisonOps:
-
-		# 			return self.compile_comparisonOp_ifgoto( cmdType, cmd2[1] )
-
-		# 	else:
-
-		# 		return self.compile_operation( cmdType )
-
 		elif cmdType == 'label':
 
-			return self.compile_label( cmd[1] )
+			return self.compile_label( cmd[ 1 ] )
 
 		elif cmdType == 'goto':
 
-			return self.compile_goto( cmd[1] )
+			return self.compile_goto( cmd[ 1 ] )
 
 		elif cmdType == 'if-goto':
 
-			return self.compile_ifgoto( cmd[1] )
+			return self.compile_ifgoto( cmd[ 1 ] )
 
 		elif cmdType == 'call':
 
-			return self.compile_call( cmd[1], int( cmd[2] ) )
+			return self.compile_call( cmd[ 1 ], int( cmd[ 2 ] ) )
 
 		elif cmdType == 'function':
 
-			return self.compile_function( cmd[1], int( cmd[2] ) )
+			return self.compile_function( cmd[ 1 ], int( cmd[ 2 ] ) )
 
 		elif cmdType == 'return':
 
@@ -480,7 +404,7 @@ class Compiler():
 			raise Exception( "Don't know how to compile the command - {}".format( cmd ) )
 
 
-	def compile_push_( self, seg, index ):
+	def compile_push_( self, seg, index, className = None ):
 
 		s = []
 
@@ -499,7 +423,7 @@ class Compiler():
 
 		elif seg == 'static':
 
-			s.append( self.atStatic( index ) )
+			s.append( self.atStatic( index, className ) )
 			s.append( 'D = M' )
 
 		elif seg == 'temp':
@@ -526,12 +450,12 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_push( self, seg, index ):
+	def compile_push( self, seg, index, className = None ):
 
 		s = []
 
 		# Get value from segment
-		s.append( self.compile_push_( seg, index ) )
+		s.append( self.compile_push_( seg, index, className ) )
 
 		# Push it to stack
 		s.append( self.pushDToStack() )
@@ -539,7 +463,7 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_pop( self, seg, index ):
+	def compile_pop( self, seg, index, className = None ):
 
 		s = []
 
@@ -556,7 +480,7 @@ class Compiler():
 
 			elif seg == 'static':
 
-				s.append( self.atStatic( index ) )
+				s.append( self.atStatic( index, className ) )
 
 			elif seg == 'temp':
 
@@ -1505,197 +1429,7 @@ class Compiler():
 
 	# Optimizations -----------------------------------
 
-	# def compile_push_pop( self, seg1, index1, seg2, index2 ):
-
-	# 	s = []
-
-	# 	# Get value from segment
-	# 	s.append( self.compile_push_( seg1, index1 ) )
-
-	# 	# Get target address
-	# 	if seg2 == 'pointer':
-
-	# 		if index2 == 0: s.append( '@THIS' )
-	# 		else:           s.append( '@THAT' )
-
-	# 	elif seg2 == 'static':
-
-	# 		s.append( self.atStatic( index2 ) )
-
-	# 	elif seg2 == 'temp':
-
-	# 		s.append( self.atTemp( index2 ) )
-
-	# 	else:
-
-	# 		raise Exception( "Shouldn't reach here" )
-
-	# 	# Pop value to target address
-	# 	s.append( 'M = D' )
-
-	# 	return self.a2s( s )
-
-
-	# def compile_push_binaryOp( self, seg, index, op ):
-
-	# 	s = []
-
-	# 	# Get value from segment
-	# 	s.append( self.compile_push_( seg, index ) )
-
-	# 	# Get prevprev value
-	# 	s.append( '@SP' )
-	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-	# 	# Apply op
-	# 	s.append( 'M = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
-
-	# 	return self.a2s( s )
-
-
-	# def compile_push_binaryOp_ifgoto( self, seg, index, op, loc ):
-
-	# 	s = []
-
-	# 	# Get value from segment
-	# 	s.append( self.compile_push_( seg, index ) )
-
-	# 	# Get prevprev value, and
-	# 	# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-	# 	s.append( '@SP' )
-
-	# 	# s.append( 'AM = M - 1' )  # aReg = prevprev_addr
-	# 	s.append( 'D = M - 1' )
-	# 	s.append( 'M = D' )
-	# 	s.append( 'A = D' )
-
-	# 	# Apply op
-	# 	s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op segment_val
-
-	# 	# Conditional jump
-	# 	s.append( self.compile_ifgoto_( loc ) )
-
-	# 	return self.a2s( s )
-
-
-	# def compile_binaryOp_ifgoto( self, op, loc ):
-
-	# 	# Only one line saved by doing this instead of using popStackToD in ifgoto
-
-	# 	s = []
-
-	# 	# Get prev value
-	# 	s.append( self.popStackToD() )  # D = prev_val
-
-	# 	# Get prevprev value 
-	# 	s.append( 'A = A - 1' )  # aReg = prevprev_addr
-
-	# 	# Apply op
-	# 	s.append( 'D = M {} D'.format( binaryOps[ op ] ) )  # stack = prevprev_val op prev_val
-
-	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-	# 	s.append( '@SP' )
-	# 	s.append( 'M = M - 1' )
-
-	# 	# Conditional jump
-	# 	s.append( self.compile_ifgoto_( loc ) )
-
-	# 	return self.a2s( s )
-
-
-	# def compile_unaryOp_ifgoto( self, op, loc ):
-
-	# 	# Three lines saved by doing this instead of using popStackToD in ifgoto
-
-	# 	s = []
-
-	# 	# Apply op, and
-	# 	# decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result) 
-	# 	s.append( '@SP' )
-
-	# 	# s.append( 'AM = M - 1' )
-	# 	s.append( 'D = M - 1' )
-	# 	s.append( 'M = D' )
-	# 	s.append( 'A = D' )
-
-	# 	s.append( 'D = {} M'.format( unaryOps[ op ] ) )
-
-	# 	# Conditional jump
-	# 	s.append( self.compile_ifgoto_( loc ) )
-
-	# 	return self.a2s( s )		
-
-
-	# def compile_push_comparisonOp( self, seg, index, op ):
-
-	# 	s = []
-
-	# 	# Get value from segment
-	# 	s.append( self.compile_push_( seg, index ) )
-
-	# 	# Get prevprev value
-	# 	s.append( '@SP' )
-	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-	# 	# Compare
-	# 	s.append( self.compile_comparisonOp_( op ) )
-
-	# 	# Update stack
-	# 	s.append( '@SP' )
-	# 	s.append( 'A = M - 1' )
-	# 	s.append( 'M = D' )
-
-	# 	return self.a2s( s )
-
-
-	# def compile_push_comparisonOp_ifgoto( self, seg, index, op, loc ):
-
-	# 	s = []
-
-	# 	# Get value from segment
-	# 	s.append( self.compile_push_( seg, index ) )
-
-	# 	# Get prevprev value
-	# 	s.append( '@SP' )
-	# 	s.append( 'A = M - 1' )  # aReg = prevprev_addr
-
-	# 	# Compare
-	# 	s.append( self.compile_comparisonOp_( op ) )
-
-	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-	# 	s.append( '@SP' )
-	# 	s.append( 'M = M - 1' )
-
-	# 	# Conditional jump
-	# 	s.append( self.compile_ifgoto_( loc ) )
-
-	# 	return self.a2s( s )
-
-
-	# def compile_comparisonOp_ifgoto( self, op, loc ):
-
-	# 	# Only one line saved by doing this instead of using popStackToD in ifgoto.
-	# 	# However, also save 3 lines by not pushing comparison result onto stack
-
-	# 	s = []
-
-	# 	# Get prev value
-	# 	s.append( self.popStackToD() )  # D = prev_val
-
-	# 	# Get prevprev value 
-	# 	s.append( 'A = A - 1' )  # aReg = prevprev_addr
-
-	# 	# Compare
-	# 	s.append( self.compile_comparisonOp_( op ) )
-
-	# 	# Decrement address held by SP (this would usually be done by ifgoto when retrieving comparison result)
-	# 	s.append( '@SP' )
-	# 	s.append( 'M = M - 1' )
-
-	# 	# Conditional jump
-	# 	s.append( self.compile_ifgoto_( loc ) )
-
-	# 	return self.a2s( s )
+	# TODO maybe, tradeoff is complexity
 
 
 

@@ -1,12 +1,16 @@
 # ========================================================================================
 #
+#  Description:
+#
+#    Emulates execution of VM code.
+#
 #  Attribution:
-# 
+#
 #     Code by www.jk-quantized.com
-# 
+#
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-# 
+#
 # ========================================================================================
 
 '''
@@ -694,15 +698,15 @@ def Math_tan(): pass
 
 
 OSWrappers = {
-	
+
 	'Sys.wait'      : Sys_wait,
 
-	'GFX.drawPixel'       : GFX_drawPixel,
-	'GFX.setColor'        : GFX_setColor,
-	'GFX.drawFastHLine'   : GFX_drawFastHLine,
-	'GFX.fillScreen'      : GFX_fillScreen,
-	'GFX.getPixel'        : GFX_getPixel,
-	'GFX.replaceDisplayWithMainMemory' : GFX_replaceDisplayWithMainMemory
+	# 'GFX.drawPixel'       : GFX_drawPixel,
+	# 'GFX.setColor'        : GFX_setColor,
+	# 'GFX.drawFastHLine'   : GFX_drawFastHLine,
+	# 'GFX.fillScreen'      : GFX_fillScreen,
+	# 'GFX.getPixel'        : GFX_getPixel,
+	# 'GFX.replaceDisplayWithMainMemory' : GFX_replaceDisplayWithMainMemory
 }
 
 

@@ -1,16 +1,16 @@
 # ========================================================================================
-# 
+#
 #  Description:
 #
 #     Generates a merged copy of the Hack VM (virtual machine) files present in a directory
-# 
+#
 #  Attribution:
 #
 #     Code by www.jk-quantized.com
-# 
+#
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-# 
+#
 # ========================================================================================
 
 

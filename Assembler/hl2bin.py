@@ -1,13 +1,15 @@
 # ========================================================================================
 #
-# Description:
-#	Compiles Hack HL (high level) code to Hack BIN (binary) code
+#  Description:
 #
-# Attribution:
-# 	Code by www.jk-quantized.com
+#    Compiles Hack HL (high level) code to Hack BIN (binary) code
 #
-# Redistribution and use of this code in source and binary forms must retain
-# the above attribution notice and this condition.
+#  Attribution:
+#
+#    Code by www.jk-quantized.com
+#
+#  Redistribution and use of this code in source and binary forms must retain
+#  the above attribution notice and this condition.
 #
 # ========================================================================================
 
@@ -50,11 +52,12 @@ def hl_to_bin( inputDirPath ):
 
 	VM_includes = [
 
+		OSPath + '/GlobalConstants.vm',
 		OSPath + '/Array.vm',
 		OSPath + '/DataMemory.vm',
 		OSPath + '/Font.vm',
+		OSPath + '/Colors.vm',
 		OSPath + '/GFX.vm',
-		OSPath + '/GlobalConstants.vm',
 		OSPath + '/Keyboard.vm',
 		OSPath + '/Math.vm',
 		OSPath + '/String.vm',

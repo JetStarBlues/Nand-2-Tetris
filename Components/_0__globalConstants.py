@@ -15,57 +15,44 @@ SCREEN_FPS = 30
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
 PROGRAM_MEMORY_SIZE = 2**16
-DATA_MEMORY_SIZE = 2**16
+DATA_MEMORY_SIZE    = 2**16
 
 # RAM Allocation (compatible)
 STATIC_START = 16
-STATIC_END   = 255
+STATIC_END   = 255  # TODO, make static bigger
 STACK_START  = 256
 STACK_END    = 2047
 HEAP_START   = 2048
-HEAP_END     = 16383
+HEAP_END     = 32757
 
-SCREEN_MEMORY_MAP   = 16384
-KBD_MEMORY_MAP      = 24576
-MOUSE_MEMORY_MAP    = 24577
-MOUSEX_MEMORY_MAP   = 24578
-MOUSEY_MEMORY_MAP   = 24579
-IO_BANK1_MEMORY_MAP = 24580  # 15 downto 0
-IO_BANK2_MEMORY_MAP = 24581  # 31 downto 16
+SCREEN_MEMORY_MAP   = HEAP_END + 0
+KEYBOARD_MEMORY_MAP = HEAP_END + 6
+MOUSE_MEMORY_MAP    = HEAP_END + 8
+# IO_BANK1_MEMORY_MAP = None  # 15 downto 0
+# IO_BANK2_MEMORY_MAP = None  # 31 downto 16
 
 
 # Performance mode --
 # Uses python built-ins for arithmetic operations and storage
 PERFORMANCE_MODE = True
+
 if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0  # Can get away with no clock period as flip flops are not used for memory
 
 
-# Color mode --
-COLOR_MODE_4BIT = False
-if COLOR_MODE_4BIT :
+# --- Emulator --------------------------------------
 
-	# No space is left unallocated
-	HEAP_END = DATA_MEMORY_SIZE - 8192 * 4 - 6
+COLOR_PALETTE_1BIT = {
 
-	KBD_MEMORY_MAP      = HEAP_END + 0
-	MOUSE_MEMORY_MAP    = HEAP_END + 1
-	MOUSEX_MEMORY_MAP   = HEAP_END + 2
-	MOUSEY_MEMORY_MAP   = HEAP_END + 3
-	IO_BANK1_MEMORY_MAP = HEAP_END + 4
-	IO_BANK2_MEMORY_MAP = HEAP_END + 5
-	SCREEN_MEMORY_MAP   = HEAP_END + 6
-
-
-# --- Simulator UI -----------------------------------
-
-SCREEN_BACKGROUND_COLOR = '#FFFCF3'
-SCREEN_FOREGROUND_COLOR = '#717164'
+	'0' : '#FFFCF3',
+	'1' : '#717164',
+}
 
 COLOR_PALETTE_4BIT = {
 
 	# PICO-8 palette
 	#  www.lexaloffle.com/gfx/pico8_pal_017.png
+	#  www.lexaloffle.com/pico-8.php?page=faq
 	'0000' : '#000000',
 	'0001' : '#1D2B53',
 	'0010' : '#7E2553',

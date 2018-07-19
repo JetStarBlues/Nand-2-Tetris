@@ -2,27 +2,27 @@
 #  
 #  Description:
 #     Compiles Hack HL (high level) code to Hack VM (virtual machine) code
-#  
+#
 #  Attribution:
 #     Code by www.jk-quantized.com
-#  
+#
 #     Design is based on:
-#  
+#
 #        Mihai Bazon's superb interpreter and compiler design tutorial:
 #         http://lisperator.net/pltut/
 #         http://lisperator.net/s/lambda/lambda-eval1.js
-#  
+#
 #        Lecture notes from the Nand To Tetris course
 #         www.nand2tetris.org
-#  
+#
 #     Extensions to the Hack HL grammar:
-#  
+#
 #        Some are my own and others are inspired by @cadet1620's posts as noted within the code.
 #        http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/template/NamlServlet.jtp?macro=user_nodes&user=266121
 #  
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-#  
+#
 # ========================================================================================
 
 # TODO: Relative includes...
@@ -150,14 +150,6 @@ class InputStream():
 
 		return self.input[ self.pos + 1 ]
 
-	# def peekpeekpeek( self ):
-
-	# 	return self.input[ self.pos + 2 ]
-
-	# def peekpeekpeekpeek( self ):
-
-	# 	return self.input[ self.pos + 3 ]
-
 	def eof( self ):
 
 		return self.pos >= self.inputEnd
@@ -238,9 +230,7 @@ class TokenStream():
 		self.input = input_
 
 		self.current   = None
-		self.previous  = None
-		self.previous2 = None
-		self.previous3 = None
+		self.previous  = []
 
 		self.keywords = Hack_lexicon[ 'keywords' ]
 
@@ -569,131 +559,19 @@ class TokenStream():
 
 	# -----------------------------------
 
-	def peek( self ):
+	def peek( self, n = 1 ):
 
-		if self.previous3:    # previously peeked4
+		if len( self.previous ) >= n:
 
-			return self.previous3
+			return self.previous[ n - 1 ]  # previously peeked
 
-		elif self.previous2:  # previously peeked3
+		else:
 
-			return self.previous2
+			while len( self.previous ) < n:  # keep peeking until reach n
 
-		elif self.previous:   # previously peekedpeeked
+				self.current = self.read_next()
 
-			return self.previous
-
-		elif self.current:    # previously peeked
-
-			return self.current
-
-		else:                 # haven't previously peeked
-
-			self.current = self.read_next()
-
-			return self.current
-
-	def peekpeek( self ):
-
-		if self.previous3:    # previously peeked4
-
-			return self.previous3
-
-		elif self.previous2:  # previously peeked3
-
-			return self.previous2		
-
-		if self.previous:     # previously peekedpeeked
-
-			return self.current
-
-		elif self.current:    # previously peeked
-
-			self.previous = self.current
-			self.current  = self.read_next()
-
-			return self.current
-
-		else:                 # haven't previously peeked
-
-			self.previous = self.read_next()
-			self.current  = self.read_next()
-
-			return self.current
-
-	def peek3( self ):
-
-		if self.previous3:    # previously peeked4
-
-			return self.previous3
-
-		elif self.previous2:  # previously peeked3
-
-			return self.current
-
-		elif self.previous:   # previously peekedpeeked
-
-			self.previous2 = self.previous
-			self.previous  = self.current
-			self.current   = self.read_next()
-
-			return self.current
-
-		elif self.current:    # previously peeked
-
-			self.previous2 = self.current
-			self.previous  = self.read_next()
-			self.current   = self.read_next()
-
-			return self.current
-
-		else:                 # haven't previously peeked
-
-			self.previous2 = self.read_next()
-			self.previous  = self.read_next()
-			self.current   = self.read_next()
-
-			return self.current
-
-	def peek4( self ):
-
-		if self.previous3:    # previously peeked4
-
-			return self.current
-
-		elif self.previous2:  # previously peeked3
-
-			self.previous3 = self.previous2
-			self.previous2 = self.previous
-			self.previous  = self.current
-			self.current   = self.read_next()
-
-			return self.current
-
-		elif self.previous:   # previously peekedpeeked
-
-			self.previous3 = self.previous
-			self.previous2 = self.current
-			self.previous  = self.read_next()
-			self.current   = self.read_next()
-
-			return self.current
-
-		elif self.current:    # previously peeked
-
-			self.previous3 = self.current
-			self.previous2 = self.read_next()
-			self.previous  = self.read_next()
-			self.current   = self.read_next()
-
-			return self.current
-
-		else:                 # haven't previously peeked
-
-			self.previous3 = self.read_next()
-			self.previous2 = self.read_next()
-			self.previous  = self.read_next()
-			self.current   = self.read_next()
+				self.previous.append( self.current )
 
 			return self.current
 
@@ -705,45 +583,13 @@ class TokenStream():
 			the stream advanced
 		'''
 
-		if self.previous3:
+		if self.previous:
 
-			tok = self.previous3
-			self.previous3 = None
-
-			# print( ">>", tok )
-			return tok
-
-		elif self.previous2:
-
-			tok = self.previous2
-			self.previous2 = None
-
-			# print( ">>", tok )
-			return tok
-
-		elif self.previous:
-
-			tok = self.previous
-			self.previous = None
-
-			# print( ">>", tok )
-			return tok
-
-		elif self.current:
-
-			tok = self.current
-			self.current = None
-
-			# print( ">>", tok )
-			return tok
+			return self.previous.pop( 0 )  # return oldest item
 
 		else:
 
 			return self.read_next()
-			
-			# tok = self.read_next()
-			# print( ">>", tok )
-			# return tok
 
 	def eof( self ):
 
@@ -934,6 +780,19 @@ def testTokenizer():
 		}
 			|
 		{
+			type      : 'identifier'
+			className : STRING
+			name      : STRING
+			arrIdx    : exp
+		}
+			|
+		{
+			type      : 'identifier'
+			className : STRING
+			name      : STRING
+		}
+			|
+		{
 			type : 'subroutineCall'
 			name : STRING
 			args : [ exp ]	
@@ -964,9 +823,9 @@ def testTokenizer():
 
 	varDec          -> 'var' type varName ( ',' varName )* ';'
 
-	className       -> identifier
-	subroutineName  -> identifier
-	varName         -> identifier
+	className       -> label
+	subroutineName  -> label
+	varName         -> label
 
 	statements      -> statement*
 
@@ -984,9 +843,11 @@ def testTokenizer():
 
 	expression      -> expressionTerm ( binaryOp expressionTerm )*
 
-	expressionTerm  -> integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOp expressionTerm
+	expressionTerm  -> integerConstant | stringConstant | keywordConstant | cVarName | cVarName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOp expressionTerm
 
-	subroutineCall  -> ( ( className | varName ) '.' )? subroutineName '(' expressionList ')'
+	cSubroutineName -> ( ( className | varName ) '.' )? subroutineName
+
+	subroutineCall  -> cSubroutineName subroutineName '(' expressionList ')'
 
 	expressionList  -> ( expression ( ',' expression )* )?
 
@@ -999,17 +860,21 @@ def testTokenizer():
 
 	stringConstant  -> sequence wrapped in double quotes
 
-	identifier      -> sequence of letters, digits, and underscore not starting with a digit
+	label           -> sequence of letters, digits, and underscore not starting with a digit
 
 
 	-- Stuff I added -------------------------------------------------------------------------
 
-	assignment        -> varName ( '[' expression ']' )? assignmentOp expression
+	cVarName          -> ( className '.' )? varName
+
+	assignment        -> cVarName ( '[' expression ']' )? assignmentOp expression
+
+	identifier        -> cVarName | cSubroutineName
 
 	assignmentOp      -> '=' | +=' | '-=' | '/=' | ...
 
 	forStatement      -> 'for' '(' assignment ';' expression ';' assignment ')' statementBlock
-	
+
 	include           -> 'include' stringConstant
 
 	-- Inspired by @cadet1620 ----
@@ -1017,7 +882,7 @@ def testTokenizer():
 	continueStatement -> 'continue' ';'
 
 	breakStatement    -> 'break' ';'
-	
+
 	charConstant      -> single Ascii character wrapped in single quotes
 
 	hexConstant       -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
@@ -1172,7 +1037,7 @@ class Parser():
 
 		self.input.next()  # 'class'
 
-		name = self.read_id( 'classDeclaration' )
+		name = self.read_id( 'parse_classDeclaration' )
 
 		self.skip_punc( '{' )
 
@@ -1216,7 +1081,7 @@ class Parser():
 
 			self.croak( "Error: Expecting 'int' or 'char' type in constant declaration. Instead got {}".format( self.input.peek() ) )
 
-		name = self.read_id( 'constDeclaration' )
+		name = self.read_id( 'parse_constDeclaration' )
 
 		self.skip_op( '=' )
 
@@ -1275,9 +1140,9 @@ class Parser():
 
 			self.croak( "Error: Expecting either 'static' or 'field' keyword in classVariableDeclaration" )
 
-		d_type = self.read_d_type( 'classVariableDeclaration' )
+		d_type = self.read_d_type( 'parse_classVariableDeclaration' )
 
-		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'classVariableDeclaration' )
+		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_classVariableDeclaration' )
 
 		return {
 
@@ -1304,7 +1169,7 @@ class Parser():
 
 		ret_type = self.input.next()[ 'value' ]   # void, other
 
-		name = self.read_id( 'subroutineDeclaration' )
+		name = self.read_id( 'parse_subroutineDeclaration' )
 
 		params = self.parse_delimitedList( '(', ')', ',', self.parse_parameter )
 
@@ -1334,9 +1199,9 @@ class Parser():
 			type varName
 		'''
 
-		d_type = self.read_d_type( 'parameter' )
+		d_type = self.read_d_type( 'parse_parameter' )
 
-		name = self.read_id( 'parameter' )
+		name = self.read_id( 'parse_parameter' )
 
 		return {
 
@@ -1359,9 +1224,9 @@ class Parser():
 
 		self.skip_kw( 'var' )
 
-		d_type = self.read_d_type( 'variableDeclaration' )
+		d_type = self.read_d_type( 'parse_variableDeclaration' )
 
-		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'variableDeclaration' )
+		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_variableDeclaration' )
 
 		return {
 
@@ -1426,13 +1291,11 @@ class Parser():
 
 			''' Assumptions
 				 - only assignment and calls can begin with ids
-				 - cannot assign class properties (static/fields) outside said class
-				    ex. 'let p.x = 5' is invalid
 				 - cannot store function pointers in arrays
 				    ex. 'do cats[0]()' is invalid
 			'''
 
-			tok2 = self.input.peekpeek()[ 'value' ]
+			tok2 = self.input.peek( 2 )[ 'value' ]
 
 			if tok2 == '[' or tok2 in self.assignmentOps:
 
@@ -1444,7 +1307,7 @@ class Parser():
 
 			elif tok2 == '.':
 
-				tok4 = self.input.peek4()[ 'value' ]
+				tok4 = self.input.peek( 4 )[ 'value' ]
 
 				if tok4 == '(':
 
@@ -1452,11 +1315,9 @@ class Parser():
 
 				else:
 
-					raise Exception( 'Should never get here' )
+					ret = self.parse_assignment()  # support external access
 
 			else:
-
-				print( tok2 )
 
 				raise Exception( 'Should never get here' )
 
@@ -1482,13 +1343,13 @@ class Parser():
 			( ( className | varName ) '.' )? subroutineName '(' expressionList ')'
 		'''
 
-		name = self.read_id( 'subroutineCall' )
+		name = self.read_id( 'parse_subroutineCall' )
 
 		if self.input.peek()[ 'value' ] == '.':
 
 			self.input.next()  # .
 
-			name += '.' + self.read_id( 'subroutineCall dot' )
+			name += '.' + self.read_id( 'parse_subroutineCall dot' )
 
 		args = self.parse_delimitedList( '(', ')', ',', self.parse_expression )
 
@@ -1501,17 +1362,11 @@ class Parser():
 
 	def parse_assignment( self, returnType = None ):
 		'''
-			varName ( '[' expression ']' )? assignmentOp expression
+			cVarName ( '[' expression ']' )? assignmentOp expression
 		'''
 
 		# -- Left
-		left = self.read_id( 'assignment' )
-
-		arrIdx = None
-
-		if self.input.peek()[ 'value' ] == '[':
-
-			arrIdx = self.parse_wrapped( '[', ']', self.parse_expression )
+		left = self.parse_identifier()
 
 		# -- Op
 		tok = self.input.peek()
@@ -1533,17 +1388,8 @@ class Parser():
 			'type'         : 'assignment',
 			'assignmentOp' : op,
 			'right'        : right,
-			'left'         : {
-
-				'type' : 'identifier',
-				'name' : left
-			},
+			'left'         : left
 		}
-
-
-		if arrIdx :
-
-			ret[ 'left' ][ 'arrIdx' ] = arrIdx
 
 		return ret
 
@@ -1755,22 +1601,126 @@ class Parser():
 
 			return exps  # sequence of 1+ binary ops
 
+	def parse_identifier( self ):
+		'''
+			identifier      -> cVarName | cSubroutineName
+			cVarName        -> ( className '.' )? varName
+			cSubroutineName -> ( ( className | varName ) '.' )? subroutineName
+		'''
+
+		tok = self.input.peek()
+
+		tok2 = self.input.peek( 2 )[ 'value' ]
+
+		# subroutineCall
+		if tok2 == '(':
+
+			ret = { 
+
+				'type' : 'subroutineCall'
+			}
+			
+			ret.update( self.parse_subroutineCall() )
+			
+			return ret
+
+		# varName '[' expression ']'
+		elif tok2 == '[':
+
+			self.input.next()  # varName
+
+			arrIdx = self.parse_wrapped( '[', ']', self.parse_expression )
+
+			return {
+
+				'type'   : 'identifier',
+				'name'   : tok[ 'value' ],
+				'arrIdx' : arrIdx
+			}
+
+		#
+		elif tok2 == '.':
+
+			tok4 = self.input.peek( 4 )[ 'value' ]
+
+			# subroutineCall
+			if tok4 == '(':
+
+				ret = { 
+
+					'type' : 'subroutineCall'
+				}
+				
+				ret.update( self.parse_subroutineCall() )
+				
+				return ret
+
+			# className.varName '[' expression ']'
+			elif tok4 == '[':
+
+				# Support external access of class variables
+
+				tok3 = self.input.peek( 3 )
+
+				self.input.next()                   # className
+				self.input.next()                   # '.'
+				self.read_id( 'parse_identifier' )  # varName
+
+				arrIdx = self.parse_wrapped( '[', ']', self.parse_expression )
+
+				return {
+
+					'type'      : 'identifier',
+					'className' : tok[ 'value' ],
+					'name'      : tok3[ 'value' ],
+					'arrIdx'    : arrIdx
+				}
+
+			# className.varName
+			else:
+
+				# Support external access of class variables
+
+				tok3 = self.input.peek( 3 )
+
+				self.input.next()                   # className
+				self.input.next()                   # '.'
+				self.read_id( 'parse_identifier' )  # varName
+
+				return {
+
+					'type'      : 'identifier',
+					'className' : tok[ 'value' ],
+					'name'      : tok3[ 'value' ]
+				}
+
+		# varName
+		else:
+
+			self.input.next()
+
+			return {
+
+				'type' : 'identifier',
+				'name' : tok[ 'value' ]
+			}
+
 	def parse_expressionTerm( self ):
 		'''
-			integerConstant | stringConstant | keywordConstant | varName | 
-			varName '[' expression ']' | subroutineCall | '(' expression ')' | 
+			integerConstant | stringConstant | keywordConstant | cVarName | 
+			cVarName '[' expression ']' | subroutineCall | '(' expression ')' | 
 			unaryOp expressionTerm
 		'''
 
 		tok = self.input.peek()
 
-		# print( "--", tok )
-
+		# integerConstant
 		if ( tok[ 'type' ] == 'num' or tok[ 'type' ] == 'hex' or
 		     tok[ 'type' ] == 'bin' or tok[ 'type' ] == 'char' ):
 
 			return self.parse_integerConstant()
 
+		# stringConstant
 		elif tok[ 'type' ] == 'str':
 
 			self.input.next()
@@ -1781,6 +1731,7 @@ class Parser():
 				'value' : tok[ 'value' ]
 			}
 
+		# keywordConstant
 		elif tok[ 'type' ] == 'kw' and tok[ 'value' ] in self.keywordConstants:
 
 			self.input.next()
@@ -1791,70 +1742,11 @@ class Parser():
 				'value' : tok[ 'value' ]
 			}
 
+		# identifier
 		elif tok[ 'type' ] == 'id':
 
-			tok2 = self.input.peekpeek()[ 'value' ]
+			return self.parse_identifier()
 
-			# varName '[' expression ']'
-			if tok2 == '[':
-
-				self.input.next() # id
-
-				self.input.next() # '['
-
-				arrIdx = self.parse_expression()
-
-				self.skip_punc( ']' )
-
-				return {
-
-					'type'   : 'identifier',
-					'name'   : tok[ 'value' ],
-					'arrIdx' : arrIdx
-				}
-
-			# subroutineCall
-			elif tok2 == '(':
-
-				ret = { 'type' : 'subroutineCall' }
-				ret.update( self.parse_subroutineCall() )
-				return ret
-
-			#
-			elif tok2 == '.':
-
-				tok4 = self.input.peek4()[ 'value' ]
-
-				# className.varName '[' expression ']'
-				if tok4 == '[':
-
-					# TODO, static access support
-					raise Exception( 'External static access not yet supported' )
-
-				# subroutineCall
-				elif tok4 == '(':
-
-					ret = { 'type' : 'subroutineCall' }
-					ret.update( self.parse_subroutineCall() )
-					return ret
-
-				# varName
-				else:
-
-					# TODO, static access support
-					raise Exception( 'External static access not yet supported' )
-
-			# varName
-			else:
-
-				self.input.next()
-
-				return {
-
-					'type' : 'identifier',
-					'name' : tok[ 'value' ]
-				}
-		
 		# unaryOp expressionTerm
 		elif tok[ 'type' ] == 'op' and tok[ 'value' ] in self.unaryOps:
 
@@ -1872,6 +1764,7 @@ class Parser():
 
 			return self.parse_wrapped( '(', ')', self.parse_expression )
 
+		#
 		else:
 
 			self.croak( 'Error: Unexpected token: {}'.format( tok ) )
@@ -2045,7 +1938,9 @@ class Compiler():
 		# return self.compiler.compile( tree )
 		
 		includes = parser.includes
+
 		translation = self.compiler.compile( tree )
+
 		return( translation, includes )
 
 
@@ -2057,9 +1952,18 @@ class VariableTable():
 
 		self.type_ = type_
 
+		self.segmentMap = {
+
+			'static' : 'static',
+			'field'  : 'this',
+			'var'    : 'local',
+		}
+
 		self.setup()
 
 	def setup( self ):
+
+		self.scopeName = None
 
 		if self.type_ == 'class':
 
@@ -2083,6 +1987,10 @@ class VariableTable():
 
 			self.segments_ = [ 'local', 'argument', 'const' ]  # precedence lookup
 
+	def setScopeName( self, scopeName ):
+
+		self.scopeName = scopeName
+
 	def add( self, segment, varName, dataType, value = None ):
 
 		self.segments[ segment ].append({
@@ -2091,6 +1999,37 @@ class VariableTable():
 			'd_type' : dataType,
 			'value'  : value
 		})
+
+	def addVarsToTable( self, variableDeclarations ):
+
+		if variableDeclarations:
+
+			for vDec in variableDeclarations:
+
+				dataType = vDec[ 'd_type' ]
+
+				varType  = vDec.get( 'var_type' )
+
+				if varType:
+
+					# const
+					if varType == 'const':
+
+						self.add( 'const', vDec[ 'name' ], dataType, vDec[ 'value' ] )
+
+					# static | field | var
+					else:
+
+						segment = self.segmentMap[ varType ]
+
+						for name in vDec[ 'names' ]:
+
+							self.add( segment, name, dataType )
+
+				else:
+
+					# Assume argument
+					self.add( 'argument', vDec[ 'name' ], dataType )
 
 	def lookup( self, varName, checkConstants ):
 
@@ -2129,16 +2068,18 @@ class CompileTo_HackVM():
 
 	def __init__( self ):
 
-		self.segmentMap = {
+		# self.segmentMap = {
 
-			'static' : 'static',
-			'field'  : 'this',
-			'var'    : 'local',
-		}
+		# 	'static' : 'static',
+		# 	'field'  : 'this',
+		# 	'var'    : 'local',
+		# }
 
 		self.curClassName = None
 		self.curFunctionName = None		
-		self.classVarTable = VariableTable( 'class' )
+		self.classVarTables = []
+		self.curClassVarTable = None
+		# self.classVarTable = VariableTable( 'class' )
 		self.subroutineVarTable = VariableTable( 'subroutine' )
 
 		self.whileStmtCount = 0
@@ -2180,8 +2121,6 @@ class CompileTo_HackVM():
 
 		# for t in tree:
 
-		# 	self.setup()
-
 		# 	output += self.compile_classDeclaration( t )
 
 		# return output
@@ -2193,13 +2132,29 @@ class CompileTo_HackVM():
 
 		return 'push constant {}\n'.format( n )
 
-	def push_( self, seg_name, val ):
+	def push_( self, seg_name, val, className = None ):
 
-		return 'push {} {}\n'.format( seg_name, val )
+		className_ = className if className else self.curClassName
 
-	def pop_( self, seg_name, val ):
+		if seg_name == 'static':
 
-		return 'pop {} {}\n'.format( seg_name, val )
+			return 'push {} {} {}\n'.format( seg_name, val, className_ )  # support external access
+
+		else:
+
+			return 'push {} {}\n'.format( seg_name, val )
+
+	def pop_( self, seg_name, val, className = None ):
+
+		className_ = className if className else self.curClassName
+
+		if seg_name == 'static':
+
+			return 'pop {} {} {}\n'.format( seg_name, val, className_ )  # support external access
+
+		else:
+
+			return 'pop {} {}\n'.format( seg_name, val )
 
 	def call_( self, fx_name, nArgs ):
 
@@ -2243,47 +2198,24 @@ class CompileTo_HackVM():
 
 	# -----------------------------------
 
-	def addToVarTable( self, table, variableDeclarations ):
+	def lookupVar( self, varName, checkConstants = False, checkAllClasses = False ):
 
-		if variableDeclarations:
+		if checkAllClasses:  # support external access
 
-			for vDec in variableDeclarations:
+			for classTable in self.classVarTables[ : - 1 ]:  # skip current class
 
-				dataType  = vDec[ 'd_type' ]
+				found = classTable.lookup( varName, checkConstants )
+				if found: return found
 
-				varType = vDec.get( 'var_type' )
+		else:
 
-				if varType:
+			# Check subroutine table
+			found = self.subroutineVarTable.lookup( varName, checkConstants )
+			if found: return found
 
-					# const
-					if varType == 'const':
-
-						table.add( 'const', vDec[ 'name' ], dataType, vDec[ 'value' ] )
-
-					# static | field | var
-					else:
-
-						segment = self.segmentMap[ varType ]
-
-						for name in vDec[ 'names' ]:
-
-							table.add( segment, name, dataType )
-
-				else:
-
-					# Assume argument
-					table.add( 'argument', vDec[ 'name' ], dataType )
-
-
-	def lookupVar( self, varName, checkConstants = False ):
-
-		# Check subroutine table
-		found = self.subroutineVarTable.lookup( varName, checkConstants )
-		if found: return found
-
-		# Check class table
-		found = self.classVarTable.lookup( varName, checkConstants )
-		if found: return found
+			# Check class table
+			found = self.curClassVarTable.lookup( varName, checkConstants )
+			if found: return found
 
 		return None
 
@@ -2292,7 +2224,15 @@ class CompileTo_HackVM():
 
 	def setupForClassDeclaration( self ):
 		
-		self.classVarTable.clear()
+		# -- Reuse table
+		# self.classVarTable.clear()
+
+		# -- Create new table for each class
+		self.classVarTables.append( VariableTable( 'class' ) )
+
+		idx = len( self.classVarTables ) - 1
+
+		self.curClassVarTable = self.classVarTables[ idx ]
 
 
 	def compile_classDeclaration( self, exp ):
@@ -2301,9 +2241,11 @@ class CompileTo_HackVM():
 
 		self.curClassName = exp[ 'name' ]
 
+		self.curClassVarTable.setScopeName( self.curClassName )
+
 		# -- Add variables to table
-		self.addToVarTable( self.classVarTable, exp[ 'constDec' ] )
-		self.addToVarTable( self.classVarTable, exp[ 'varDec' ] )
+		self.curClassVarTable.addVarsToTable( exp[ 'constDec' ] )
+		self.curClassVarTable.addVarsToTable( exp[ 'varDec' ] )
 
 		# -- Subroutines
 		s = ''
@@ -2339,16 +2281,17 @@ class CompileTo_HackVM():
 		if fxType == 'method':
 
 			# Add placeholder for 'self' arg
-			self.subroutineVarTable.add( 
+			self.subroutineVarTable.add(
+
 				'argument', 
 				'*',  # used as won't collide with a potential Hack HL variable name
 				'placeholder'
 			)
 
-		self.addToVarTable( self.subroutineVarTable, exp[ 'params' ] )
+		self.subroutineVarTable.addVarsToTable( exp[ 'params' ] )
 		
-		self.addToVarTable( self.subroutineVarTable, exp[ 'constDec' ] )
-		self.addToVarTable( self.subroutineVarTable, exp[ 'varDec' ] )
+		self.subroutineVarTable.addVarsToTable( exp[ 'constDec' ] )
+		self.subroutineVarTable.addVarsToTable( exp[ 'varDec' ] )
 
 		nArgs   = len( self.subroutineVarTable.segments[ 'argument' ] )
 		nLocals = len( self.subroutineVarTable.segments[ 'local' ] )
@@ -2367,7 +2310,7 @@ class CompileTo_HackVM():
 		elif fxType == 'constructor':
 
 			# Allocate field variables
-			nFields = len( self.classVarTable.segments[ 'this' ] )
+			nFields = len( self.curClassVarTable.segments[ 'this' ] )
 
 			if nFields > 0:
 
@@ -2501,64 +2444,67 @@ class CompileTo_HackVM():
 
 		s = ''
 
-		# -- Right
-		right = self.compile_expression( exp[ 'right' ] )
-
-		# -- Pop to left
 		op = exp[ 'assignmentOp' ]
 
-		varName = exp[ 'left' ][ 'name' ]
-
-		left = self.lookupVar( varName )
-
-		if not left:
-
-			raise Exception( 'Error: Undefined variable - ' + varName )
+		name = exp[ 'left' ][ 'name' ]
 
 		arrIdx = exp[ 'left' ].get( 'arrIdx' )
 
+
+		# -- Find left
+		className = exp[ 'left' ].get( 'className' )
+
+		if className:
+
+			left = self.lookupVar( name, checkAllClasses = True )  # support external access
+
+		else:
+
+			left = self.lookupVar( name )
+
+			className = self.curClassName
+
+		if not left:
+
+			raise Exception( 'Error: Undefined variable - ' + name )
+
+
+		# -- Right
+		s += self.compile_expression( exp[ 'right' ] )
+
+		# If compound assignment (+=, -=, *= etc), push left and op
+		if op != '=': 
+
+			s += self.push_( left[ 'segName' ], left[ 'segIdx' ], className )
+			
+			if arrIdx:
+
+				# Calc index
+				s += self.compile_expression( arrIdx )
+				s += self.add_()
+
+				# Push contents
+				s += self.pop_( 'pointer', 1 )
+				s += self.push_( 'that', 0 )
+
+			s += self.compile_binaryOp( op[ : - 1 ] )
+
+
+		# -- Pop to left
 		if arrIdx:
 
-			# Calc address
+			# Calc index
+			s += self.push_( left[ 'segName' ], left[ 'segIdx' ], className )
 			s += self.compile_expression( arrIdx )
-			s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
 			s += self.add_()
 
-			# Calc value
-			if op == '=':
-
-				s += right
-
-			else:  # +=, -=, *= etc.
-
-				s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
-				s += right
-				s += self.compile_binaryOp( op[ : - 1 ] )
-
-			s += self.pop_( 'temp', 0 )
-
-			# Set address
+			# Pop
 			s += self.pop_( 'pointer', 1 )
-
-			# Set RAM[address] to value
-			s += self.push_( 'temp', 0 )
 			s += self.pop_( 'that', 0 )
 
 		else:
 
-			# Calc value
-			if op == '=':
-
-				s += right
-
-			else:  # compound assignment such as +=, -=, &=
-
-				s += self.push_( left[ 'segName' ], left[ 'segIdx' ] )
-				s += right
-				s += self.compile_binaryOp( op[ : - 1 ] )
-
-			# Set var to value
-			s += self.pop_( left[ 'segName' ], left[ 'segIdx' ] )
+			s += self.pop_( left[ 'segName' ], left[ 'segIdx' ], className )
 
 		return s
 
@@ -2997,7 +2943,6 @@ class CompileTo_HackVM():
 
 			return self.pushConstant_( ord( expValue ) )  # Ascii code
 
-
 		elif expType == 'keywordConstant':
 
 			kw = expValue
@@ -3024,32 +2969,44 @@ class CompileTo_HackVM():
 
 			name = exp[ 'name' ]
 
-			loc = self.lookupVar( name, True )
+			className = exp.get( 'className' )
 
-			if not loc:
+			if className:
 
-				raise Exception( 'Error: Undefined variable - ' + name )
+				loc = self.lookupVar( name, checkConstants = True, checkAllClasses = True )  # support external access
 
-			if 'arrIdx' in exp:
+				if not loc:
 
-				# Retrieve value and push to stack
-				s  = self.push_( loc[ 'segName' ], loc[ 'segIdx' ] )
-				s += self.compile_expression( exp[ 'arrIdx' ] )
-				s += self.add_()
-				s += self.pop_( 'pointer', 1 )
-				s += self.push_( 'that', 0 )
-				return s
+					raise Exception( 'Error: Undefined variable - {}.{}'.format( className, name ) )
 
 			else:
 
-				# Push value to stack
-				if loc[ 'segName' ] == 'const':
+				loc = self.lookupVar( name, checkConstants = True )
 
-					return self.compile_expressionTerm( loc[ 'value' ] )
+				className = self.curClassName
 
-				else:
+				if not loc:
 
-					return self.push_( loc[ 'segName' ], loc[ 'segIdx' ] )
+					raise Exception( 'Error: Undefined variable - ' + name )
+
+			# Push value to stack
+			if loc[ 'segName' ] == 'const':
+
+				return self.compile_expressionTerm( loc[ 'value' ] )
+
+			else:
+
+				s = self.push_( loc[ 'segName' ], loc[ 'segIdx' ], className )
+
+				if 'arrIdx' in exp:
+
+					# Retrieve value and push to stack
+					s += self.compile_expression( exp[ 'arrIdx' ] )
+					s += self.add_()
+					s += self.pop_( 'pointer', 1 )
+					s += self.push_( 'that', 0 )
+
+				return s
 
 		elif expType == 'subroutineCall':
 
@@ -3219,7 +3176,8 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 
 	includes = []
 
-	inputFilePaths = getJackFilesFromDir( inputDirPath )
+	# inputFilePaths = getJackFilesFromDir( inputDirPath )
+	inputFilePaths = [ inputDirPath + '/Main.jack' ]
 
 	for inputFilePath in inputFilePaths:
 
@@ -3248,18 +3206,11 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 
 	while len( includes ) > 0:
 
-		path = includes.pop()
+		path = includes.pop( 0 )
 
 		className = re.search( '\w+(?=\.jack)|\w+(?=\.vm)', path ).group( 0 )
 
 		if className in classes:
-
-			# raise Exception( 'Error: More than one class is named {}\n\t{}\n\t{}\n'.format(
-
-			# 	className,
-			# 	'\n\t'.join( processedFiles ),
-			# 	path
-			# ) )
 
 			print( ' Note: More than one class is named {}. As such, ignored \n\t{}'.format(
 

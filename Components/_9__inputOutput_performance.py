@@ -1,4 +1,23 @@
-''' Read/write data from/to memory using integer representation instead of binary'''
+# ========================================================================================
+#
+#  Description:
+#
+#    Emulates IO devices (screen, mouse, keyboard).
+#    Assumes values in main_memory are stored using decimal representation (type int) 
+#
+#  Attribution:
+#
+#     Code by www.jk-quantized.com
+#
+#  Redistribution and use of this code in source and binary forms must retain
+#  the above attribution notice and this condition.
+#
+# ========================================================================================
+
+
+# TODO: getPixelsFromMain_4BitMode()
+
+
 
 '''----------------------------- Imports -----------------------------'''
 
@@ -48,63 +67,71 @@ class IO():
 		# Screen ---
 		self.width = 512
 		self.height = 256
-		self.newContent = False
 
 		# Memory map ---
-		# self.screenMemStart = SCREEN_MEMORY_MAP
-		self.cmdNum = SCREEN_MEMORY_MAP + 0
-		self.arg0   = SCREEN_MEMORY_MAP + 1
-		self.arg1   = SCREEN_MEMORY_MAP + 2
-		self.arg2   = SCREEN_MEMORY_MAP + 3
-		self.arg3   = SCREEN_MEMORY_MAP + 4
-		self.arg4   = SCREEN_MEMORY_MAP + 5
+		self.addrScreenCmd  = SCREEN_MEMORY_MAP + 0
+		self.addrScreenArg0 = SCREEN_MEMORY_MAP + 1
+		self.addrScreenArg1 = SCREEN_MEMORY_MAP + 2
+		self.addrScreenArg2 = SCREEN_MEMORY_MAP + 3
+		self.addrScreenArg3 = SCREEN_MEMORY_MAP + 4
+		self.addrScreenArg4 = SCREEN_MEMORY_MAP + 5
 
-		# 1Bit color mode ---
-		self.fgColor = self.hex2rgb( SCREEN_FOREGROUND_COLOR )
-		self.bgColor = self.hex2rgb( SCREEN_BACKGROUND_COLOR )
-		self.colors = {
+		self.addrMouseP = MOUSE_MEMORY_MAP + 0
+		self.addrMouseX = MOUSE_MEMORY_MAP + 1
+		self.addrMouseY = MOUSE_MEMORY_MAP + 2
 
-			'0' : self.bgColor,
-			'1' : self.fgColor
-		}
-		self.nRegistersPerRow = self.width // self.N
-		self.nPixelsPerWord = self.N
-		self.nRegisters = self.height * self.nRegistersPerRow;
-		# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+		self.addrKeyP    = KEYBOARD_MEMORY_MAP + 0
+		self.addrKeyCode = KEYBOARD_MEMORY_MAP + 1
 
-		# 4Bit color mode ---
-		if COLOR_MODE_4BIT:
+		# Commands ---
+		self.cmds = [
 
-			self.colors = {}
+			None,
+			self.setColor,
+			self.drawPixel,
+			self.getPixel,
+			self.fillScreen,
+			self.drawFastHLine,
+			self.fillRect,
+			self.drawPixelBuffer,
+			self.drawPixelBuffer4,
+		]
 
-			for key, value in COLOR_PALETTE_4BIT.items():
+		# Colors ---
+		self.curColor = ( 0, 0, 0 )
 
-				self.colors[ key ] = self.hex2rgb( value )
+		# 1Bit color
+		self.colors_1 = {}
 
-			self.fgColor = self.colors[ '0111' ]
-			self.bgColor = self.colors[ '0000' ]
+		for key, value in COLOR_PALETTE_1BIT.items():
 
-			self.nRegistersPerRow *= 4
-			self.nPixelsPerWord = 4
-			self.nRegisters = self.height * self.nRegistersPerRow;
-			# self.screenMemEnd = self.screenMemStart + self.height * self.nRegistersPerRow;
+			self.colors_1[ key ] = self.hex2rgb( value )
+
+		self.nRegistersPerRow_1 = self.width // self.N
+		self.nPixelsPerWord_1   = self.N
+		self.nRegisters_1       = self.height * self.nRegistersPerRow_1;
+
+		# 4Bit color
+		self.colors_4 = {}
+
+		for key, value in COLOR_PALETTE_4BIT.items():
+
+			self.colors_4[ key ] = self.hex2rgb( value )
+
+		self.nRegistersPerRow_4  = self.nRegistersPerRow_1 * 4
+		self.nPixelsPerWord_4    = 4
+		self.nRegisters_4        = self.height * self.nRegistersPerRow_4;
 
 		# Pixel array ---
-		# Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
-		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.bgColor )   # np( nCols, nRows, z )
-		self.curColor = self.fgColor
-
-		# Initialize Pygame ---
-		# threading.Thread(
-		# 	target = self.initPygame,
-		# 	name = 'io_thread'
-		# ).start()
+		''' Pygame 'blit_array' expects a numpy array with [x][y] indexing (i.e. [column][row])
+		    np( nCols, nRows, z ) '''
+		self.pixelArray = numpy.full( ( self.width, self.height, 3 ), self.curColor )
 
 	def hex2rgb( self, h ):
 
-		r = int( h[ -6 : -4 ], 16 )
-		g = int( h[ -4 : -2 ], 16 )
-		b = int( h[ -2 :    ], 16 )
+		r = int( h[ - 6 : - 4 ], 16 )
+		g = int( h[ - 4 : - 2 ], 16 )
+		b = int( h[ - 2 :     ], 16 )
 
 		return( r, g, b )
 
@@ -186,6 +213,10 @@ class IO():
 
 					self.handleMouseReleased( event.button )
 
+				if event.type == pygame.MOUSEMOTION:
+
+					self.handleMouseMoved( event.pos )
+
 			# Update screen
 			self.updateScreen()
 
@@ -195,11 +226,16 @@ class IO():
 
 	# Screen ----------------------------------------------------
 
-	def handleScreenCS( self ): pass
-
 	def updateScreen( self ):
 
-		if self.newContent:  # update only if there's a change
+		# In hardware, this would be called on rising edge (of not zero)?
+
+		cmd = self.main_memory.read( self.addrCmd )
+
+		if cmd != 0:
+
+			# Execute command
+			self.cmds[ cmd ]()
 
 			# Blit pixel values
 			pygame.surfarray.blit_array( self.surface, self.pixelArray )
@@ -207,33 +243,26 @@ class IO():
 			# Update display
 			pygame.display.flip()
 
-			self.newContent = False	
+			# Mark completion
+			self.main_memory.write( 1, 0, 1, self.addrCmd )
 
-	def setColor( self, colorCode ):
+	def setColor( self ):
 
-		if COLOR_MODE_4BIT:
+		# Get args
+		r = self.main_memory.read( self.addrScreenArg0 )
+		g = self.main_memory.read( self.addrScreenArg1 )
+		b = self.main_memory.read( self.addrScreenArg2 )
 
-			key = toBinary( colorCode, 4 )
+		# Set color
+		self.curColor = ( r, g, b )
 
-			if not key in self.colors:
-
-				raise Exception( 'Color selection is not valid' )
-
-			self.curColor = self.colors[ key ] # temp
-
-		else:
-
-			key = str( colorCode )
-
-			if not key in self.colors:
-
-				raise Exception( 'Color selection is not valid - {}'.format( colorCode ) )
-
-			self.curColor = self.colors[ key ] # temp
-
-	def drawPixel( self, x, y ):
+	def drawPixel( self ):
 
 		''' Update only the relevant pixel '''
+
+		# Get args
+		x = self.main_memory.read( self.addrScreenArg0 )
+		y = self.main_memory.read( self.addrScreenArg1 )
 
 		# Check if coordinates are valid
 		if( x < 0 or x >= self.width or y < 0 or y >= self.height ):
@@ -244,8 +273,26 @@ class IO():
 		self.pixelArray[ x ][ y ] = self.curColor
 		# self.surface.set_at( ( x, y ), self.curColor )
 
-		# Mark screen for update
-		self.newContent = True
+	def getPixel( self, x, y ):
+
+		# Get args
+		x = self.main_memory.read( self.addrScreenArg0 )
+		y = self.main_memory.read( self.addrScreenArg1 )
+
+		# Check if coordinates are valid
+		if(
+			x < 0 or x >= self.width or
+			y < 0 or y >= self.height
+		):
+			raise Exception( 'getPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
+
+		# Get color
+		color = self.pixelArray[ x ][ y ]
+
+		# Write to memory
+		self.main_memory.write( 1, color[ 0 ], 1, self.addrScreenArg0 )
+		self.main_memory.write( 1, color[ 1 ], 1, self.addrScreenArg1 )
+		self.main_memory.write( 1, color[ 2 ], 1, self.addrScreenArg2 )
 
 	def flood( self, x, y, len ):
 
@@ -268,7 +315,12 @@ class IO():
 		# I can easily make this fast for numpy array, but what would be hardware equivalent?
 		pass
 
-	def drawFastHLine( self, x, y, w ):
+	def drawFastHLine( self ):
+
+		# Get args
+		x = self.main_memory.read( self.addrScreenArg0 )
+		y = self.main_memory.read( self.addrScreenArg1 )
+		w = self.main_memory.read( self.addrScreenArg2 )
 
 		# Check if coordinates are valid
 		if(
@@ -281,48 +333,33 @@ class IO():
 		# Draw line
 		self.flood( x, y, w )
 
-		# Mark screen for update
-		self.newContent = True
-
 	def fillScreen( self ):
 
 		self.flood( 0, 0, self.width * self.height )
 
-		# Mark screen for update
-		self.newContent = True
+	def fillRect( self ):
 
-	def getPixel( self, x, y ):
+		# Get args
+		x = self.main_memory.read( self.addrScreenArg0 )
+		y = self.main_memory.read( self.addrScreenArg1 )
+		w = self.main_memory.read( self.addrScreenArg2 )
+		h = self.main_memory.read( self.addrScreenArg3 )
 
 		# Check if coordinates are valid
 		if(
-			x < 0 or x >= self.width or
-			y < 0 or y >= self.height
+			w <= 0 or
+			h <= 0 or
+			x <  0 or ( x + w ) > self.width or
+			y <  0 or ( y + h ) > self.height
 		):
-			raise Exception( 'getPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
+			raise Exception( 'fillRect received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
 
-		# Get color
-		color = self.pixelArray[ x ][ y ]
+		# Draw fill lines horizontally
+		for i in range( y, y + h ):
 
-		# Lookup colorCode
-		for key, value in self.colors.items():
+			self.drawFastHLine( x, i, w )
 
-			if value == color:
-
-				colorCode = key
-
-		# Write to memory
-		self.main_memory.write( 1, colorCode, 1, SCREEN_MEMORY_MAP )  # TODO, get better location
-
-
-	def writePixelBuffer( self, pixBuffer, x, y, w, h ):
-
-		'''
-			Write current pixel values to main memory
-		'''
-		pass  # TODO, and test!
-
-
-	def drawPixelBuffer( self, pixBuffer, x, y, w, h ):
+	def drawPixelBuffer( self, bitMode = 2 ):
 
 		'''
 			Draw pixels from main memory.
@@ -334,6 +371,13 @@ class IO():
 
 			Slow because decoding packed representation.
 		'''
+
+		# Get args
+		pixBuffer = self.main_memory.read( self.addrScreenArg0 )
+		x         = self.main_memory.read( self.addrScreenArg1 )
+		y         = self.main_memory.read( self.addrScreenArg2 )
+		w         = self.main_memory.read( self.addrScreenArg3 )
+		h         = self.main_memory.read( self.addrScreenArg4 )
 
 		# Check if coordinates are valid
 		if(
@@ -347,7 +391,7 @@ class IO():
 		# Replace
 		if( w == self.width and h == self.height ):
 
-			if COLOR_MODE_4BIT:
+			if bitMode == 4:
 
 				self.getPixelsFromMain_4BitMode_fast( pixBuffer )
 
@@ -357,7 +401,7 @@ class IO():
 
 		else:
 
-			if COLOR_MODE_4BIT:
+			if bitMode == 4:
 
 				self.getPixelsFromMain_4BitMode( pixBuffer, x, y, w, h )
 
@@ -368,18 +412,22 @@ class IO():
 		# Mark screen for update
 		self.newContent = True
 
+	def drawPixelBuffer4( self ):
+
+		self.drawPixelBuffer( bitMode = 4 )
+
 	def getPixelsFromMain_1BitMode( self, pixBuffer, x, y, w, h ):
 
 		startX = x
 		endX   = x + w
 
-		startWord = startX // self.nPixelsPerWord
-		endWord   = ceil( endX / self.nPixelsPerWord )
+		startWord = startX // self.nPixelsPerWord_1
+		endWord   = ceil( endX / self.nPixelsPerWord_1 )
 
 		startWordOffset = startX % 16
 		endWordOffset   = endX % 16
 
-		regIdx = pixBuffer + ( y * self.nRegistersPerRow )
+		regIdx = pixBuffer + ( y * self.nRegistersPerRow_1 )
 
 		for y in range( y, y + h ):
 
@@ -392,7 +440,7 @@ class IO():
 
 				register = toBinary( register, self.N )
 
-				for i in range( self.nPixelsPerWord ):
+				for i in range( self.nPixelsPerWord_1 ):
 
 					if word == startWord and i < startWordOffset:
 
@@ -404,20 +452,20 @@ class IO():
 
 					pixel = register[ i ]
 
-					color = self.colors[ pixel ]  # look up corresponding color
+					color = self.colors_1[ pixel ]  # look up corresponding color
 
 					self.pixelArray[ x ][ y ] = color
 
 					x += 1					
 
-			regIdx += self.nRegistersPerRow
+			regIdx += self.nRegistersPerRow_1
 
 	def getPixelsFromMain_1BitMode_fast( self, pixBuffer ):
 
 		x = 0
 		y = 0
 
-		for regIdx in range( pixBuffer, pixBuffer + self.nRegisters ):
+		for regIdx in range( pixBuffer, pixBuffer + self.nRegisters_1 ):
 
 			register = self.main_memory.read( regIdx )
 
@@ -427,7 +475,7 @@ class IO():
 
 				pixel = register[ i ]
 
-				color = self.colors[ pixel ]  # look up corresponding color
+				color = self.colors_1[ pixel ]  # look up corresponding color
 
 				self.pixelArray[ x ][ y ] = color
 
@@ -447,7 +495,7 @@ class IO():
 		x = 0
 		y = 0
 
-		for idx in range( pixBuffer, pixBuffer + self.nRegisters ):
+		for idx in range( pixBuffer, pixBuffer + self.nRegisters_4 ):
 
 			register = self.main_memory.read( idx )
 
@@ -457,7 +505,7 @@ class IO():
 
 				pixel = register[ i : i + 4 ]
 
-				color = self.colors[ pixel ]  # look up corresponding color
+				color = self.colors_4[ pixel ]  # look up corresponding color
 
 				self.pixelArray[ x ][ y ] = color
 
@@ -480,28 +528,36 @@ class IO():
 		if button == 1:  # left button
 
 			# Write to memory
-			#  clk, data, write, address
-			self.main_memory.write( 1,        1, 1,  MOUSE_MEMORY_MAP )
-			self.main_memory.write( 1, pos[ 0 ], 1, MOUSEX_MEMORY_MAP )
-			self.main_memory.write( 1, pos[ 1 ], 1, MOUSEY_MEMORY_MAP )
+			self.main_memory.write( 1,        1, 1, self.addrMouseP )
+			self.main_memory.write( 1, pos[ 0 ], 1, self.addrMouseX )
+			self.main_memory.write( 1, pos[ 1 ], 1, self.addrMouseY )
 
 	def handleMouseReleased( self, button ):
 
-		''' If mouse button is released, write 0 '''
+		''' If mouse button is released, write 0
+		    Note: Too fast, cleared long before Hack program has chance to poll
+		'''
 
-		# if button == 1:  # left button
+		if button == 1:  # left button
 
-		# 	# Write to memory
-		# 	self.main_memory.write( 1, 0, 1, MOUSE_MEMORY_MAP )
+			# Write to memory
+			self.main_memory.write( 1, 0, 1, self.addrMouseP )
 
-		pass  # Too fast, cleared long before Hack program has chance to see
+	def handleMouseMoved( self, pos ):
+
+		''' If mouse is moved, update mouseX and mouseY '''
+
+		# Write to memory
+		self.main_memory.write( 1,        1, 1, self.addrMouseP )
+		self.main_memory.write( 1, pos[ 0 ], 1, self.addrMouseX )
+		self.main_memory.write( 1, pos[ 1 ], 1, self.addrMouseY )
 
 
 	# Keyboard --------------------------------------------------
 
 	def handleKeyPressed( self, key, modifier ):
 
-		''' If key is pressed, write keyCode '''
+		''' If key is pressed, write 1 and update keyCode '''
 
 		# Lookup keyCode
 		keyCode = self.lookupKey( key, modifier )
@@ -509,16 +565,17 @@ class IO():
 		print( 'Key pressed', key, modifier, keyCode )
 
 		# Write to memory
-		self.main_memory.write( 1, keyCode, 1, KBD_MEMORY_MAP )
+		self.main_memory.write( 1, 1, 1, self.addrKeyP )
+		self.main_memory.write( 1, keyCode, 1, self.addrKeyCode )
 
 	def handleKeyReleased( self ):
 
-		''' If key is released, write 0 '''
+		''' If key is released, write 0
+			Note: Too fast, cleared long before Hack program has chance to poll
+		'''
 
 		# Write to memory
-		# self.main_memory.write( 1, 0, 1,  KBD_MEMORY_MAP )
-
-		pass  # Too fast, cleared long before Hack program has chance to see
+		self.main_memory.write( 1, 0, 1, self.addrKeyP )
 
 	def lookupKey( self, key, modifier ):
 

@@ -1,5 +1,9 @@
 # ========================================================================================
 #
+#  Description:
+#
+#    Emulates execution of binary/machine code.
+#
 #  Attribution:
 # 
 #     Code by www.jk-quantized.com

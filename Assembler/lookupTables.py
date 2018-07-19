@@ -101,7 +101,7 @@ globalAddresses = {
 	'@GP2'     : '@15',
 
 	'@SCREEN'  : '@' + str( GC.SCREEN_MEMORY_MAP ),
-	'@KBD'     : '@' + str( GC.KBD_MEMORY_MAP ),
+	'@KBD'     : '@' + str( GC.KEYBOARD_MEMORY_MAP ),
 }
 
 def flip( d ):

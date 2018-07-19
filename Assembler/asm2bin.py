@@ -1,16 +1,16 @@
 # ========================================================================================
-# 
+#
 #  Description:
 # 
-#     Compiles Hack ASM (assembly) code to Hack BIN (binary) code
-# 
+#    Compiles Hack ASM (assembly) code to Hack BIN (binary) code
+#
 #  Attribution:
 # 
-#     Code by www.jk-quantized.com
+#    Code by www.jk-quantized.com
 # 
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-# 
+#
 # ========================================================================================
 
 '''
@@ -369,11 +369,15 @@ def handleVariables( cmdList ):
 
 				freeAddress += 1 	# register is no longer unallocated
 
-	print( 'Assembled program has {} global variables. Maximum is {}.'.format( freeAddress - static_segment_start, static_segment_size ) )
+	print( 'Assembled program has {} global variables. Maximum is {}.'.format(
 
-	if freeAddress > static_segment_end:
+		freeAddress - static_segment_start,
+		static_segment_size
+	) )
 
-		print( 'Assembled program exceeds maximum number of global variables by {}.'.format( freeAddress - static_segment_end ) )
+	# if freeAddress > static_segment_end:
+
+	# 	print( 'Assembled program exceeds maximum number of global variables by {}.'.format( freeAddress - static_segment_end ) )
 
 	return cmdList
 
