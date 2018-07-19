@@ -908,8 +908,6 @@ class Parser():
 
 		self.assignmentOps = Hack_lexicon[ 'assignmentOps' ]
 
-		self.includes = []
-
 	def parse( self ):
 
 		return self.parse_toplevel()
@@ -1896,7 +1894,9 @@ class Parser():
 
 			if self.is_str():
 			
-				self.includes.append( self.input.next()[ 'value' ] )
+				# self.includes.append( self.input.next()[ 'value' ] )
+				
+				self.input.next()  # skip
 
 			else:
 
@@ -1935,13 +1935,9 @@ class Compiler():
 		tree = parser.parse()
 		# prettyPrint( tree )
 
-		# return self.compiler.compile( tree )
-		
-		includes = parser.includes
-
 		translation = self.compiler.compile( tree )
 
-		return( translation, includes )
+		return( translation )
 
 
 # === Compiler - Hack VM ========================================
@@ -3043,98 +3039,103 @@ class CompileTo_HackVM():
 
 # -- Run -----------------------------------------
 
-def genVMFile( inputFilePath, outputFilePath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
+def getAbsoluteTargetPath ( relativeTargetPath, absoluteReferencePath ):
 
-	global USE_TECS_COMPATIBLE
-	global USE_BESPOKE_COMPATIBLE
+	if relativeTargetPath[ 0 : 2 ].upper() == 'C:':  # is absolute (assumes stored in C drive)
 
-	# Setup compatibility
-	USE_TECS_COMPATIBLE    = useTECSCompatibleVM
-	USE_BESPOKE_COMPATIBLE = useBespokeCompatibleVM
+		dirPath = relativeTargetPath.split( '/' )
+		dirPath = '/'.join( dirPath[ : - 1 ] )
 
-	# Init compiler
-	compiler = Compiler()
+		return ( relativeTargetPath, dirPath )
 
-	# Read
-	with open( inputFilePath, 'r' ) as file:
-		
-		jackCode = file.read()
+	p_path = absoluteReferencePath
+	r_path = relativeTargetPath
 
-	# Translate
-	vmCode, includes = compiler.compile( jackCode )
+	# Handle move up
+	traverseUp = re.match( '(\.\./)+', relativeTargetPath )  # '../'
 
-	# Write
-	with open( outputFilePath, 'w' ) as file:
+	if traverseUp:
 
-		file.write( vmCode )
+		traverseUp = traverseUp.group( 0 )
 
-	print( 'Done' )
+		nUp = traverseUp.count( '/' )
 
+		parentFolders = absoluteReferencePath.split( '/' )
 
+		p_path = '/'.join( parentFolders[ : - nUp ] )  # move up
 
-def getJackFilesFromDir( dirPath ):
-
-	fileNames = os.listdir( dirPath )
-
-	filePaths = []
-
-	for fileName in fileNames:
-
-		if fileName[ -4 : ] == 'jack':
-
-			filePath = dirPath + '/' + fileName
-
-			filePaths.append( filePath )
-
-	return filePaths
+		r_path = relativeTargetPath[ len( traverseUp ) : ]  # remove up
 
 
-def getDirPathFromFilePath( path ):
+	# Handle move down
+	absDirPath = p_path
 
-	return path[ : - len( path.split( '/' )[ - 1 ] ) ]
+	subFolders = r_path.split( '/' )
 
+	if len( subFolders ) > 1:
 
-def countDirsUp( path ):
+		absDirPath = '{}/{}'.format( p_path, '/'.join( subFolders[ : - 1 ] ) )
 
-	nDirsUp = 0
+	absFilePath = '{}/{}'.format( p_path, r_path )
 
-	while path[ 0 : 2 ] == '..':
-
-		nDirsUp += 1
-
-		path = path[ 3 : ]
-
-	return nDirsUp, path
+	#
+	return ( absFilePath, absDirPath )
 
 
-def makePathsAbsolute( curDir, paths ):
+def traverseFile ( filePath, fileDirPath, foundFiles ):
 
-	dirs = curDir.split( '/' )
+	with open( filePath, 'r' ) as file:
 
-	newPaths = []
+		for line in file:
 
-	for path in paths:
+			if line[ 0 : 7 ] == 'include':
 
-		f2 = path[ 0 : 2 ]
+				# print( '>>', line[ 8 : - 1 ] )
 
-		if f2.upper() != "C:":  # not absolute
+				include = re.search( r'"(.+)"', line ).group( 1 )  # allow variable spaces
 
-			if f2 == '..':
+				absFilePath, absDirPath = getAbsoluteTargetPath( include, fileDirPath )
 
-				nDirsUp, path = countDirsUp( path )
+				traverseFile( absFilePath, absDirPath, foundFiles )  # include of include
 
-				path = '/'.join( dirs[ : - nDirsUp ] ) + path
+				foundFiles.append( absFilePath )  # add after includes
 
-			elif path[ 0 ].isalnum():
+			elif line[ 0 : 5 ] == 'class':
 
-				path = curDir + path
-
-		newPaths.append( path )
-
-	return newPaths
+				break
 
 
-def translateFile( compiler, className, inputFilePath, outputDirPath, includes ):
+def traverseProgramTree ( inputDirPath ):
+
+	''' Order of includes matters.
+	    Generates a list of all files used by the program that
+	    preserves the order specified by include statements.
+	'''
+
+	foundFiles = []
+
+	filePath = inputDirPath + '/Main.jack'  # starting point
+
+	absFilePath = os.path.abspath( filePath )  # make absolute
+
+	absDirPath = os.path.dirname( absFilePath )
+
+	absFilePath = absFilePath.replace( '\\', '/' )  # use forward slashes
+	absDirPath  = absDirPath.replace( '\\', '/' )   # use forward slashes
+
+	traverseFile( absFilePath, absDirPath, foundFiles )
+
+	foundFiles.append( absFilePath )  # add after includes
+
+	# debug
+	# print( "Files used by program:" )
+	# for f in foundFiles:
+	# 	print( '  {}'.format( f ) )
+
+	return foundFiles
+
+
+def translateFile( compiler, className, inputFilePath, outputDirPath ):
 
 	print( ' - Translating {}'.format( inputFilePath ) )
 
@@ -3145,17 +3146,12 @@ def translateFile( compiler, className, inputFilePath, outputDirPath, includes )
 		
 		jackCode = file.read()
 
-	vmCode, includes_ = compiler.compile( jackCode )
+	vmCode = compiler.compile( jackCode )
 
 	# Write
 	with open( outputFilePath, 'w' ) as file:
 
 		file.write( vmCode )
-
-	# Handle includes
-	includes_ = makePathsAbsolute( getDirPathFromFilePath( inputFilePath ), includes_ )
-
-	includes.extend( includes_ )
 
 
 def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
@@ -3172,43 +3168,12 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 
 	# Translate jack files in input directory
 	classes = []
-	processedFiles = []
 
-	includes = []
-
-	# inputFilePaths = getJackFilesFromDir( inputDirPath )
-	inputFilePaths = [ inputDirPath + '/Main.jack' ]
+	inputFilePaths = traverseProgramTree( inputDirPath )
 
 	for inputFilePath in inputFilePaths:
 
 		className = re.search( '\w+(?=\.jack)', inputFilePath ).group( 0 )
-
-		if className in classes:
-
-			raise Exception( 'Error: More than one class is named {}\n\t{}\n\t{}\n'.format(
-
-				className,
-				'\n\t'.join( processedFiles ),
-				path
-			) )
-
-		else:
-
-			classes.append( className )
-
-			translateFile( compiler, className, inputFilePath, inputDirPath, includes )
-
-	processedFiles.extend( inputFilePaths )
-
-
-	# Translate 'included' jack files. Pass on 'included' vm files
-	vmIncludes = []
-
-	while len( includes ) > 0:
-
-		path = includes.pop( 0 )
-
-		className = re.search( '\w+(?=\.jack)|\w+(?=\.vm)', path ).group( 0 )
 
 		if className in classes:
 
@@ -3221,22 +3186,7 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 
 			classes.append( className )
 
-			# Generated VM files are appended to the input directory instead of 
-			#  replacing the ones in the source directory
-			if path[ - 4 : ] == 'jack':
-
-				translateFile( compiler, className, path, inputDirPath, includes )
-
-			# Paths of included VM files passed on as is
-			elif path[ - 2 : ] == 'vm':
-
-				vmIncludes.append( path )
-			
-			processedFiles.append( path )
-
-
-	# Return list of included VM files
-	return vmIncludes
+			translateFile( compiler, className, inputFilePath, inputDirPath )
 
 	# print( 'Done' )
 

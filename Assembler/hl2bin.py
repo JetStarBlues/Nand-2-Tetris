@@ -66,7 +66,7 @@ def hl_to_bin( inputDirPath ):
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
-	VM_includes.extend( hl2vm.genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM ) )
+	hl2vm.genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM )
 
 	# Generate VMX file
 	print( 'Generating VMX file...' )
