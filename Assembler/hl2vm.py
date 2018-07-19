@@ -3105,7 +3105,7 @@ def traverseFile ( filePath, fileDirPath, foundFiles ):
 				break
 
 
-def traverseProgramTree ( inputDirPath ):
+def traverseProgramTree ( startFilePath ):
 
 	''' Order of includes matters.
 	    Generates a list of all files used by the program that
@@ -3114,9 +3114,7 @@ def traverseProgramTree ( inputDirPath ):
 
 	foundFiles = []
 
-	filePath = inputDirPath + '/Main.jack'  # starting point
-
-	absFilePath = os.path.abspath( filePath )  # make absolute
+	absFilePath = os.path.abspath( startFilePath )  # make absolute
 
 	absDirPath = os.path.dirname( absFilePath )
 
@@ -3154,7 +3152,14 @@ def translateFile( compiler, className, inputFilePath, outputDirPath ):
 		file.write( vmCode )
 
 
-def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
+def genVMFile( inputFilePath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
+
+	inputDirPath = os.path.dirname( inputFilePath )
+
+	genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM, inputFilePath )
+
+
+def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False, startFilePath = None ):
 
 	global USE_TECS_COMPATIBLE
 	global USE_BESPOKE_COMPATIBLE
@@ -3166,10 +3171,15 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 	# Init compiler
 	compiler = Compiler()
 
-	# Translate jack files in input directory
-	classes = []
+	# Get program files
+	if startFilePath == None:
 
-	inputFilePaths = traverseProgramTree( inputDirPath )
+		startFilePath = inputDirPath + '/Main.jack'  # default
+
+	inputFilePaths = traverseProgramTree( startFilePath )
+
+	# Translate files
+	classes = []
 
 	for inputFilePath in inputFilePaths:
 
