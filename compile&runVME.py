@@ -39,8 +39,8 @@ inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode
 
 
 # Compile
-Assembler.hl2bin.hl_to_bin( inputDirPath )
-print()
+# Assembler.hl2bin.hl_to_bin( inputDirPath )
+# print()
 
 # Run
 Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )

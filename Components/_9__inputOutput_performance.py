@@ -160,7 +160,7 @@ class IO():
 		self.clock = pygame.time.Clock()
 
 		# Init background
-		self.surface.fill( self.bgColor )
+		# self.surface.fill( bgColor )
 		pygame.display.flip()
 
 		# Start loop
@@ -221,7 +221,9 @@ class IO():
 			self.updateScreen()
 
 			# Tick
+			#  FPS acts as delay (i.e. how often this loop is called and thus mousePos etc are checked)
 			self.clock.tick( self.maxFps )
+			# self.clock.tick()  # unbound
 
 
 	# Screen ----------------------------------------------------
@@ -230,9 +232,11 @@ class IO():
 
 		# In hardware, this would be called on rising edge (of not zero)?
 
-		cmd = self.main_memory.read( self.addrCmd )
+		cmd = self.main_memory.read( self.addrScreenCmd )
 
 		if cmd != 0:
+
+			# print( 'Received screen cmd -', self.cmds[ cmd ].__name__ )
 
 			# Execute command
 			self.cmds[ cmd ]()
@@ -244,7 +248,7 @@ class IO():
 			pygame.display.flip()
 
 			# Mark completion
-			self.main_memory.write( 1, 0, 1, self.addrCmd )
+			self.main_memory.write( 1, 0, 1, self.addrScreenCmd )
 
 	def setColor( self ):
 
@@ -252,6 +256,8 @@ class IO():
 		r = self.main_memory.read( self.addrScreenArg0 )
 		g = self.main_memory.read( self.addrScreenArg1 )
 		b = self.main_memory.read( self.addrScreenArg2 )
+
+		print( 'setColor( {}, {}, {} )'.format( r, g, b ) )
 
 		# Set color
 		self.curColor = ( r, g, b )
@@ -357,7 +363,7 @@ class IO():
 		# Draw fill lines horizontally
 		for i in range( y, y + h ):
 
-			self.drawFastHLine( x, i, w )
+			self.flood( x, i, w )
 
 	def drawPixelBuffer( self, bitMode = 2 ):
 

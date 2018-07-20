@@ -3152,14 +3152,14 @@ def translateFile( compiler, className, inputFilePath, outputDirPath ):
 		file.write( vmCode )
 
 
-def genVMFile( inputFilePath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
+def genVMFile( inputFilePath, libInputPaths = None, libOutputPath = None, useTECSCompatibleVM = False, useBespokeCompatibleVM = False ):
 
 	inputDirPath = os.path.dirname( inputFilePath )
 
-	genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM, inputFilePath )
+	genVMFiles( inputDirPath, libInputPaths, libOutputPath, useTECSCompatibleVM, useBespokeCompatibleVM, inputFilePath )
 
 
-def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleVM = False, startFilePath = None ):
+def genVMFiles( inputDirPath, libInputPaths = None, libOutputPath = None, useTECSCompatibleVM = False, useBespokeCompatibleVM = False, startFilePath = None ):
 
 	global USE_TECS_COMPATIBLE
 	global USE_BESPOKE_COMPATIBLE
@@ -3177,6 +3177,9 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 		startFilePath = inputDirPath + '/Main.jack'  # default
 
 	inputFilePaths = traverseProgramTree( startFilePath )
+
+	# Prepend library file paths
+	inputFilePaths = libInputPaths + inputFilePaths
 
 	# Translate files
 	classes = []
@@ -3196,7 +3199,13 @@ def genVMFiles( inputDirPath, useTECSCompatibleVM = False, useBespokeCompatibleV
 
 			classes.append( className )
 
-			translateFile( compiler, className, inputFilePath, inputDirPath )
+			outputDirPath = inputDirPath  # place VM files in program directory
+
+			if libOutputPath and ( inputFilePath in libInputPaths ):
+
+				outputDirPath = libOutputPath  # place VM files elsewhere (mainly for stdlibs)
+
+			translateFile( compiler, className, inputFilePath, outputDirPath )
 
 	# print( 'Done' )
 

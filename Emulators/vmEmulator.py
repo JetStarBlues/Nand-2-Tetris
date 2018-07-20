@@ -40,8 +40,8 @@
 import re
 import time
 import os
-from multiprocessing import Array, Process
 import threading
+from multiprocessing import Array, Process
 import yappi
 
 # Hack computer
@@ -59,9 +59,9 @@ debugPath = 'VMEmulatorDebug/'  # Folder where logs go
 
 debugMode = False
 
-useMultiprocessing = True  # Gains realized only if screen fps > 3
+useMultiprocessing = False  # Gains realized only if screen fps > 3
 
-runYappiProfile = True
+runYappiProfile = False
 
 
 # Setup computer -------------------
@@ -117,14 +117,6 @@ STATIC = 16
 
 # IO Helpers ------------------------
 
-if Components.COLOR_MODE_4BIT:
-
-	nColors = 16
-
-else:
-
-	nColors = 2
-
 class RAMWrapper():
 
 	def __init__( self, ram ):
@@ -165,11 +157,11 @@ def executeInstruction( cmd ):
 
 	if cmdType == 'push':
 
-		push( cmd[1], cmd[2], cmd )
+		push( cmd[ 1 ], cmd[ 2 ], cmd )
 
 	elif cmdType == 'pop':
 
-		pop( cmd[1], cmd[2], cmd )
+		pop( cmd[ 1 ], cmd[ 2 ], cmd )
 
 	elif cmdType in operations:
 
@@ -177,15 +169,15 @@ def executeInstruction( cmd ):
 
 	elif cmdType == 'goto':
 
-		goto( cmd[1] )
+		goto( cmd[ 1 ] )
 
 	elif cmdType == 'if-goto':
 
-		ifgoto( cmd[1] )
+		ifgoto( cmd[ 1 ] )
 
 	elif cmdType == 'call':
 
-		call( cmd[1], cmd[2] )
+		call( cmd[ 1 ], cmd[ 2 ] )
 
 	elif cmdType == 'return':
 
@@ -193,11 +185,11 @@ def executeInstruction( cmd ):
 
 	elif cmdType == 'label':
 
-		label( cmd[1] )
+		label( cmd[ 1 ] )
 
 	elif cmdType == 'function':
 
-		function( cmd[1], cmd[2] )
+		function( cmd[ 1 ], cmd[ 2 ] )
 
 	else:
 
@@ -220,7 +212,7 @@ def push( seg, index, cmd ):
 
 	elif seg == 'static':
 
-		RAM[ addr ] = RAM[ staticLookup[ cmd[3] ] ]
+		RAM[ addr ] = RAM[ staticLookup[ cmd[ 3 ] ] ]
 
 	elif seg == 'temp':
 
@@ -266,7 +258,7 @@ def pop( seg, index, cmd ):
 
 	elif seg == 'static':
 
-		RAM[ staticLookup[ cmd[3] ] ] = value
+		RAM[ staticLookup[ cmd[ 3 ] ] ] = value
 
 	elif seg == 'temp':
 
@@ -513,6 +505,8 @@ def function( fxName, nLocals ):
 
 	global yieldToExternal
 
+	# print( 'curFx - ', fxName )
+
 	# Init locals to zeros
 	for i in range( nLocals ):
 
@@ -566,147 +560,10 @@ def Sys_wait():
 	ret()
 
 
-# Graphics ---
-def GFX_drawPixel():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-
-	# Execute ---
-	io.drawPixel( x, y )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-def GFX_setColor():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	c = RAM[ argBase ]
-
-	# Execute ---
-
-	# Update static, `fgColor = color;`
-	#  Static indices depend on the order they are listed in 'GFX.jack'
-	# RAM[ staticLookup[ 'GFX_5' ] ] = c
-	RAM[ staticLookup[ 'GFX_0' ] ] = c
-
-	#
-	if c == negativeOne:  # c == True
-
-		c = 1
-
-	elif c > negativeOne or c >= nColors:  # c is outside 0..nColors
-
-		# raise Exception( 'Color selection is not valid - {}'.format( c ) )
-
-		# print( 'ERROR: Color selection is not valid' )
-		print( 'ERROR: Color selection is not valid - {}'.format( c ) )
-
-		# Halt program
-		haltOnError()
-
-		return
-
-	io.setColor( c )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-def GFX_drawFastHLine():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-	w = RAM[ argBase + 2 ]
-
-	# Execute ---
-	io.drawFastHLine( x, y, w )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-def GFX_fillScreen():
-
-	# Execute ---
-	io.fillScreen()
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-def GFX_getPixel():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-
-	# Execute ---
-	io.getPixel( x, y )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-
-def GFX_drawBuffer():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-	w = RAM[ argBase + 2 ]
-	h = RAM[ argBase + 3 ]
-
-	# Execute ---
-	io.??( x, y, w, h )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-
-def GFX_fillRect():
-
-	# Retrieve args ---
-	argBase = RAM[ ARG ]
-	x = RAM[ argBase ]
-	y = RAM[ argBase + 1 ]
-	w = RAM[ argBase + 2 ]
-	h = RAM[ argBase + 3 ]
-
-	# Execute ---
-	io.??( x, y, w, h )
-
-	# Return ---
-	push( 'constant', 0, None )
-	ret()
-
-
-# Math ---
-# hardware CORDIC?
-def Math_cos(): pass
-def Math_sin(): pass
-def Math_tan(): pass
-
-
+# ---
 OSWrappers = {
 
-	'Sys.wait'      : Sys_wait,
-
-	# 'GFX.drawPixel'       : GFX_drawPixel,
-	# 'GFX.setColor'        : GFX_setColor,
-	# 'GFX.drawFastHLine'   : GFX_drawFastHLine,
-	# 'GFX.fillScreen'      : GFX_fillScreen,
-	# 'GFX.getPixel'        : GFX_getPixel,
-	# 'GFX.replaceDisplayWithMainMemory' : GFX_replaceDisplayWithMainMemory
+	'Sys.wait'      : Sys_wait
 }
 
 
@@ -750,16 +607,16 @@ def extractProgram( inputFilePath ):
 
 			if cmd:
 
-				cmdType = cmd[0]
+				cmdType = cmd[ 0 ]
 
 				if cmdType == 'function':
 
-					curFx = cmd[1]
-					curClass = curFx.split( '.' )[0]
+					curFx = cmd[ 1 ]
+					curClass = curFx.split( '.' )[ 0 ]
 
-					addressLookup[ cmd[1] ] = addr
+					addressLookup[ cmd[ 1 ] ] = addr
 
-					cmd[2] = int( cmd[2] )  # cast nLocals to int
+					cmd[ 2 ] = int( cmd[ 2 ] )  # cast nLocals to int
 
 					ROM.append( cmd )
 
@@ -767,7 +624,7 @@ def extractProgram( inputFilePath ):
 
 					# Make labels globally unique
 
-					newLabel = '{}_{}'.format( curFx, cmd[1] )
+					newLabel = '{}_{}'.format( curFx, cmd[ 1 ] )
 
 					if cmdType == 'label':
 
@@ -777,13 +634,21 @@ def extractProgram( inputFilePath ):
 
 				elif cmdType == 'push' or cmdType == 'pop':
 
-					cmd[2] = int( cmd[2] )  # cast index to int
+					cmd[ 2 ] = int( cmd[ 2 ] )  # cast index to int
 
-					if cmd[1] == 'static':
+					if cmd[ 1 ] == 'static':
 
 						# Make static references globally unique
 
-						refName =  '{}_{}'.format( curClass, cmd[2] )
+						if len( cmd ) == 4:  # 'push/pop static index className' vs 'push/pop static index'
+
+							className = cmd[ 3 ]
+
+						else:
+
+							className = curClass
+
+						refName = '{}_{}'.format( className, cmd[ 2 ] )
 
 						if refName not in staticLookup:
 
@@ -797,13 +662,19 @@ def extractProgram( inputFilePath ):
 
 								raise Exception( 'Ran out of static space' )
 
-						cmd += [ refName ]
+						if len( cmd ) == 4:  # 'push/pop static index className' vs 'push/pop static index'
+
+							cmd[ 3 ] = refName
+
+						else:
+
+							cmd += [ refName ]
 
 					ROM.append( cmd )
 
 				elif cmdType == 'call':
 
-					cmd[2] = int( cmd[2] )  # cast nArgs to int
+					cmd[ 2 ] = int( cmd[ 2 ] )  # cast nArgs to int
 
 					ROM.append( cmd )
 
@@ -899,13 +770,13 @@ def dumpROMnAddresses():
 	with open( debugPath + 'addressDump', 'w' ) as file:
 
 		# Dump generated label addresses
-		for kv in sorted( addressLookup.items(), key = lambda x : x[1] ):
-			file.write( '{:<5} - {}\n'.format( kv[1], kv[0] ) )
+		for kv in sorted( addressLookup.items(), key = lambda x : x[ 1 ] ):
+			file.write( '{:<5} - {}\n'.format( kv[ 1 ], kv[ 0 ] ) )
 		file.write( '\n\n' )
 
 		# Dump generated static addresses
-		for kv in sorted( staticLookup.items(), key = lambda x : x[1] ):
-			file.write( '{:<3} - {}\n'.format( kv[1], kv[0] ) )
+		for kv in sorted( staticLookup.items(), key = lambda x : x[ 1 ] ):
+			file.write( '{:<3} - {}\n'.format( kv[ 1 ], kv[ 0 ] ) )
 
 
 # Computer --------------------------
@@ -1001,6 +872,11 @@ def tick():
 
 		PC_jump = False
 
+	''' Kinda hacky, workaround for different clocks.
+	    Pygame.Clock ticks at GC.SCREEN_FPS whereas Components.Clock ticks at unbound
+	'''
+	io.updateScreen()
+
 
 def update():
 
@@ -1009,7 +885,7 @@ def update():
 		tick()
 
 	# Handle exit via IO
-	if ( useMultiprocessing and not io_process.is_alive() ) or io.hasExited :
+	if io.hasExited or ( useMultiprocessing and not io_process.is_alive() ):
 
 		if debugMode:
 
@@ -1061,7 +937,7 @@ def run( programPath_ ):
 	global programPath
 
 	# Specify program
-	if programPath:
+	if programPath_:
 		
 		programPath = programPath_ 
 

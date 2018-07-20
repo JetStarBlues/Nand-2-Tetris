@@ -8,8 +8,6 @@ N_BITS = 16
 
 CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
-# SCREEN_FPS = 1
-# SCREEN_FPS = 24
 SCREEN_FPS = 30
 
 # Note, addressable memory is one less than N_BITS since 

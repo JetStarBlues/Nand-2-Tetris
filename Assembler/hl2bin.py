@@ -35,51 +35,62 @@ useBespokeCompatibleVM = True
 compileBinaries = True  # Generate assembly and binary files
 # compileBinaries = False
 
-OSPath = '../N2T_Code/Programs/precompiledOS'
+OSClasses = [  # ordered by dependency
+
+	"GlobalConstants",
+	"Array",
+	"DataMemory",
+	"Math",
+	"Font",
+	"Colors",
+	"GFX",
+	"Keyboard",
+	"String",
+	"Sys",
+]
+
+OS_HLPath = '../N2T_Code/OS'
+OS_VMPath = '../N2T_Code/Programs/precompiledOS'
+
+OS_HLFiles = [ '{}/{}.jack'.format( OS_HLPath, c ) for c in OSClasses ]
+OS_VMFiles = [ '{}/{}.vm'.format( OS_VMPath, c ) for c in OSClasses ]
 
 
-def compileOS():
+# def compileOS():
 
-	# Generate VM files
-	print( 'Generating OS VM files...' )
-	hl2vm.genVMFiles( OSPath, useTECSCompatibleVM, useBespokeCompatibleVM )
+# 	# Generate VM files
+# 	print( 'Generating OS VM files...' )
+# 	hl2vm.genVMFiles( OSPath, useTECSCompatibleVM, useBespokeCompatibleVM )
 
 
 def hl_to_bin( inputDirPath ):
 
-	# Compile OS
-	compileOS()
-
-	VM_includes = [
-
-		OSPath + '/GlobalConstants.vm',
-		OSPath + '/Array.vm',
-		OSPath + '/DataMemory.vm',
-		OSPath + '/Math.vm',
-		OSPath + '/Font.vm',
-		OSPath + '/Colors.vm',
-		OSPath + '/GFX.vm',
-		OSPath + '/Keyboard.vm',
-		OSPath + '/String.vm',
-		OSPath + '/Sys.vm',
-	]
+	#
+	# compileOS()
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
-	hl2vm.genVMFiles( inputDirPath, useTECSCompatibleVM, useBespokeCompatibleVM )
+	hl2vm.genVMFiles( 
+
+		inputDirPath,
+		libInputPaths = OS_HLFiles,
+		libOutputPath = OS_VMPath,
+		useTECSCompatibleVM = useTECSCompatibleVM,
+		useBespokeCompatibleVM = useBespokeCompatibleVM
+	)
 
 	# Generate VMX file
 	print( 'Generating VMX file...' )
 	# vm2vmx.genVMXFile( inputDirPath )
-	vm2vmx.genVMXFile( inputDirPath, libraryPaths = VM_includes )
+	vm2vmx.genVMXFile( inputDirPath, libraryPaths = OS_VMFiles )
 
 	if compileBinaries:
 
 		# Generate ASM file
 		print( 'Generating assembly file...' )
 		# vm2asm.genASMFile( inputDirPath )
-		vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes )
-		# vm2asm.genASMFile( inputDirPath, libraryPaths = VM_includes, debug = True )
+		vm2asm.genASMFile( inputDirPath, libraryPaths = OS_VMFiles )
+		# vm2asm.genASMFile( inputDirPath, libraryPaths = OS_VMFiles, debug = True )
 
 		# Generate BIN file
 		print( 'Generating binary file...' )
