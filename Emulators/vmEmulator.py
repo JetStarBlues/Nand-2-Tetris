@@ -873,7 +873,7 @@ def tick():
 		PC_jump = False
 
 	''' Kinda hacky, workaround for different clocks.
-	    Pygame.Clock ticks at GC.SCREEN_FPS whereas Components.Clock ticks at unbound
+	    Make IO screen updates run on CPU clock.
 	'''
 	io.updateScreen()
 
@@ -902,31 +902,18 @@ def update():
 	# Stop running when reach Sys.halt
 	if PC == sysHalt:
 
-		# TODO, none of these actions seem to lower processor use...
-
+		# Stop clock
 		clock.stop()
-		io.maxFps = 0  # stop screen refresh ??
 
-		# print( 'Sys.halt reached' )
+		# Stop (lower) screen update
+		io.maxFps = 1  # lowest can go is 1 FPS
+
 		print( 'Sys.halt reached. Took {0:.2f} seconds.'.format( time.time() - startTime ) )
 
 		# Profile... temp
 		if runYappiProfile:
 
 			yappi.get_func_stats().print_all()
-
-		# Am I really killing the clock and IO threads with the above??
-		main_thread = threading.main_thread()
-
-		for t in threading.enumerate():
-
-			print( t.getName(), t.isAlive() )  # Nope, they are still alive! TODO, how to properly stop them
-
-
-	#Hmmm
-	# if PC == addressLookup[ 'Main.main' ]:
-
-	# 	print( 'Main thread is alive', threading.main_thread().isAlive() )  # main dead...
 
 
 

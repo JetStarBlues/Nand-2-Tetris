@@ -176,52 +176,48 @@ class IO():
 
 	def run( self ):
 
+		''' Infinte update loop.
+		    Needed to keep Pygame alive. '''
+
 		while not self.hasExited:
 
 			# Poll input devices (mouse, keyboard)
 			for event in pygame.event.get():
 
-				if event.type == pygame.QUIT:  # click X
+				# Gracefully handle exit
+				if event.type == pygame.QUIT :  # clicked X
 
 					self.quitPygame()
 
 					return
 
-				if event.type == pygame.KEYDOWN:
+				elif event.type == pygame.KEYDOWN:
 
-					if event.key == 27:  # Escape
+					modifier = pygame.key.get_mods()
 
-						self.quitPygame()
+					self.handleKeyPressed( event.key, modifier )
 
-						return
-
-					else:
-
-						modifier = pygame.key.get_mods()
-
-						self.handleKeyPressed( event.key, modifier )
-
-				if event.type == pygame.KEYUP:
+				elif event.type == pygame.KEYUP:
 
 					self.handleKeyReleased()
 
-				if event.type == pygame.MOUSEBUTTONDOWN:
+				elif event.type == pygame.MOUSEBUTTONDOWN:
 
 					self.handleMousePressed( event.button, event.pos )
 
-				if event.type == pygame.MOUSEBUTTONUP:
+				elif event.type == pygame.MOUSEBUTTONUP:
 
 					self.handleMouseReleased( event.button )
 
-				if event.type == pygame.MOUSEMOTION:
+				elif event.type == pygame.MOUSEMOTION:
 
 					self.handleMouseMoved( event.pos )
 
 			# Update screen
-			self.updateScreen()
+			# self.updateScreen()
 
 			# Tick
-			#  FPS acts as delay (i.e. how often this loop is called and thus mousePos etc are checked)
+			#  FPS acts as delay (i.e. how often this loop is called)
 			self.clock.tick( self.maxFps )
 			# self.clock.tick()  # unbound
 
@@ -257,7 +253,7 @@ class IO():
 		g = self.main_memory.read( self.addrScreenArg1 )
 		b = self.main_memory.read( self.addrScreenArg2 )
 
-		print( 'setColor( {}, {}, {} )'.format( r, g, b ) )
+		# print( 'setColor( {}, {}, {} )'.format( r, g, b ) )
 
 		# Set color
 		self.curColor = ( r, g, b )
@@ -529,7 +525,7 @@ class IO():
 
 		''' If mouse button is pressed, write 1 and update mouseX and mouseY '''
 
-		# print( 'Mouse pressed', pos )
+		print( 'Mouse pressed', pos )
 
 		if button == 1:  # left button
 

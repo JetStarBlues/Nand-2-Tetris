@@ -8,11 +8,13 @@ N_BITS = 16
 
 CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
-SCREEN_FPS = 30
+SCREEN_FPS = 1
+# SCREEN_FPS = 15
+# SCREEN_FPS = 30
 
 # Note, addressable memory is one less than N_BITS since 
 #  first bit reserved ( used to decide if A or C instruction )
-PROGRAM_MEMORY_SIZE = 2**16
+PROGRAM_MEMORY_SIZE = 2**26
 DATA_MEMORY_SIZE    = 2**16
 
 # RAM Allocation (compatible)
