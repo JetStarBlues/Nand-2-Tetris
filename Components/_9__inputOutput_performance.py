@@ -91,6 +91,7 @@ class IO():
 			self.drawPixel,
 			self.getPixel,
 			self.fillScreen,
+			self.drawFastVLine,
 			self.drawFastHLine,
 			self.fillRect,
 			self.drawPixelBuffer,
@@ -267,7 +268,10 @@ class IO():
 		y = self.main_memory.read( self.addrScreenArg1 )
 
 		# Check if coordinates are valid
-		if( x < 0 or x >= self.width or y < 0 or y >= self.height ):
+		if(
+			x < 0 or x >= self.width or
+			y < 0 or y >= self.height
+		):
 
 			raise Exception( 'drawPixel received invalid argument(s): ( {}, {} )'.format( x, y ) )
 
@@ -312,10 +316,25 @@ class IO():
 				x = 0
 				y += 1
 
-	def drawFastVLine( self, x, y, h ):
+	def drawFastVLine( self ):
 
-		# I can easily make this fast for numpy array, but what would be hardware equivalent?
-		pass
+		# Get args
+		x = self.main_memory.read( self.addrScreenArg0 )
+		y = self.main_memory.read( self.addrScreenArg1 )
+		h = self.main_memory.read( self.addrScreenArg2 )
+
+		# Check if coordinates are valid
+		if(
+			h <= 0 or 
+			x <  0 or         x >= self.width or
+			y <  0 or ( y + h ) >  self.height
+		):
+			raise Exception( 'drawFastVLine received invalid argument(s): ( {}, {}, {} )'.format( x, y, h ) )
+
+		# Draw line
+		for y2 in range( y, y + h ):
+
+			self.pixelArray[ x ][ y2 ] = self.curColor
 
 	def drawFastHLine( self ):
 
@@ -327,8 +346,8 @@ class IO():
 		# Check if coordinates are valid
 		if(
 			w <= 0 or 
-			x <  0 or ( x + w ) > self.width or
-			y <  0 or         y > self.height
+			x <  0 or ( x + w ) >  self.width or
+			y <  0 or         y >= self.height
 		):
 			raise Exception( 'drawFastHLine received invalid argument(s): ( {}, {}, {} )'.format( x, y, w ) )
 
@@ -564,7 +583,8 @@ class IO():
 		# Lookup keyCode
 		keyCode = self.lookupKey( key, modifier )
 
-		print( 'Key pressed', key, modifier, keyCode )
+		# print( 'Key pressed', key, modifier, keyCode )
+		print( 'Key pressed', keyCode )
 
 		# Write to memory
 		self.main_memory.write( 1, 1, 1, self.addrKeyP )

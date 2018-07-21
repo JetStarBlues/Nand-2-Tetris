@@ -13,7 +13,7 @@ import Emulators.vmEmulator
 # inputDirPath = '../N2T_Code/Programs/HashTable'
 # inputDirPath = '../N2T_Code/Programs/LinkedList'
 # inputDirPath = '../N2T_Code/Programs/pong'
-inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode'
+# inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/sanity'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/modifiedCode'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Trigonometry/modifiedCode'
@@ -29,7 +29,7 @@ inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/string'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/memory'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/math'
-# inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
+inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/includesOfIncludes'
@@ -39,8 +39,8 @@ inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Creature/modifiedCode
 
 
 # Compile
-# Assembler.hl2bin.hl_to_bin( inputDirPath )
-# print()
+Assembler.hl2bin.hl_to_bin( inputDirPath )
+print()
 
 # Run
 Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )

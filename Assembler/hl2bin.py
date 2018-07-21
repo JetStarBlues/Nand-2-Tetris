@@ -32,8 +32,8 @@ useTECSCompatibleVM = False
 useBespokeCompatibleVM = True
 # useBespokeCompatibleVM = False
 
-compileBinaries = True  # Generate assembly and binary files
-# compileBinaries = False
+# compileBinaries = True  # Generate assembly and binary files
+compileBinaries = False
 
 OSClasses = [  # ordered by dependency
 

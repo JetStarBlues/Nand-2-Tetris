@@ -2466,13 +2466,11 @@ class CompileTo_HackVM():
 
 
 		# -- Right
-		s += self.compile_expression( exp[ 'right' ] )
-
 		# If compound assignment (+=, -=, *= etc), push left and op
 		if op != '=': 
 
 			s += self.push_( left[ 'segName' ], left[ 'segIdx' ], className )
-			
+
 			if arrIdx:
 
 				# Calc index
@@ -2483,7 +2481,13 @@ class CompileTo_HackVM():
 				s += self.pop_( 'pointer', 1 )
 				s += self.push_( 'that', 0 )
 
+			s += self.compile_expression( exp[ 'right' ] )
+
 			s += self.compile_binaryOp( op[ : - 1 ] )
+
+		else:
+
+			s += self.compile_expression( exp[ 'right' ] )
 
 
 		# -- Pop to left
