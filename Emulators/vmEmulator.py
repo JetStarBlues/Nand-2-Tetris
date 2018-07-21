@@ -39,9 +39,7 @@
 # Built ins
 import re
 import time
-import os
 import threading
-from multiprocessing import Array, Process
 import yappi
 
 # Hack computer
@@ -59,8 +57,6 @@ debugPath = 'VMEmulatorDebug/'  # Folder where logs go
 
 debugMode = False
 
-useMultiprocessing = False  # Gains realized only if screen fps > 3
-
 runYappiProfile = False
 
 
@@ -74,14 +70,7 @@ PC = 0
 PC_prev = 0
 PC_jump = False
 
-RAM = None
-if useMultiprocessing:
-
-	RAM = Array( 'i', 2 ** 16 )  # Slower than 'list', but allows IO to be run in separate process
-
-else:
-
-	RAM = [ 0 ] * ( 2 ** 16 )
+RAM = [ 0 ] * ( 2 ** 16 )
 
 ROM = []  # Psuedo ROM, loaded with VM code
 
@@ -885,7 +874,7 @@ def update():
 		tick()
 
 	# Handle exit via IO
-	if io.hasExited or ( useMultiprocessing and not io_process.is_alive() ):
+	if io.hasExited:
 
 		if debugMode:
 
@@ -938,42 +927,6 @@ def run( programPath_ ):
 
 	# Start IO
 	io.runAsThread()
-
-	# Start clock
-	clock.run()
-
-	print( 'Program has started' )
-
-	startTime = time.time()
-
-
-if __name__ == '__main__':
-
-	''' For whatever reason, multiprocessing.Process needs to be
-	    started from within this block.
-	    See, https://stackoverflow.com/a/42617612/
-	'''
-
-	# Setup
-	setup()
-
-	# Profile... temp
-	if runYappiProfile:
-
-		yappi.start()
-
-	# Start IO
-	if useMultiprocessing:
-
-		io_process = Process(
-			target = io.initPygame,
-			name   = 'io_process'
-		)
-		io_process.start()
-
-	else:
-
-		io.runAsThread()
 
 	# Start clock
 	clock.run()
