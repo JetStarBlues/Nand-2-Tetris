@@ -1,0 +1,105 @@
+Accurate comparisons
+
+http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
+
+====================
+
+@TEMP2  // y
+@TEMP1  // x
+
+====================
+
+(comp_lt)
+	@xIsNotNeg
+	D ; JGE  // x is not neg
+
+(xIsNeg)
+	@TEMP2
+	D = M  // y
+
+	@xIsNeg&yIsNeg
+	D ; JLT  // y is neg
+
+(xIsNeg&yIsNotNeg)   <---
+	D = - 1  // true
+	@end
+	0 ; JMP
+
+(xIsNotNeg)
+	@TEMP2
+	D = M  // y
+
+	@xIsNotNeg&yIsNotNeg
+	D ; JGE  // y is not neg
+
+(xIsNotNeg&yisNeg)   <---
+	D = 0  // false
+	@end
+	0 ; JMP
+
+(xIsNeg&yIsNeg)
+(xIsNotNeg&yIsNotNeg)
+	// D = Y
+	@TEMP1
+	D = M - D  // x - y
+
+	@dIsNotNeg
+	D ; JGE
+
+(dIsNeg)            <---
+	D = - 1  // true
+	@end
+	0 ; JMP
+
+(dIsNotNeg)         <---
+	D = 0  // false
+	@end
+	0 ; JMP
+
+(end)
+
+
+===========================
+
+
+(xIsNeg&yIsNeg)
+(xIsNotNeg&yIsNotNeg)
+	// D = Y
+	@TEMP1
+	D = M - D  // x - y
+
+	@dIsNotNeg
+	D ; JGE
+
+(dIsNeg)            <---
+	D = - 1  // true
+	@end
+	0 ; JMP
+
+(dIsNotNeg)
+	
+	@dIsNotNeg&dIsNotZero
+	D ; JNE
+
+(dIsNotNeg&dIsZero)
+	D = - 1  // true
+	@end
+	0 ; JMP
+
+(dIsNotNeg&dIsNotZero)
+	D = 0  // false
+	@end
+	0 ; JMP
+
+(end)
+
+
+===========================
+
+@lte
+0 ; JMP
+
+(ret)
+D = ! D
+
+(end)

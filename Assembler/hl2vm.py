@@ -25,7 +25,7 @@
 #
 # ========================================================================================
 
-# TODO: Relative includes...
+# TODO: Support escaped quotes '\"' in strings
 
 
 # === Imports ===================================================
@@ -218,7 +218,7 @@ def testInputStream():
 	- if non-zero digit, read a number
 	- if letter,         read an identifier or keyword
 	- if punctuation,    return punctuation token
-	- if oper character, return operator token
+	- if op   character, return operator token
 	- if none of above,  raise error
 '''
 
@@ -2923,7 +2923,7 @@ class CompileTo_HackVM():
 
 						i += 2
 
-					else:
+					else:  # treat as standalone backslash
 
 						c = ord( c )
 						i += 1
@@ -3196,7 +3196,7 @@ def genVMFiles( inputDirPath, libInputPaths = None, libOutputPath = None, useTEC
 
 			print( ' Note: More than one class is named {}. As such, ignored \n\t{}'.format(
 
-				className, path
+				className, inputFilePath
 			) )
 
 		else:

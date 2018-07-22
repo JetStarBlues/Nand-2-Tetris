@@ -46,12 +46,12 @@
 
 '''
 	TODO
+	- test comparison ops!
+
 	- optimize for 0, 1, -1, 'x+1', 'x-1',
 		push constant 0/1
 		(neg/add/sub)
 		pop static/local/arg idx
-
-	- correct comparison ops
 '''
 
 
@@ -597,7 +597,7 @@ class Compiler():
 		
 		# True
 		s.append( self.label( cTrue ) )
-		s.append( 'D = 1' )
+		s.append( 'D = - 1' )
 		
 		# End/continue
 		s.append( self.label( cEnd ) )
@@ -640,328 +640,259 @@ class Compiler():
 
 	def compile_comparisonOp2_( self, op ):
 
-		# TODO, test this!
-
-		''' 
-			Applies to gt, gte, lt, lte.
-			In short, use of two's complement slightly complicates comparison. See,
-			http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
-		'''
-
 		s = []
 
-		cTrue     = 'comp_true{}'.format( self.compCount )
-		cEnd      = 'comp_end{}'.format( self.compCount )
 		returnPos = 'comp_returnPosition{}'.format( self.compCount )
 		self.compCount += 1
 
-		# Save a and b values
+		# Save x and y values
 		s.append( 'B = M' )
 		s.append( self.atTemp( 1 ) )
-		s.append( 'M = B' )          # a
+		s.append( 'M = B' )          # x
 		s.append( self.atTemp( 2 ) )
-		s.append( 'M = D' )          # b
+		s.append( 'M = D' )          # y
 
 		# Save return position
 		s.append( self.at( returnPos ) )
 		s.append( 'D = A' )
-		s.append( self.atTemp( 0 ) )
+		s.append( self.atTemp( 3 ) )
 		s.append( 'M = D' )
 
-		# Set compType, used by comparisonOp_generic_
-		if op == 'gt':
-			
-			s.append( 'D = 0' )
+		# Goto respective generic comparison function
+		#  Sets D to result of comparison
+		if op == 'lt':
 
-		elif op == 'gte':
-			
-			s.append( 'D = 1' )
-
-		elif op == 'lt':
-
-			s.append( self.at( 2 ) )
-			s.append( 'D = A' )
+			s.append( self.at( '$_genericComparisonOpLt' ) )
+			s.append( '0 ; JMP' )
 
 		elif op == 'lte':
 
-			s.append( self.at( 3 ) )
-			s.append( 'D = A' )
+			s.append( self.at( '$_genericComparisonOpLte' ) )
+			s.append( '0 ; JMP' )
 
-		s.append( self.at( 'compType' ) )
-		s.append( 'M = D' )
+		elif op == 'gt':
 
-		# Goto comparisonOp_generic. Sets D to result of comparison
-		s.append( self.at( '$_genericComparisonOp' ) )
-		s.append( '0 ; JMP' )
+			s.append( self.at( '$_genericComparisonOpLte' ) )
+			s.append( '0 ; JMP' )
+
+		elif op == 'gte':
+
+			s.append( self.at( '$_genericComparisonOpLt' ) )
+			s.append( '0 ; JMP' )
 
 		# Create label for return position
 		s.append( self.label( returnPos ) )
 
-		# Set return value
-		s.append( self.at( cTrue ) )
-		s.append( 'D ; {}'.format( comparisonOps[ op ] ) )
-		
-		# False
-		s.append( 'D = 0' )
-		s.append( self.at( cEnd ) )
-		s.append( '0 ; JMP' )
-		
-		# True
-		s.append( self.label( cTrue ) )
-		s.append( 'D = 1' )
-		
-		# End/continue
-		s.append( self.label( cEnd ) )
+		if op == 'gt' or op == 'gte':
 
+			s.append( 'D = ! D' )
+
+		#
 		return self.a2s( s )
 
 
-	def compile_comparisonOp2_bootstrap( self ):
+	def compile_comparisonOp2_bootsrap( self ):
+
+		''' Code is based on @Cadet1620's answer on this forum discussion:
+		      http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
+		'''
 
 		'''
 			Python equivalent of what subsequent assembly code aims to do
 
-			zr, ng        = isDiffZrNg( a, b )
-			oppositeSigns = isOppositeSigns( a, b )
-			aIsNeg        = isNegative( a )
+			def lt ( x, y ):
 
-			def _gt ( a, b ):
+				if isNeg( x ):
 
-				if oppositeSigns:
+					if not isNeg( y ):
 
-					value = not aIsNeg
+						return True
 
-				else:  # same signs
-
-					value = not ( zr or ng )
-
-			def _gte ( a, b ):
-
-				if oppositeSigns:
-
-					value = not aIsNeg
+					# isNeg( x ) and isNeg( y ) - aka same signs
 
 				else:
 
-					value = not ng
+					if isNeg( y ):
 
-			def _lt ( a, b ):
+						return False
 
-				if oppositeSigns:
+					# not isNeg( x ) and not isNeg( y ) - aka same signs
 
-					value = aIsNeg
+				# same signs
+				if isNeg( d ):
 
-				else:
-
-					value = ng
-
-			def _lte ( a, b ):
-
-				if oppositeSigns:
-
-					value = aIsNeg
+					return True
 
 				else:
 
-					value = zr or ng
+					return False
+
+
+			def lte ( x, y ):
+
+				d = x - y
+
+				if isNeg( x ):
+
+					if not isNeg( y ):
+
+						return True
+
+					# isNeg( x ) and isNeg( y ) - aka same signs
+
+				else:
+
+					if isNeg( y ):
+
+						return False
+
+					# not isNeg( x ) and not isNeg( y ) - aka same signs
+
+				# same signs
+				if isNeg( d ):
+
+					return True
+
+				else:
+
+					if isZero( d ):
+
+						return True
+
+					else:
+
+						return False
+
+
+			def gt ( x, y ):
+
+				return not lte(x, y )
+
+			def gte ( x, y ):
+
+				return not lt( x, y )
 		'''
 
 		s = []
 
+		# ___ Lt _______________________________________________________________
+
 		# Create label
-		s.append( self.label( '$_genericComparisonOp' ) )
+		s.append( self.label( '$_genericComparisonOpLt' ) )
+
+		s.append(    self.at( 'xIsNotNeg___lt' ) )
+		s.append(    'D ; JGE' )
+
+		s.append( self.label( 'xIsNeg___lt' ) )
+		s.append(    self.atTemp( 2 ) )
+		s.append(    'D = M' )                                     # y
+
+		s.append(    self.at( 'xIsNeg_and_yIsNeg___lt' ) )
+		s.append(    'D ; JLT' )
+
+		s.append( self.label( 'xIsNeg_and_yIsNotNeg___lt' ) )      # <--- return
+		s.append(    'D = - 1' )                                   # true
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
+
+		s.append( self.label( 'xIsNotNeg___lt' ) )
+		s.append(    self.atTemp( 2 ) )
+		s.append(    'D = M' )                                     # y
+
+		s.append(    self.at( 'xIsNotNeg_and_yIsNotNeg___lt' ) )
+		s.append(    'D ; JGE' )
+
+		s.append( self.label( 'xIsNotNeg_and_yisNeg___lt' ) )      # <--- return
+		s.append(    'D = 0' )                                     # false
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
+
+		s.append( self.label( 'xIsNeg_and_yIsNeg___lt' ) )
+		s.append( self.label( 'xIsNotNeg_and_yIsNotNeg___lt' ) )
+		# D = Y
+		s.append(    self.atTemp( 1 ) )
+		s.append(    'D = M - D' )                                 # x - y
+
+		s.append(    self.at( 'dIsNotNeg___lt' ) )
+		s.append(    'D ; JGE' )
+
+		s.append( self.label( 'dIsNeg___lt' ) )                    # <--- return
+		s.append(    'D = - 1' )                                   # true
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
+
+		s.append( self.label( 'dIsNotNeg___lt' ) )                 # <--- return
+		s.append(    'D = 0' )                                     # false
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
 
-		# ___ Calc zr, ng, aIsNeg, oppSigns ____________________________________
+		# ___ Lte ______________________________________________________________
 
-		# Calc difference is zr
-		s.append( 'D = B - D' )
-		s.append( self.at( 'genericComparisonOp_isZero' ) )
-		s.append( 'D ; JEQ' )                                    # (a - b) eq zero
+		# Create label
+		s.append( self.label( '$_genericComparisonOpLte' ) )
 
-		s.append( self.at( 'zr' ) )
-		s.append( 'M = 0' )                                      # false
-		s.append( self.at( 'genericComparisonOp_cont0' ) )
-		s.append( '0 ; JMP' )
+		s.append(    self.at( 'xIsNotNeg___lte' ) )
+		s.append(    'D ; JGE' )
 
-		s.append( self.label( 'genericComparisonOp_isZero' ) )
-		s.append( self.at( 'zr' ) )
-		s.append( 'M = 1' )                                      # true
+		s.append( self.label( 'xIsNeg___lte' ) )
+		s.append(    self.atTemp( 2 ) )
+		s.append(    'D = M' )                                      # y
 
-		s.append( self.label( 'genericComparisonOp_cont0' ) )
+		s.append(    self.at( 'xIsNeg_and_yIsNeg___lte' ) )
+		s.append(    'D ; JLT' )
 
+		s.append( self.label( 'xIsNeg_and_yIsNotNeg___lte' ) )      # <--- return
+		s.append(    'D = - 1' )                                    # true
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
-		# Calc difference is ng
-		s.append( self.at( 'genericComparisonOp_isNeg' ) )
-		s.append( 'D ; JLT ' )                                   # (a - b) lt zero
+		s.append( self.label( 'xIsNotNeg___lte' ) )
+		s.append(    self.atTemp( 2 ) )
+		s.append(    'D = M' )                                      # y
 
-		s.append( self.at( 'ng' ) )
-		s.append( 'M = 0' )                                      # false
-		s.append( self.at( 'genericComparisonOp_cont1' ) )
-		s.append( '0 ; JMP' )
+		s.append(    self.at( 'xIsNotNeg_and_yIsNotNeg___lte' ) )
+		s.append(    'D ; JGE' )
 
-		s.append( self.label( 'genericComparisonOp_isNeg' ) )
-		s.append( self.at( 'ng' ) )
-		s.append( 'M = 1' )                                      # true
+		s.append( self.label( 'xIsNotNeg_and_yisNeg___lte' ) )      # <--- return
+		s.append(    'D = 0' )                                      # false
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
-		s.append( self.label( 'genericComparisonOp_cont1' ) )
+		s.append( self.label( 'xIsNeg_and_yIsNeg___lte' ) )
+		s.append( self.label( 'xIsNotNeg_and_yIsNotNeg___lte' ) )
+		# D = Y
+		s.append(    self.atTemp( 1 ) )
+		s.append(    'D = M - D' )                                  # x - y
 
+		s.append(    self.at( 'dIsNotNeg___lte' ) )
+		s.append(    'D ; JGE' )
 
-		# Calc aIsNeg
-		s.append( self.at( 32767 ) )
-		s.append( 'D = ! A' )                                    # 32768
-		s.append( self.atTemp( 1 ) )
-		s.append( 'D = M & D' )                                  # a & 32768
-		s.append( self.at( 'genericComparisonOp_aIsPos' ) )
-		s.append( 'D ; JEQ' )                                    # msb = 0
+		s.append( self.label( 'dIsNeg___lte' ) )                    # <--- return
+		s.append(    'D = - 1' )                                    # true
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'M = 1' )
-		s.append( self.at( 'genericComparisonOp_cont2' ) )
-		s.append( '0 ; JMP' )
+		s.append( self.label( 'dIsNotNeg___lte' ) )
+		s.append(    self.at( 'dIsNotNeg_and_dIsNotZero___lte' ) )
+		s.append(    'D ; JNE' )
 
-		s.append( self.label( 'genericComparisonOp_aIsPos' ) )
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'M = 0' )
+		s.append( self.label( 'dIsNotNeg_and_dIsZero___lte' ) )     # <--- return
+		s.append(    'D = - 1' )                                    # true
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
-		s.append( self.label( 'genericComparisonOp_cont2' ) )
-
-
-		# Calc bIsNeg
-		s.append( self.at( 32767 ) )
-		s.append( 'D = ! A' )                                    # 32768
-		s.append( self.atTemp( 2 ) )
-		s.append( 'D = M & D' )                                  # b & 32768
-		s.append( self.at( 'genericComparisonOp_aIsPos' ) )
-		s.append( 'D ; JEQ' )                                    # msb = 0
-
-		s.append( 'D = 1' )
-		s.append( self.at( 'genericComparisonOp_cont2' ) )
-		s.append( '0 ; JMP' )
-
-		s.append( self.label( 'genericComparisonOp_aIsPos' ) )
-		s.append( 'D = 0' )
-
-		s.append( self.label( 'genericComparisonOp_cont2' ) )
-
-
-		# Calc opposite signs
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'D = M ^ D' )                                  # aIsNeg ^ bIsNeg
-		s.append( self.at( 'oppSigns' ) )
-		s.append( 'M = D' )
-
-
-		# ___ Jump to appropriate comparison ___________________________________
-
-		s.append( self.at( 'compType' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'genericComparisonOp_gt' ) )
-		s.append( 'D ; JEQ' )
-		s.append( self.at( 'genericComparisonOp_gte' ) )
-		s.append( 'D - 1; JEQ' )
-		s.append( self.at( 2 ) )
-		s.append( 'B = D - A' )
-		s.append( self.at( 'genericComparisonOp_lt' ) )
-		s.append( 'B ; JEQ' )
-		s.append( self.at( 3 ) )
-		s.append( 'B = D - A' )
-		s.append( self.at( 'genericComparisonOp_lte' ) )
-		s.append( 'B ; JEQ' )
-
-
-		# ___ Comparison logic _________________________________________________
-
-		# gt
-		s.append( self.label( 'genericComparisonOp_gt' ) )
-
-		s.append( self.at( 'oppSigns' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'genericComparisonOp_gt_sameSigns' ) )
-
-		s.append( 'D ; JEQ' )
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'D = ! M' )                                    # ! aIsNeg
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-		s.append( self.label( 'genericComparisonOp_gt_sameSigns' ) )
-		s.append( self.at( 'zr' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'ng' ) )
-		s.append( 'D = M | D' )
-		s.append( 'D = ! D' )                                    # ! ( zr | ng )
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-
-		# gte
-		s.append( self.label( 'genericComparisonOp_gte' ) )
-
-		s.append( self.at( 'oppSigns' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'genericComparisonOp_gte_sameSigns' ) )
-
-		s.append( 'D ; JEQ' )
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'D = ! M' )                                    # ! aIsNeg
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-		s.append( self.label( 'genericComparisonOp_gte_sameSigns' ) )
-		s.append( self.at( 'ng' ) )
-		s.append( 'D = ! M' )                                    # ! ng
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-
-		# lt
-		s.append( self.label( 'genericComparisonOp_lt' ) )
-
-		s.append( self.at( 'oppSigns' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'genericComparisonOp_lt_sameSigns' ) )
-
-		s.append( 'D ; JEQ' )
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'D = M' )                                      # aIsNeg
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-		s.append( self.label( 'genericComparisonOp_lt_sameSigns' ) )
-		s.append( self.at( 'ng' ) )
-		s.append( 'D = M' )                                      # ng
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-
-		# lte
-		s.append( self.label( 'genericComparisonOp_lte' ) )
-
-		s.append( self.at( 'oppSigns' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'genericComparisonOp_lte_sameSigns' ) )
-
-		s.append( 'D ; JEQ' )
-		s.append( self.at( 'aIsNeg' ) )
-		s.append( 'D = M' )                                      # aIsNeg
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
-
-		s.append( self.label( 'genericComparisonOp_lte_sameSigns' ) )
-		s.append( self.at( 'zr' ) )
-		s.append( 'D = M' )
-		s.append( self.at( 'ng' ) )
-		s.append( 'D = M | D' )                                  # zr | ng
-		s.append( self.at( 'genericComparisonOp_return' ) )
-		s.append( '0 ; JMP' )
+		s.append( self.label( 'dIsNotNeg_and_dIsNotZero___lte' ) )  # <--- return
+		s.append(    'D = 0' )                                      # false
+		s.append(    self.at( 'genericComparisonOp_return' ) )
+		s.append(    '0 ; JMP' )
 
 
 		# ___ Return ___________________________________________________________
 
 		# Jump to saved return position
 		s.append( self.label( 'genericComparisonOp_return' ) )
-		s.append( self.atTemp( 0 ) )
+		s.append( self.atTemp( 3 ) )
 		s.append( 'A = M' )
 		s.append( '0 ; JMP' )
 

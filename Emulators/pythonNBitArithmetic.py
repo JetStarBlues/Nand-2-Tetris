@@ -28,20 +28,6 @@ class NBitArithmetic ():
 		return x > self.largestInt
 
 
-	# Local helpers
-	def isDiffZrNg( self, a, b ):
-
-		diff = self._sub( a, b )
-		zr   = diff == 0
-		ng   = self.isNegative( diff )
-
-		return ( zr, ng )
-
-	def isOppositeSigns( self, a, b ):
-
-		return self.isNegative( a ) ^ self.isNegative( b )
-
-
 	# Arithmetic and logic
 	def _not( self, a ):
 
@@ -106,89 +92,90 @@ class NBitArithmetic ():
 
 	def _eq ( self, a, b ):
 
-		zr, ng = self.isDiffZrNg( a, b )
+		d = self._sub( a, b )
 
-		return zr
+		return d == 0
 
 	def _ne ( self, a, b ):
 
-		zr, ng = self.isDiffZrNg( a, b )
+		d = self._sub( a, b )
 
-		return not zr
+		return d != 0
 
 	# For gt, gte, lt, lte see discussion here,
 	#  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
-
-	def _gt ( self, a, b ):
-
-		# value = not( zr or ng )  # simple, but inaccurate for opposite signs
-
-		zr, ng        = self.isDiffZrNg( a, b )
-		oppositeSigns = self.isOppositeSigns( a, b )
-		aIsNeg        = self.isNegative( a )
-
-		if oppositeSigns:
-
-			value = not aIsNeg
-
-		else:  # same signs
-
-			value = not ( zr or ng )
-
-		return value
-
-
-	def _gte ( self, a, b ):
-
-		# value = not( ng )        # simple, but inaccurate for opposite signs
-
-		zr, ng        = self.isDiffZrNg( a, b )
-		oppositeSigns = self.isOppositeSigns( a, b )
-		aIsNeg        = self.isNegative( a )
-
-		if oppositeSigns:
-
-			value = not aIsNeg
-
-		else:  # same signs
-
-			value = not ng
-
-		return value
+	#  Code based on @cadet1620's answer
 
 	def _lt ( self, a, b ):
 
-		# value = ng               # simple, but inaccurate for opposite signs
+		# return ng               # simple, but inaccurate for opposite signs
 
-		zr, ng        = self.isDiffZrNg( a, b )
-		oppositeSigns = self.isOppositeSigns( a, b )
-		aIsNeg        = self.isNegative( a )
+		if self.isNegative( a ):
 
-		if oppositeSigns:
+			if not self.isNegative( b ):
 
-			value = aIsNeg
+				return True
 
-		else:  # same signs
+			# aIsNeg and bIsNeg
 
-			value = ng
+		else:
 
-		return value
+			if self.isNegative( b ):
+
+				return False
+
+			# aIsNotNeg and bIsNotNeg
+
+		# same signs
+		d = self._sub( a, b )  # won't oveflow
+
+		if self.isNegative( d ):
+
+			return True
+
+		else:
+
+			return False
 
 	def _lte ( self, a, b ):
 
-		# value = zr or ng         # simple, but inaccurate for opposite signs
+		# return zr or ng         # simple, but inaccurate for opposite signs
 
-		zr, ng        = self.isDiffZrNg( a, b )
-		oppositeSigns = self.isOppositeSigns( a, b )
-		aIsNeg        = self.isNegative( a )
+		if self.isNegative( a ):
 
-		if oppositeSigns:
+			if not self.isNegative( b ):
 
-			value = aIsNeg
+				return True
 
-		else:  # same signs
+			# aIsNeg and bIsNeg
 
-			value = zr or ng
+		else:
 
-		return value
+			if self.isNegative( b ):
 
+				return False
+
+			# aIsNotNeg and bIsNotNeg
+
+		# same signs
+		d = self._sub( a, b )  # won't oveflow
+
+		if self.isNegative( d ):
+
+			return True
+
+		else:
+
+			return d == 0
+
+	def _gt ( self, a, b ):
+
+		# return not( zr or ng )  # simple, but inaccurate for opposite signs
+
+		return not self._lte( a, b )
+
+	def _gte ( self, a, b ):
+
+		# return not( ng )        # simple, but inaccurate for opposite signs
+
+		return not self._lt( a, b )
