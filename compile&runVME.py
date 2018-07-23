@@ -6,7 +6,7 @@ import Emulators.vmEmulator
 
 '''------------------------------- Main -------------------------------'''
 
-inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
+# inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/includesOfIncludes'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/nonExistMethods'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/Point'
@@ -18,7 +18,7 @@ inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/floatingPoint/modifiedCode'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/MarkArmbrust/Trigonometry/modifiedCode'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASchunky'
-# inputDirPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASscroller'
+inputDirPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASscroller'
 # inputDirPath = '../N2T_Code/Programs/ByOthers/GavinStewart/Games&Demos/modifiedCode/GASboing'
 # inputDirPath = '../N2T_Code/Programs/General/colorImages/lp'
 # inputDirPath = '../N2T_Code/Programs/General/colorImages/sunset'
@@ -31,8 +31,6 @@ inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
-# inputDirPath = 'Programs/ByOthers/MarkArmbrust/Creature/modifiedCode'
-# inputDirPath = 'Programs/ByOthers/GavinStewart/Games&Demos/GASscroller/modifiedCode'
 
 
 # Compile

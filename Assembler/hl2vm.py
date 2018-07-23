@@ -597,8 +597,6 @@ class TokenStream():
 
 	def croak( self, msg ):
 
-		# print( "Derp Derp\n\t" + msg )
-
 		self.input.croak( msg )
 
 
@@ -2073,7 +2071,7 @@ class CompileTo_HackVM():
 
 		self.curClassName = None
 		self.curFunctionName = None		
-		self.classVarTables = []
+		self.classVarTables = {}
 		self.curClassVarTable = None
 		# self.classVarTable = VariableTable( 'class' )
 		self.subroutineVarTable = VariableTable( 'subroutine' )
@@ -2194,14 +2192,18 @@ class CompileTo_HackVM():
 
 	# -----------------------------------
 
-	def lookupVar( self, varName, checkConstants = False, checkAllClasses = False ):
+	def lookupVar( self, varName, checkConstants = False, className = None ):
 
-		if checkAllClasses:  # support external access
+		if className != None:  # support external access
 
-			for classTable in self.classVarTables[ : - 1 ]:  # skip current class
+			classTable = self.classVarTables.get( className )
 
-				found = classTable.lookup( varName, checkConstants )
-				if found: return found
+			if not classTable:
+
+				raise Exception( 'Error: Undefined class - ' + className )
+
+			found = classTable.lookup( varName, checkConstants )
+			if found: return found
 
 		else:
 
@@ -2224,18 +2226,16 @@ class CompileTo_HackVM():
 		# self.classVarTable.clear()
 
 		# -- Create new table for each class
-		self.classVarTables.append( VariableTable( 'class' ) )
+		self.classVarTables[ self.curClassName ] = VariableTable( 'class' )
 
-		idx = len( self.classVarTables ) - 1
-
-		self.curClassVarTable = self.classVarTables[ idx ]
+		self.curClassVarTable = self.classVarTables[ self.curClassName ]
 
 
 	def compile_classDeclaration( self, exp ):
 
-		self.setupForClassDeclaration()
-
 		self.curClassName = exp[ 'name' ]
+
+		self.setupForClassDeclaration()
 
 		self.curClassVarTable.setScopeName( self.curClassName )
 
@@ -2452,7 +2452,7 @@ class CompileTo_HackVM():
 
 		if className:
 
-			left = self.lookupVar( name, checkAllClasses = True )  # support external access
+			left = self.lookupVar( name, className = className )  # support external access
 
 		else:
 
@@ -2973,11 +2973,11 @@ class CompileTo_HackVM():
 
 			if className:
 
-				loc = self.lookupVar( name, checkConstants = True, checkAllClasses = True )  # support external access
+				loc = self.lookupVar( name, checkConstants = True, className = className )  # support external access
 
 				if not loc:
 
-					raise Exception( 'Error: Undefined variable - {}.{}'.format( className, name ) )
+					raise Exception( 'Error: Undefined class level variable - {}.{}'.format( className, name ) )
 
 			else:
 

@@ -691,7 +691,7 @@ class Compiler():
 		return self.a2s( s )
 
 
-	def compile_comparisonOp2_bootsrap( self ):
+	def compile_comparisonOp2_bootstrap( self ):
 
 		''' Code is based on @Cadet1620's answer on this forum discussion:
 		      http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Greater-or-less-than-when-comparing-numbers-with-different-signs-td4031520.html
