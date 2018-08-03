@@ -300,12 +300,12 @@ class IO():
 		self.main_memory.write( 1, color[ 1 ], 1, self.addrScreenArg1 )
 		self.main_memory.write( 1, color[ 2 ], 1, self.addrScreenArg2 )
 
-	def flood( self, x, y, len ):
+	def flood( self, x, y, n ):
 
 		''' Write words to display RAM
 		    Assumes display RAM allocates one register per pixel '''
 
-		for i in range( len ):
+		for i in range( n ):
 
 			self.pixelArray[ x ][ y ] = self.curColor
 

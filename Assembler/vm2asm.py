@@ -28,9 +28,12 @@
 		. Temp 0 - (in hl2vm) one-time
 		            . by 'array assignment' to save return value
 		            . to discard return value from standalone 'call'
-		. Temp 1 -
-		. Temp 2 -
-		. Temp 3 -
+		. Temp 1 - (in hl2vm) one-time
+		            . by 'comparisonOp2' to save 'x' value
+		. Temp 2 - (in hl2vm) one-time
+		            . by 'comparisonOp2' to save 'y' value
+		. Temp 3 - (in hl2vm) one-time
+		            . by 'comparisonOp2' to save return address
 		. Temp 4 -
 		. Temp 5 -
 		. Temp 6 -
@@ -656,7 +659,7 @@ class Compiler():
 		s.append( self.at( returnPos ) )
 		s.append( 'D = A' )
 		s.append( self.atTemp( 3 ) )
-		s.append( 'M = D' )
+		s.append( 'M = D' )           # returnPos
 
 		# Goto respective generic comparison function
 		#  Sets D to result of comparison

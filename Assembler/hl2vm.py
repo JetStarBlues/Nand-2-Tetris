@@ -923,16 +923,16 @@ class Parser():
 		self.retrieveIncludes()
 
 		# -- Each file contains only one class
-		return self.parse_classDeclaration()
+		# return self.parse_classDeclaration()
 
 		# -- Each file can contain multiple classes
-		# output = []
+		output = []
 
-		# while not self.input.eof():
+		while not self.input.eof():
 
-		# 	output.append( self.parse_classDeclaration() )
+			output.append( self.parse_classDeclaration() )
 
-		# return output
+		return output
 
 
 	# -----------------------------------
@@ -1037,8 +1037,6 @@ class Parser():
 
 		self.skip_punc( '{' )
 
-		constDec = self.parse_constDeclarations()
-
 		varDec = self.parse_classVariableDeclarations()
 
 		subDec = self.parse_subroutineDeclarations()
@@ -1049,18 +1047,56 @@ class Parser():
 
 			'type'     : 'classDeclaration',
 			'name'     : name,
-			'constDec' : constDec,
 			'varDec'   : varDec,
 			'subDec'   : subDec,
 		}
 
-	def parse_constDeclarations( self ):
+	def parse_classVariableDeclarations( self ):
 
 		def continueCondition( tok ):
 
-			return tok[ 'value' ] == 'const'
+			return ( tok[ 'value' ] == 'static' or
+			         tok[ 'value' ] == 'field' or
+			         tok[ 'value' ] == 'const' )
 
-		return self.parse_consecutive( continueCondition, self.parse_constDeclaration )
+		return self.parse_consecutive( continueCondition, self.parse_classVariableDeclaration )
+	
+	def parse_classVariableDeclaration( self ):
+		'''
+			'const' 'int' varName '=' unaryOp? integerConstant ';'
+			( 'static' | 'field' ) type varName ( ',' varName )* ';'
+		'''
+
+		if self.is_kw( 'const' ):
+
+			return self.parse_constDeclaration()
+
+		else:
+
+			if self.is_kw( 'static' ):
+
+				var_type = 'static'
+
+			elif self.is_kw( 'field' ):
+
+				var_type = 'field'
+
+			else:
+
+				self.croak( "Error: Expecting either 'static' or 'field' keyword in classVariableDeclaration" )
+
+			self.input.next()
+
+			d_type = self.read_d_type( 'parse_classVariableDeclaration' )
+
+			names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_classVariableDeclaration' )
+
+			return {
+
+				'var_type' : var_type,
+				'names'    : names,
+				'd_type'   : d_type
+			}
 
 	def parse_constDeclaration( self ):
 		'''
@@ -1107,51 +1143,13 @@ class Parser():
 
 		}
 
-	def parse_classVariableDeclarations( self ):
-
-		def continueCondition( tok ):
-
-			return tok[ 'value' ] == 'static' or tok[ 'value' ] == 'field'
-
-		return self.parse_consecutive( continueCondition, self.parse_classVariableDeclaration )
-	
-	def parse_classVariableDeclaration( self ):
-		'''
-			( 'static' | 'field' ) type varName ( ',' varName )* ';'
-		'''
-
-		if self.is_kw( 'static' ):
-
-			var_type = 'static'
-
-			self.input.next()
-
-		elif self.is_kw( 'field' ):
-
-			var_type = 'field'
-			
-			self.input.next()
-
-		else:
-
-			self.croak( "Error: Expecting either 'static' or 'field' keyword in classVariableDeclaration" )
-
-		d_type = self.read_d_type( 'parse_classVariableDeclaration' )
-
-		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_classVariableDeclaration' )
-
-		return {
-
-			'var_type' : var_type,
-			'names'    : names,
-			'd_type'   : d_type
-		}
-
 	def parse_subroutineDeclarations( self ):
 
 		def continueCondition( tok ):
 
-			return tok[ 'value' ] == 'constructor' or tok[ 'value' ] == 'function' or tok[ 'value' ] == 'method'
+			return ( tok[ 'value' ] == 'constructor' or
+			         tok[ 'value' ] == 'function' or
+			         tok[ 'value' ] == 'method' )
 
 		return self.parse_consecutive( continueCondition, self.parse_subroutineDeclaration )
 		
@@ -1171,9 +1169,7 @@ class Parser():
 
 		self.skip_punc( '{' )
 
-		constDec = self.parse_constDeclarations()
-
-		varDec = self.parse_variableDeclarations()
+		varDec = self.parse_subroutineVariableDeclarations()
 
 		statements = self.parse_statements()
 
@@ -1185,7 +1181,6 @@ class Parser():
 			'fx_type'    : fx_type,
 			'ret_type'   : ret_type,
 			'params'     : params,
-			'constDec'   : constDec,
 			'varDec'     : varDec,
 			'statements' : statements
 		}
@@ -1205,32 +1200,39 @@ class Parser():
 			'd_type' : d_type,
 		}
 
-	def parse_variableDeclarations( self ):
+	def parse_subroutineVariableDeclarations( self ):
 
 		def continueCondition( tok ):
 
-			return tok[ 'value' ] == 'var'
+			return ( tok[ 'value' ] == 'var' or
+			         tok[ 'value' ] == 'const' )
 
-		return self.parse_consecutive( continueCondition, self.parse_variableDeclaration )
+		return self.parse_consecutive( continueCondition, self.parse_subroutineVariableDeclaration )
 	
-	def parse_variableDeclaration( self ):
+	def parse_subroutineVariableDeclaration( self ):
 		'''
+			'const' 'int' varName '=' unaryOp? integerConstant ';'
 			'var' type varName ( ',' varName )* ';'
 		'''
 
-		self.skip_kw( 'var' )
+		if self.is_kw( 'const' ):
 
-		d_type = self.read_d_type( 'parse_variableDeclaration' )
+			return self.parse_constDeclaration()
 
-		names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_variableDeclaration' )
+		else:
 
-		return {
+			self.skip_kw( 'var' )
 
-			# 'type'     : 'variableDeclaration',
-			'var_type' : 'var',
-			'names'    : names,
-			'd_type'   : d_type
-		}
+			d_type = self.read_d_type( 'parse_varDeclaration' )
+
+			names = self.parse_delimitedList( None, ';', ',', self.read_id, 'parse_varDeclaration' )
+
+			return {
+
+				'var_type' : 'var',
+				'names'    : names,
+				'd_type'   : d_type
+			}
 
 	def parse_statements( self ):
 
@@ -2100,24 +2102,24 @@ class CompileTo_HackVM():
 	def compile_toplevel( self, tree ):
 
 		# -- Each file contains only one class
-		return self.compile_classDeclaration( tree )
+		# return self.compile_classDeclaration( tree )
 
 		# -- Each file can contain multiple classes
 		''' 
-		    Atm won't work due to way we handle statics.
-		    'push/pop static index' vm command does not have enough info
-		    for vm2asm compiler to determine class which command belongs to
-		    when it's generating '@className.index' commands
+			Relies on 'push/pop static index className' syntax
+			in generated VM code.
 
-		    TODO - Resolve if wish to support multiple classes in a file
+		    'push/pop static index' command does not have enough info
+		    for the vm2asm compiler to determine which class the static
+		    belongs to when it's generating '@className.index' commands
 		'''
-		# output = ''
+		output = ''
 
-		# for t in tree:
+		for t in tree:
 
-		# 	output += self.compile_classDeclaration( t )
+			output += self.compile_classDeclaration( t )
 
-		# return output
+		return output
 
 
 	# -----------------------------------
@@ -2240,7 +2242,6 @@ class CompileTo_HackVM():
 		self.curClassVarTable.setScopeName( self.curClassName )
 
 		# -- Add variables to table
-		self.curClassVarTable.addVarsToTable( exp[ 'constDec' ] )
 		self.curClassVarTable.addVarsToTable( exp[ 'varDec' ] )
 
 		# -- Subroutines
@@ -2284,9 +2285,10 @@ class CompileTo_HackVM():
 				'placeholder'
 			)
 
+		# -- Add parameters to table
 		self.subroutineVarTable.addVarsToTable( exp[ 'params' ] )
-		
-		self.subroutineVarTable.addVarsToTable( exp[ 'constDec' ] )
+
+		# -- Add variables to table
 		self.subroutineVarTable.addVarsToTable( exp[ 'varDec' ] )
 
 		nArgs   = len( self.subroutineVarTable.segments[ 'argument' ] )
@@ -3045,7 +3047,7 @@ class CompileTo_HackVM():
 
 def getAbsoluteTargetPath ( relativeTargetPath, absoluteReferencePath ):
 
-	if relativeTargetPath[ 0 : 2 ].upper() == 'C:':  # is absolute (assumes stored in C drive)
+	if relativeTargetPath[ 1 ] == ':':  # is absolute (assumes one letter drive)
 
 		dirPath = relativeTargetPath.split( '/' )
 		dirPath = '/'.join( dirPath[ : - 1 ] )
