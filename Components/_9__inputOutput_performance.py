@@ -141,7 +141,8 @@ class IO():
 		threading.Thread(
 
 			target = self.initPygame,
-			name = 'io_thread'
+			name = 'io_thread',
+			daemon = False
 
 		).start()
 

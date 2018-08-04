@@ -3,6 +3,8 @@
 import Assembler.hl2bin
 import Emulators.vmEmulator
 
+import sys
+
 
 '''------------------------------- Main -------------------------------'''
 
@@ -34,10 +36,23 @@ inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
 
+if __name__ == '__main__':
 
-# Compile
-Assembler.hl2bin.hl_to_bin( inputDirPath )
-print()
+	# Get args if any
+	args = sys.argv[ 1 : ]
 
-# Run
-Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )
+	if len( args ) == 1:
+
+		inputDirPath = args[ 0 ]
+
+	elif len( args ) > 1:
+
+		raise Exception( 'Received unexpected arguments' )
+
+
+	# Compile
+	Assembler.hl2bin.hl_to_bin( inputDirPath )
+	print()
+
+	# Run
+	Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )

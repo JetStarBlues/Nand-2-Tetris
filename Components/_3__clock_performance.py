@@ -43,8 +43,11 @@ class Clock():
 	def run( self ):
 
 		threading.Thread(
+
 			target = self.run_,
-			name = 'clock_thread'
+			name = 'clock_thread',
+			daemon = False
+
 		).start()
 
 
