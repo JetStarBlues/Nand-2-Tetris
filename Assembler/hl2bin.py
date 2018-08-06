@@ -38,8 +38,8 @@ compileBinaries = False
 OSClasses = [  # ordered by dependency
 
 	"GlobalConstants",
-	"Array",
 	"DataMemory",
+	"Array",
 	"Math",
 	"Font",
 	"Colors",

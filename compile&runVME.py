@@ -8,7 +8,7 @@ import sys
 
 '''------------------------------- Main -------------------------------'''
 
-inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
+# inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/multiclass'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/includesOfIncludes'
@@ -27,6 +27,7 @@ inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
 # inputDirPath = '../N2T_Code/Programs/General/colorImages/lp'
 # inputDirPath = '../N2T_Code/Programs/General/colorImages/sunset'
 # inputDirPath = '../N2T_Code/Programs/General/hello'
+inputDirPath = '../N2T_Code/Programs/General/4BitDemo'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/sys'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/string'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/memory'

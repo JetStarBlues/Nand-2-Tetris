@@ -13,6 +13,8 @@
 #
 # ========================================================================================
 
+# TODO - Why is sys.halt not reached?
+#      - Get file instead of dir?
 
 
 '''----------------------------- Imports -----------------------------'''
@@ -52,7 +54,7 @@ class GUI ():
 		# Window setup
 		self.root = tkinter.Tk()
 		self.root.wm_title( 'VME Launcher' )
-		self.root.iconbitmap( 'Components/favicon.ico' )
+		self.root.iconbitmap( 'Other/GUIImages/favicon2.ico' )
 
 		self.root.geometry( '{}x{}'.format( width, height ) )
 		self.root.resizable( False, False )
@@ -123,6 +125,8 @@ class GUI ():
 
 		self.hasExited = True
 
+		print( 'Exited Tkinter' )
+
 
 	def handleMouseClick ( self, ev ):
 
@@ -144,6 +148,8 @@ class GUI ():
 			# print( 'Run' )
 
 			if self.fileName:
+
+				print()
 
 				subprocess.run( [ 'Python', 'compile&RunVME.py', self.fileName ] )
 

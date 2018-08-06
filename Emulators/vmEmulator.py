@@ -888,6 +888,7 @@ def update():
 
 			yappi.get_func_stats().print_all()
 
+
 	# Stop running when reach Sys.halt
 	if PC == sysHalt:
 
