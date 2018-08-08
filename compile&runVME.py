@@ -35,6 +35,7 @@ inputDirPath = '../N2T_Code/Programs/General/4BitDemo'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
+# inputDirPath = '../N2T_Code/Programs/OSLibTests/font'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
 
 if __name__ == '__main__':

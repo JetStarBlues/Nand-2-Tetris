@@ -15,9 +15,6 @@
 # ========================================================================================
 
 
-# TODO: getPixelsFromMain_4BitMode()
-
-
 
 '''----------------------------- Imports -----------------------------'''
 
@@ -75,6 +72,8 @@ class IO():
 		self.addrScreenArg2 = SCREEN_MEMORY_MAP + 3
 		self.addrScreenArg3 = SCREEN_MEMORY_MAP + 4
 		self.addrScreenArg4 = SCREEN_MEMORY_MAP + 5
+		self.addrScreenArg5 = SCREEN_MEMORY_MAP + 6
+		self.addrScreenArg6 = SCREEN_MEMORY_MAP + 7
 
 		self.addrMouseP = MOUSE_MEMORY_MAP + 0
 		self.addrMouseX = MOUSE_MEMORY_MAP + 1
@@ -381,7 +380,7 @@ class IO():
 
 			self.flood( x, i, w )
 
-	def drawPixelBuffer( self, bitMode = 2 ):
+	def drawPixelBuffer( self, bitMode = 1 ):
 
 		'''
 			Draw pixels from main memory.
@@ -396,22 +395,29 @@ class IO():
 
 		# Get args
 		pixBuffer = self.main_memory.read( self.addrScreenArg0 )
-		x         = self.main_memory.read( self.addrScreenArg1 )
-		y         = self.main_memory.read( self.addrScreenArg2 )
-		w         = self.main_memory.read( self.addrScreenArg3 )
-		h         = self.main_memory.read( self.addrScreenArg4 )
+		srcX      = self.main_memory.read( self.addrScreenArg1 )
+		srcY      = self.main_memory.read( self.addrScreenArg2 )
+		srcW      = self.main_memory.read( self.addrScreenArg3 )
+		srcH      = self.main_memory.read( self.addrScreenArg4 )
+		dstX      = self.main_memory.read( self.addrScreenArg5 )
+		dstY      = self.main_memory.read( self.addrScreenArg6 )
 
 		# Check if coordinates are valid
 		if(
-			w <= 0 or
-			h <= 0 or
-			x <  0 or ( x + w ) > self.width or
-			y <  0 or ( y + h ) > self.height
+			srcW <= 0 or
+			srcH <= 0 or
+			srcX <  0 or ( srcX + srcW ) > self.width or
+			srcY <  0 or ( srcY + srcH ) > self.height or
+			dstX <  0 or ( dstX + srcW ) > self.width or
+			dstY <  0 or ( dstY + srcH ) > self.height
 		):
-			raise Exception( 'drawBuffer received invalid argument(s): ( {}, {}, {}, {} )'.format( x, y, w, h ) )
+			raise Exception( 'drawBuffer received invalid coordinate(s): ( {}, {}, {}, {}, {}, {} )'.format( 
+
+				srcX, srcY, srcW, srcH, dstX, dstY
+			) )
 
 		# Replace
-		if( w == self.width and h == self.height ):
+		if( srcW == self.width and srcH == self.height ):
 
 			if bitMode == 4:
 
@@ -425,11 +431,11 @@ class IO():
 
 			if bitMode == 4:
 
-				self.getPixelsFromMain_4BitMode( pixBuffer, x, y, w, h )
+				self.getPixelsFromMain_4BitMode( pixBuffer, srcX, srcY, srcW, srcH, dstX, dstY )
 
 			else:
 
-				self.getPixelsFromMain_1BitMode( pixBuffer, x, y, w, h )
+				self.getPixelsFromMain_1BitMode( pixBuffer, srcX, srcY, srcW, srcH, dstX, dstY )
 
 		# Mark screen for update
 		self.newContent = True
@@ -438,23 +444,28 @@ class IO():
 
 		self.drawPixelBuffer( bitMode = 4 )
 
-	def getPixelsFromMain_1BitMode( self, pixBuffer, x, y, w, h ):
+	def getPixelsFromMain_1BitMode( self, pixBuffer, srcX, srcY, srcW, srcH, dstX, dstY ):
 
-		startX = x
-		endX   = x + w
+		startX    = srcX
+		endX      = srcX + srcW
+		startXDst = dstX
 
-		startWord = startX // self.nPixelsPerWord_1
-		endWord   = ceil( endX / self.nPixelsPerWord_1 )
+		# startWord = startX // self.nPixelsPerWord_1
+		# endWord   = endX // self.nPixelsPerWord_1
 
-		startWordOffset = startX % 16
-		endWordOffset   = endX % 16
+		# startWordOffset = startX % self.nPixelsPerWord_1
+		# endWordOffset   = endX % self.nPixelsPerWord_1
 
-		regIdx = pixBuffer + ( y * self.nRegistersPerRow_1 )
+		( startWord, startWordOffset ) = divmod( startX, self.nPixelsPerWord_1 )
+		( endWord, endWordOffset )     = divmod(   endX, self.nPixelsPerWord_1 )
 
-		for y in range( y, y + h ):
+		regIdx = pixBuffer + ( srcY * self.nRegistersPerRow_1 )
 
-			x = startX
+		for srcY in range( srcY, srcY + srcH ):
+
+			srcX = startX
 			word = startWord
+			dstX = startXDst
 
 			for word in range( startWord, endWord + 1 ):
 
@@ -476,10 +487,13 @@ class IO():
 
 					color = self.colors_1[ pixel ]  # look up corresponding color
 
-					self.pixelArray[ x ][ y ] = color
+					# self.pixelArray[ srcX ][ srcY ] = color
+					self.pixelArray[ dstX ][ dstY ] = color
 
-					x += 1					
+					srcX += 1
+					dstX += 1
 
+			dstY += 1
 			regIdx += self.nRegistersPerRow_1
 
 	def getPixelsFromMain_1BitMode_fast( self, pixBuffer ):
@@ -508,9 +522,59 @@ class IO():
 					x = 0
 					y += 1
 
-	def getPixelsFromMain_4BitMode( self, pixBuffer, x, y, w, h ):
+	def getPixelsFromMain_4BitMode( self, pixBuffer, srcX, srcY, srcW, srcH, dstX, dstY ):
 
-		pass  # TODO, and test!
+		startX    = srcX
+		endX      = srcX + srcW
+		startXDst = dstX
+
+		# startWord = startX // self.nPixelsPerWord_4
+		# endWord   = endX // self.nPixelsPerWord_4
+
+		# startWordOffset = startX % self.nPixelsPerWord_4
+		# endWordOffset   = endX % self.nPixelsPerWord_4
+
+		( startWord, startWordOffset ) = divmod( startX, self.nPixelsPerWord_4 )
+		( endWord, endWordOffset )     = divmod(   endX, self.nPixelsPerWord_4 )
+
+		regIdx = pixBuffer + ( srcY * self.nRegistersPerRow_1 )
+
+		for srcY in range( srcY, srcY + srcH ):
+
+			srcX = startX
+			word = startWord
+			dstX = startXDst
+
+			for word in range( startWord, endWord + 1 ):
+
+				register = self.main_memory.read( regIdx + word )
+
+				register = toBinary( register, self.N )
+
+				for i in range( 0, self.N, 4 ):  # loop through pixels in register
+
+					ii = i >> 2  # i // 4  # which pixel among the four is this one?
+
+					if word == startWord and ii < startWordOffset:
+
+						continue  # skip
+
+					elif word == endWord and ii >= endWordOffset:
+
+						break  # done with word
+
+					pixel = register[ i : i + 4 ]
+
+					color = self.colors_4[ pixel ]  # look up corresponding color
+
+					# self.pixelArray[ srcX ][ srcY ] = color
+					self.pixelArray[ dstX ][ dstY ] = color
+
+					srcX += 1
+					dstX += 1
+
+			dstY += 1
+			regIdx += self.nRegistersPerRow_4
 
 	def getPixelsFromMain_4BitMode_fast( self, pixBuffer ):
 
@@ -523,7 +587,7 @@ class IO():
 
 			register = toBinary( register, self.N )
 
-			for i in range( 0, self.N, 4 ):
+			for i in range( 0, self.N, 4 ):  # loop through pixels in register
 
 				pixel = register[ i : i + 4 ]
 
