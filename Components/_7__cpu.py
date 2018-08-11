@@ -5,6 +5,9 @@
 
 '''----------------------------- Imports -----------------------------'''
 
+# Built ins
+import math
+
 # Hack computer
 from ._x__components import *
 
@@ -71,20 +74,20 @@ class CPU_():
 		self.programCounter = CounterN_( 2 * N )
 
 		nStepsPerInstruction = 4
-		self.microCounter    = CounterN_( nStepsPerInstruction )
+		self.microCounter    = CounterN_( int( math.log( nStepsPerInstruction, 2 ) ) )
 
 		# Internal ROM
-		nInstructionTypes = 7
-		nEntriesM         = nInstructionTypes * nStepsPerInstruction
-		nControlSignals   = 17
-		nBitsInOpType     = 3
-		nBitsInStep       = 2
-		self.microcodeROM = ROMXN_( nEntriesM, nControlSignals )
+		nInstructionTypes    = 7
+		nEntriesMicrocodeROM = nInstructionTypes * nStepsPerInstruction
+		nControlSignals      = 17
+		self.nBitsInOpType   = 3
+		nBitsInStep          = 2
+		self.microcodeROM    = ROMXN_( nEntriesMicrocodeROM, nControlSignals )
 
-		nEntriesA     = 32
-		nBitsInfxSel  = 4
-		nBitsInfxFlag = 5
-		self.ALUROM   = ROMXN_( nEntriesA, nBitsInfxSel + nBitsInfxFlag )
+		nEntriesALUROM = 32
+		nBitsInFxSel   = 4
+		nBitsInFxFlag  = 5
+		self.ALUROM    = ROMXN_( nEntriesALUROM, nBitsInFxSel + nBitsInFxFlag )
 		
 		self.initInternalROM()
 
@@ -134,13 +137,13 @@ class CPU_():
 		self.op_nop         = ( 1, 1, 1, 1, 1 )
 
 		# Corresponds to microcode ROM base address...
-		self.opType_Aimmed      = self.intToBitArray( 0, nBitsInOpType )
-		self.opType_AAimmed     = self.intToBitArray( 1, nBitsInOpType )
-		self.opType_dstEqCmpJmp = self.intToBitArray( 2, nBitsInOpType )
-		self.opType_dstEqIOBus  = self.intToBitArray( 3, nBitsInOpType )
-		self.opType_intAck      = self.intToBitArray( 4, nBitsInOpType )
-		self.opType_reti        = self.intToBitArray( 5, nBitsInOpType )
-		self.opType_nop         = self.intToBitArray( 6, nBitsInOpType )
+		self.opType_Aimmed      = self.intToBitArray( 0, self.nBitsInOpType )
+		self.opType_AAimmed     = self.intToBitArray( 1, self.nBitsInOpType )
+		self.opType_dstEqCmpJmp = self.intToBitArray( 2, self.nBitsInOpType )
+		self.opType_dstEqIOBus  = self.intToBitArray( 3, self.nBitsInOpType )
+		self.opType_intAck      = self.intToBitArray( 4, self.nBitsInOpType )
+		self.opType_reti        = self.intToBitArray( 5, self.nBitsInOpType )
+		self.opType_nop         = self.intToBitArray( 6, self.nBitsInOpType )
 
 		# Location of ISRHandler in program
 		self.ISRHandlerAddress = self.intToBitArray( 0, 2 * N )
@@ -150,11 +153,71 @@ class CPU_():
 		self.AA_registerMask = ( 0, ) * 6 + ( 1, ) * 10
 
 
+		# Temp debug
+		self.instructionTypeLookup = {
+
+			( 0, 0, 0 ) : 'opType_Aimmed',
+			( 0, 0, 1 ) : 'opType_AAimmed',
+			( 0, 1, 0 ) : 'opType_dstEqCmpJmp',
+			( 0, 1, 1 ) : 'opType_dstEqIOBus',
+			( 1, 0, 0 ) : 'opType_intAck',
+			( 1, 0, 1 ) : 'opType_reti',
+			( 1, 1, 0 ) : 'opType_nop',
+		}
+
+		self.opLookup = {
+
+			( 1, 1, 1, 0, 0 ) : 'op_AAimmed',
+			( 1, 1, 1, 0, 1 ) : 'op_dstEqIOBus',
+			( 1, 1, 1, 1, 0 ) : 'op_reti',
+			( 1, 1, 1, 1, 1 ) : 'op_nop',
+		}
+
+		self.ALUFxLookup = {
+
+			( 0, 0, 0, 0, 0 ) : '0',
+			( 0, 0, 0, 0, 1 ) : '1',
+			( 0, 0, 0, 1, 0 ) : '-1',
+			( 0, 0, 0, 1, 1 ) : 'x',
+			( 0, 0, 1, 0, 0 ) : '! x',
+			( 0, 0, 1, 0, 1 ) : '- x',
+			( 0, 0, 1, 1, 0 ) : 'x + 1',
+			( 0, 0, 1, 1, 1 ) : 'x - 1',
+			( 0, 1, 0, 0, 0 ) : 'x + y',
+			( 0, 1, 0, 0, 1 ) : 'x - y',
+			( 0, 1, 0, 1, 0 ) : 'x & y',
+			( 0, 1, 0, 1, 1 ) : 'x | y',
+			( 0, 1, 1, 0, 0 ) : 'x ^ y',
+			( 0, 1, 1, 0, 1 ) : 'x >> y',
+			( 0, 1, 1, 1, 0 ) : 'x << y',
+			( 0, 1, 1, 1, 1 ) : 'x * y',
+			( 1, 0, 0, 0, 0 ) : 'x / y',
+		}
+
+		self.xyLookup = {
+
+			( 0, 0 ) : 'D',
+			( 0, 1 ) : 'A',
+			( 1, 0 ) : 'B',
+			( 1, 1 ) : 'M',
+		}
+
+
 	def intToBitArray( self, x, N ):
 
 		z = bin( x )[ 2 : ].zfill( N )
 
 		return tuple( map( int, z ) )
+
+
+	def bitArrayToBinaryString( self, x ):
+
+		return ''.join( map( str, x ) )
+
+
+	def bitArrayToInt( self, x ):
+
+		return int( ''.join( map( str, x ) ), 2 )
 
 
 	def initInternalROM( self ):
@@ -262,14 +325,15 @@ class CPU_():
 
 	def compareOp( self, a, b ):
 
+		# if a == b, a ^ b == 0
+
 		# submodule, dry
 		c = xorN_( self.nBitsInOp, a, b )
-		d = orN_( self.nBitsInOp, c )
+		d = not_( orNto1_( self.nBitsInOp, c ) )
 		return d
 
 
-
-	def doTheThing( self, clk, RESET, interruptRequested, IODataBus, data_memory, program_memory ):
+	def doTheThing( self, clk, RESET, interruptRequested, IODatabus, data_memory, program_memory ):
 
 		'''
 			. Everything happens at once/simultaneously
@@ -279,7 +343,7 @@ class CPU_():
 		# Constants -
 
 		# Always increment microCounter
-		microCounterIn        = 0
+		microCounterIn        = self.zero
 		microCounterWr        = 0
 		microCounterIncrement = 1
 
@@ -313,6 +377,10 @@ class CPU_():
 		instructionAddress = self.programCounter.read()
 		microStep          = self.microCounter.read()
 
+		print( 'instruction         {}'.format( self.bitArrayToBinaryString( instruction ) ) )
+		print( 'instructionAddress  {}'.format( self.programCounter.readDecimal() ) )
+		print( 'microStep           {}'.format( self.bitArrayToInt( microStep ) ) )
+
 		programMemoryOut = program_memory.read( self.programCounter.read() )
 
 
@@ -322,55 +390,57 @@ class CPU_():
 
 		aInst = not_( instruction[ self.TECSInstrType ] )
 
-		instructionType_p = muxN_(
-
-			self.N,
-
-			self.opType_Aimmed,
-			iDecode0,
-
-			aInst
-		)
-		iDecode0 = muxN_(
-
-			self.N,
-
-			self.opType_AAimmed,
-			iDecode1,
-
-			self.compareOp( op, self.op_AAimmed )
-		)
-		iDecode1 = muxN_(
-
-			self.N,
-
-			self.opType_reti,
-			iDecode2,
-
-			self.compareOp( op, self.op_reti )
-		)
-		iDecode2 = muxN_(
-
-			self.N,
-
-			self.opType_nop,
-			iDecode3,
-
-			self.compareOp( op, self.op_nop )
-		)
 		iDecode3 = muxN_(
 
-			self.N,
+			self.nBitsInOpType,
 
 			self.opType_dstEqIOBus,
 			self.opType_dstEqCmpJmp,
 
 			self.compareOp( op, self.op_dstEqIOBus )
 		)
+		iDecode2 = muxN_(
+
+			self.nBitsInOpType,
+
+			self.opType_nop,
+			iDecode3,
+
+			self.compareOp( op, self.op_nop )
+		)
+		iDecode1 = muxN_(
+
+			self.nBitsInOpType,
+
+			self.opType_reti,
+			iDecode2,
+
+			self.compareOp( op, self.op_reti )
+		)
+		iDecode0 = muxN_(
+
+			self.nBitsInOpType,
+
+			self.opType_AAimmed,
+			iDecode1,
+
+			self.compareOp( op, self.op_AAimmed )
+		)
+		instructionType_p = muxN_(
+
+			self.nBitsInOpType,
+
+			self.opType_Aimmed,
+			iDecode0,
+
+			aInst
+		)
+
+		interruptsEnabled = 1  # TODO, fix me!
 
 		instructionType = muxN_(
 
-			self.N,
+			self.nBitsInOpType,
 
 			self.opType_intAck,
 			instructionType_p,
@@ -381,6 +451,13 @@ class CPU_():
 		microAddress = instructionType + microStep   # 3bits(8) + 2bits(4)
 
 		microInstruction = self.microcodeROM.read( microAddress )
+
+		if op in self.opLookup:
+			print( 'op                  {} {}'.format( op, self.opLookup[ op ] ) )
+		else:
+			print( 'op                  {} alu {}'.format( op, self.ALUFxLookup[ op ] ) )
+		print( 'instructionType     {}       {}'.format( instructionType, self.instructionTypeLookup[ instructionType ] ) )
+		# print( 'microAddr           {}'.format( microAddress ) )
 
 
 		# Control signals -
@@ -402,6 +479,26 @@ class CPU_():
 		c_enableRegisterBackup               = microInstruction[ 14 ]
 		c_disableRegisterBackup              = microInstruction[ 15 ]
 		c_restoreRegisters                   = microInstruction[ 16 ]
+
+		print( 'controlSignals      ', end='' )
+		if c_cInst:                              print( 'c_cInst',                              end=' | ' )
+		if c_ARegisterWr:                        print( 'c_ARegisterWr',                        end=' | ' )
+		if c_ARegisterInSel_instructionRegister: print( 'c_ARegisterInSel_instructionRegister', end=' | ' )
+		if c_AARegisterWr:                       print( 'c_AARegisterWr',                       end=' | ' )
+		if c_instructionRegisterWr:              print( 'c_instructionRegisterWr',              end=' | ' )
+		if c_PCIncrement:                        print( 'c_PCIncrement',                        end=' | ' )
+		if c_PCWr:                               print( 'c_PCWr',                               end=' | ' )
+		if c_PCInSel_ISRHandler:                 print( 'c_PCInSel_ISRHandler',                 end=' | ' )
+		if c_readIODatabus:                      print( 'c_readIODatabus',                      end=' | ' )
+		if c_dstInSel_IOInputRegister:           print( 'c_dstInSel_IOInputRegister',           end=' | ' )
+		if c_enableInterrupts:                   print( 'c_enableInterrupts',                   end=' | ' )
+		if c_disableInterrupts:                  print( 'c_disableInterrupts',                  end=' | ' )
+		if c_acknowledgeInterrupt:               print( 'c_acknowledgeInterrupt',               end=' | ' )
+		if c_servicedInterrupt:                  print( 'c_servicedInterrupt',                  end=' | ' )
+		if c_enableRegisterBackup:               print( 'c_enableRegisterBackup',               end=' | ' )
+		if c_disableRegisterBackup:              print( 'c_disableRegisterBackup',              end=' | ' )
+		if c_restoreRegisters:                   print( 'c_restoreRegisters',                   end=' | ' )
+		print()
 
 
 		# Hold value over time (via register), but switch immediately with control signal
@@ -434,10 +531,10 @@ class CPU_():
 
 			self.N,
 
-			D_registerOut,
-			A_registerOut,
-			B_registerOut,
 			dataMemoryOut,
+			B_registerOut,
+			A_registerOut,
+			D_registerOut,
 
 			instruction[ self.xSel + 0 ], instruction[ self.xSel + 1 ]
 		)
@@ -446,10 +543,10 @@ class CPU_():
 
 			self.N,
 
-			D_registerOut,
-			A_registerOut,
-			B_registerOut,
 			dataMemoryOut,
+			B_registerOut,
+			A_registerOut,
+			D_registerOut,
 
 			instruction[ self.ySel + 0 ], instruction[ self.ySel + 1 ]
 		)
@@ -465,12 +562,15 @@ class CPU_():
 		zr = ALU_out[ 1 ]  # result is zero
 		ng = ALU_out[ 2 ]  # result is negative
 
+		# print( 'ALU_control         {}'.format( ALU_control ) )
+		print( 'x                   {} {} {}'.format( x, self.xyLookup[ instruction[ self.xSel : self.xSel + 2 ] ], self.bitArrayToInt( x ) ) )
+		print( 'y                   {} {} {}'.format( y, self.xyLookup[ instruction[ self.ySel : self.ySel + 2 ] ], self.bitArrayToInt( y ) ) )
+		print( 'z                   {}   {}'.format( z, self.bitArrayToInt( z ) ) )
+
 
 		# Jump -
 
-		jump = muxN8to1_(
-
-			self.N,
+		jump = mux8to1_(
 
 			1,                      # JMP
 			or_( zr, ng ),          # JLE
@@ -529,7 +629,7 @@ class CPU_():
 
 		AA_registerIn = andN_( self.N, instruction, self.AA_registerMask )
 
-		IOInput_registerIn = bufferN_( self.N, c_readIODatabus, IODatabus )
+		IOInput_registerIn = bufferN_( self.N, IODatabus, c_readIODatabus )
 
 		dataMemoryIn = muxN_(
 
@@ -547,7 +647,7 @@ class CPU_():
 
 			self.zero    + self.zero,
 			PCBkp_registerOut,
-			self.zero    + ISRHandlerAddress,
+			self.zero    + self.ISRHandlerAddress,
 			upperAddress + lowerAddress,
 
 			c_restoreRegisters, c_PCInSel_ISRHandler
@@ -591,8 +691,19 @@ class CPU_():
 		self.interruptAcknowledged_ff.doTheThing( clk, or_( RESET, c_servicedInterrupt ),               c_acknowledgeInterrupt,   0 )
 		self.backupEnabled_ff.doTheThing        ( clk,             c_disableRegisterBackup, or_( RESET, c_enableRegisterBackup ), 0 )
 
-		data_memory.write( clk, dataMemoryIn, dataMemoryWr, lowerAddress )	
+		data_memory.write( clk, dataMemoryIn, dataMemoryWr, lowerAddress )
+		print( 'dataMemoryWr        {}'.format( dataMemoryWr ) )
+		print( 'dataMemoryIn        {} {}'.format( dataMemoryIn, self.bitArrayToInt( dataMemoryIn ) ) )
+		# print( 'lowerAddress', lowerAddress )
 
 		self.programCounter.doTheThing( clk, RESET, PCIn, PCWr, c_PCIncrement )
 
 		self.microCounter.doTheThing( clk, RESET, microCounterIn, microCounterWr, microCounterIncrement )
+
+		print( 'ARegOut             {}'.format( self.A_register.readDecimal() ) )
+
+		# print( 'mem_16 ', data_memory.readDecimal( 16 ) )
+		# print( 'mem_17 ', data_memory.readDecimal( 17 ) )
+		# print( 'mem_0  ', data_memory.readDecimal( 0 ) )
+		# print( 'mem_1  ', data_memory.readDecimal( 1 ) )
+		print()

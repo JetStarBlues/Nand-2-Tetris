@@ -39,7 +39,6 @@
 # Built ins
 import re
 import time
-import threading
 import yappi
 
 # Hack computer
@@ -53,7 +52,7 @@ from .pythonNBitArithmetic import *
 # VMX file containing all necessary program code
 programPath = ''
 
-debugPath = 'VMEmulatorDebug/'  # Folder where logs go
+debugPath = 'Debug/VMEmulator/'  # Folder where logs go
 
 debugMode = False
 
@@ -79,8 +78,6 @@ io    = None
 
 startTime = None
 sysHalt = None
-
-io_process = None
 
 yieldToExternal = False  # Suspend tick
 
@@ -683,7 +680,7 @@ def updateWithDebug():
 	if breakpoint():
 
 		clock.stop()
-		# io_process.terminate()
+
 		# print( 'Breakpoint reached' )
 		print( 'Breakpoint reached after {} clock cycles'.format( clock.currentCycle ) )
 		print( 'Took {} seconds to reach breakpoint'.format( time.time() - startTime ) )
@@ -694,8 +691,8 @@ def updateWithDebug():
 def breakpoint():
 
 	# pass
-	# return PC == addressLookup[ 'GFX.fillRect' ]
 	return PC == sysHalt
+	# return PC == addressLookup[ 'GFX.fillRect' ]
 	# return clock.currentCycle == 384381
 
 
@@ -832,9 +829,6 @@ def setup():
 
 	# Initialize IO
 	io = Components.IO( nBits, RAMWrapper( RAM ) )
-
-	# Time it
-	startTime = time.time()
 
 
 def tick():

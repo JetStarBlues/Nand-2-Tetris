@@ -1,9 +1,0 @@
-include "C:/Users/Janet/Desktop/Hack/tempNotes/MyCompilerOut/OS_standalone/includesOfincludes/sub/sub2/FourthClass.jack"
-
-class ThirdClass {
-
-	function void main () {
-
-		//
-	}
-}

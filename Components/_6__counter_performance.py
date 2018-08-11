@@ -7,9 +7,9 @@ from ._x__components import *
 
 '''------------------------- Program counter -------------------------'''
 
-class ProgramCounterN_():
+class CounterN_():
 
-	''' N bit program counter '''
+	''' N bit counter '''
 
 	def __init__( self, N ):
 

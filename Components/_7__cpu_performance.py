@@ -42,7 +42,7 @@ class CPU_():
 		
 		self.N = N
 
-		self.programCounter = ProgramCounterN_( N )
+		self.programCounter = CounterN_( N )
 		self.A_register = RegisterN_( N )
 		self.D_register = RegisterN_( N )
 
@@ -58,6 +58,7 @@ class CPU_():
 
 	def doTheThing( self, clk, RESET, data_memory, program_memory ):
 
+		# self.doTheThing_V1( clk, RESET, data_memory, program_memory )
 		self.doTheThing_V2( clk, RESET, data_memory, program_memory )
 
 

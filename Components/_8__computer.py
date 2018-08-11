@@ -2,6 +2,7 @@
 
 # Built ins
 import time
+import os
 
 # Hack computer
 from ._x__components import *
@@ -23,7 +24,7 @@ class MemoryROMXN_():
 		self.ROM = RAMXN_( X, N )
 
 	
-	def flash( self, binary_file ):
+	def flash( self, binaryFile ):
 
 		''' 
 		 Write contents of binary file to ROM 
@@ -42,7 +43,7 @@ class MemoryROMXN_():
 
 		address = 0
 
-		with open( binary_file, encoding = 'utf-8' ) as input_file:
+		with open( binaryFile, encoding = 'utf-8' ) as input_file:
 				
 			for instruction in input_file:
 
@@ -64,6 +65,11 @@ class MemoryROMXN_():
 	def read( self, address ):
 
 		return self.ROM.read( address )
+
+
+	def readDecimal( self, address ):
+
+		return self.RAM.readDecimal( address )
 
 
 
@@ -88,6 +94,11 @@ class MemoryRAMXN_():
 		return self.RAM.read( address )
 
 
+	def readDecimal( self, address ):
+
+		return self.RAM.readDecimal( address )
+
+
 
 '''----------------------------- Computer -----------------------------'''
 
@@ -95,26 +106,50 @@ class ComputerN_():
 
 	''' N bit CPU + RAM + ROM '''
 
-	def __init__( self, N, RAM_size, ROM_size ):
+	def __init__( self, N, RAMSize, ROMSize ):
 
-		self.data_memory = MemoryRAMXN_( RAM_size, N )
-		self.program_memory = MemoryROMXN_( ROM_size, N )
+		self.N = N
 
-		self.screenCS = 0  # Thinking allow CPU to alert LCD Driver...
+		# Memory
+		self.data_memory = MemoryRAMXN_( RAMSize, N )
+		# self.program_memory = MemoryROMXN_( ROMSize, N )
+		self.maxROMSize = ROMSize
 
+		# CPU
 		self.CPU = CPU_( N )
 
+		# Signals
 		self.reset = 1  # Start with known state
+		self.interruptRequested = 0
+
+		# Buses
+		self.IODatabus = ( 0, ) * N
 
 
-	def load( self, binary_file ):
+	def load( self, binaryFile ):
 
-		self.program_memory.flash( binary_file )
+		binaryFileSize = os.path.getsize( binaryFile )
+
+		programSize = binaryFileSize // 18  # 1 byte for 0/1, 2 bytes for \n ... so 18 bytes per line
+
+		if ( programSize <= self.maxROMSize ):
+
+			self.program_memory = MemoryROMXN_( programSize + 1, self.N )  # init as size of program
+
+			self.program_memory.flash( binaryFile )
 
 
 	def run( self, clk ):
 
-		self.CPU.doTheThing( clk, self.reset, self.data_memory, self.program_memory )
+		self.CPU.doTheThing( 
+
+			clk,
+			self.reset,
+			self.interruptRequested,
+			self.IODatabus,
+			self.data_memory,
+			self.program_memory
+		)
 
 		# Reset the reset
 		# Poll in lieu of hardware button

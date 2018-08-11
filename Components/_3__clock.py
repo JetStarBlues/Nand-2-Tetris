@@ -28,11 +28,11 @@ class Clock():
 
 		# psuedo edges
 		self.isRising = False
-		self.isFalling = False
+		# self.isFalling = False
 
 		# functions to call on edges
 		self.callbackRising = None
-		self.callbackFalling = None
+		# self.callbackFalling = None
 
 
 	def halfTick( self ):
@@ -43,7 +43,7 @@ class Clock():
 
 		# pseudo edges
 		self.isRising = self.value
-		self.isFalling = not( self.value )
+		# self.isFalling = not( self.value )
 
 		# print("clock half tick at", round(time.time(),8), self.isRising)
 
@@ -56,8 +56,11 @@ class Clock():
 	def run( self ):
 
 		threading.Thread(
+
 			target = self.run_,
-			name = 'clock_thread'
+			name = 'clock_thread',
+			daemon = False
+
 		).start()
 
 

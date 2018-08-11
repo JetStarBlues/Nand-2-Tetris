@@ -18,9 +18,9 @@ def oneN_( N ):
 
 	return ( 0, ) * ( N - 1 ) + ( 1, )
 
-def isZero_( x ):
+def isZeroN_( N, x ):
 
-	return not_( orNto1_( x ) )
+	return not_( orNto1_( N, x ) )
 
 def isNegative_( x ):
 
@@ -308,7 +308,7 @@ def ALU_( N, x, y, control ):
 
 	# logical shift
 	z3 = shiftRightN_( N, x, y )
-	z4 = shiftLeftN_( N, x, y ),
+	z4 = shiftLeftN_( N, x, y )
 
 	# Select output
 	out = muxN16to1_(
@@ -335,7 +335,7 @@ def ALU_( N, x, y, control ):
 		fx[ 0 ], fx[ 1 ], fx[ 2 ], fx[ 3 ]
 	)
 
-	out_zr = mux_( 1, 0, isZero_( out ) )
+	out_zr = mux_( 1, 0, isZeroN_( N, out ) )
 	out_ng = mux_( 1, 0, isNegative_( out ) )
 
 	return ( out, out_zr, out_ng )

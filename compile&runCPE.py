@@ -1,13 +1,15 @@
 '''------------------------------ Imports ------------------------------'''
 
 import Assembler.hl2bin
-import Emulators.vmEmulator
+import Assembler.asm2bin
+import Emulators.cpuEmulator
 
 import sys
 
 
 '''------------------------------- Main -------------------------------'''
 
+# inputDirPath = '../N2T_Code/Programs/EmulatorTests/simple'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/multiclass'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
@@ -33,10 +35,13 @@ import sys
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/memory'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/math'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
-inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
+# inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/font'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
+
+# inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test1_add'
+inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test2_flip'
 
 if __name__ == '__main__':
 
@@ -53,8 +58,9 @@ if __name__ == '__main__':
 
 
 	# Compile
-	Assembler.hl2bin.hl_to_bin( inputDirPath )
+	# Assembler.hl2bin.hl_to_bin( inputDirPath )
+	Assembler.asm2bin.genBINFile( inputDirPath )
 	print()
 
 	# Run
-	Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )
+	Emulators.cpuEmulator.run( '{}/Main.bin'.format( inputDirPath ) )

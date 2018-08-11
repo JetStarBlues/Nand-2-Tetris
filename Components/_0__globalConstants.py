@@ -6,7 +6,7 @@
 
 N_BITS = 16
 
-CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
+# CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
 SCREEN_FPS = 1
 # SCREEN_FPS = 15
@@ -34,7 +34,7 @@ MOUSE_MEMORY_MAP    = HEAP_END + 10  # 3
 
 # Performance mode --
 # Uses python built-ins for arithmetic operations and storage
-PERFORMANCE_MODE = True
+PERFORMANCE_MODE = False
 
 if PERFORMANCE_MODE :
 	CLOCK_HALF_PERIOD = 0  # Can get away with no clock period as flip flops are not used for memory

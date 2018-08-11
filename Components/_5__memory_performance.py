@@ -48,14 +48,10 @@ class RegisterN_():
 		
 		if clk == 1 and write == 1:
 
-			# print( 'writing', x )
-
 			self.register = x
 
 
 	def read( self ):
-
-		# print( 'reading', self.register )
 
 		return self.register
 
@@ -75,15 +71,11 @@ class RAMXN_():
 	def write( self, clk, x, write, address ):
 
 		if clk == 1 and write == 1:
-		
-			# print( 'writing,', address, x )
 			
 			self.registers[ address ] = x
 
 
 	def read( self, address ):
-
-		# print( 'reading,', address, self.registers[ address ] )
 
 		return self.registers[ address ]
 

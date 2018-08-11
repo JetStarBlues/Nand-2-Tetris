@@ -1,9 +1,7 @@
 __pycache__/
 
+Debug
+
 PlayArea/screen/frames.py
 PlayArea/screen/frames2.py
-debug.txt
-debug2.txt
-debug3.txt
-dump
 temptest.py

@@ -75,12 +75,12 @@ class IO():
 		self.addrScreenArg5 = SCREEN_MEMORY_MAP + 6
 		self.addrScreenArg6 = SCREEN_MEMORY_MAP + 7
 
-		self.addrMouseP = MOUSE_MEMORY_MAP + 0
-		self.addrMouseX = MOUSE_MEMORY_MAP + 1
-		self.addrMouseY = MOUSE_MEMORY_MAP + 2
+		self.addrMouseP     = MOUSE_MEMORY_MAP + 0
+		self.addrMouseX     = MOUSE_MEMORY_MAP + 1
+		self.addrMouseY     = MOUSE_MEMORY_MAP + 2
 
-		self.addrKeyP    = KEYBOARD_MEMORY_MAP + 0
-		self.addrKeyCode = KEYBOARD_MEMORY_MAP + 1
+		self.addrKeyP       = KEYBOARD_MEMORY_MAP + 0
+		self.addrKeyCode    = KEYBOARD_MEMORY_MAP + 1
 
 		# Commands ---
 		self.cmds = [
@@ -279,7 +279,7 @@ class IO():
 		self.pixelArray[ x ][ y ] = self.curColor
 		# self.surface.set_at( ( x, y ), self.curColor )
 
-	def getPixel( self, x, y ):
+	def getPixel( self ):
 
 		# Get args
 		x = self.main_memory.read( self.addrScreenArg0 )
@@ -384,13 +384,8 @@ class IO():
 
 		'''
 			Draw pixels from main memory.
-
-			'pixBuffer' is a pointer to a location in main memory.
-			Assumes pixels are stored in TECS screen memory format.
-			TODO: elaborate w/ clear example
-			      (pictures for both 1-bit and 4-bit storage)
-
-			Slow because decoding packed representation.
+			'pixBuffer' is a pointer to a location in main memory
+			 holding encoded pixel data.
 		'''
 
 		# Get args

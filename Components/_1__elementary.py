@@ -232,7 +232,7 @@ def dMux1to8_( x, s2, s1, s0 ):
 
 # Fake 'Z' state with zero
 
-def buf_( d, sel ):
+def buffer_( d, sel ):
 
 	return mux_( d, 0, sel )
 
@@ -267,8 +267,8 @@ def muxN8to1_( N, d7, d6, d5, d4, d3, d2, d1, d0, s2, s1, s0 ):
 def muxN16to1_( N, d15, d14, d13, d12, d11, d10, d9, d8, d7, d6, d5, d4, d3, d2, d1, d0, s3, s2, s1, s0 ):
 	return tuple( mux16to1_( d15[i], d14[i], d13[i], d12[i], d11[i], d10[i], d9[i], d8[i], d7[i], d6[i], d5[i], d4[i], d3[i], d2[i], d1[i], d0[i], s3, s2, s1, s0 ) for i in range( N ) )
 
-def bufN_ ( N, d, sel ):
-	return tuple( buf_( d[i], sel ) for i in range( N ) )
+def bufferN_ ( N, d, sel ):
+	return tuple( buffer_( d[i], sel ) for i in range( N ) )
 
 
 
@@ -277,11 +277,11 @@ def bufN_ ( N, d, sel ):
 def or3_( a, b, c ):
 	return ( or_( a, or_( b, c ) ) )
 
-def orNto1_( x ):
+def orNto1_( N, x ):
 
 	# Cascaded or gates
 	out = x[0]
-	for i in range( 1, N_BITS ):
+	for i in range( 1, N ):
 		out = or_( out, x[i] )
 	return out
 

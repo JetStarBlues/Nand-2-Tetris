@@ -29,11 +29,12 @@ import Assembler.asm2bin as asm2bin
 useTECSCompatibleVM = False
 
 # Use VM instructions that are compatible with our bespoke CPU
-# useBespokeCompatibleVM = True
-useBespokeCompatibleVM = False
+useBespokeCompatibleVM = True
+# useBespokeCompatibleVM = False
 
-# compileBinaries = True  # Generate assembly and binary files
-compileBinaries = False
+# Generate assembly and binary files
+compileBinaries = True
+# compileBinaries = False
 
 OSClasses = [  # ordered by dependency
 
