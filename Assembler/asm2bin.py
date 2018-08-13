@@ -13,6 +13,8 @@
 #
 # ========================================================================================
 
+# TODO: Rewrite this... outdated style
+
 '''
 	Instruction - FEDCBA9876543210  // msb to lsb
 	              0123456789ABCDEF  // array indexing
@@ -78,6 +80,13 @@ from commonHelpers import *
 
 # == Helpers =================================================
 
+def isValidName( name ):
+
+	return re.fullmatch( r'\w+', name )
+
+
+# == Debug ===================================================
+
 def debugStuff( cmdList ):
 
 	for c in cmdList:
@@ -105,7 +114,6 @@ def debugStuff( cmdList ):
 		print( '{:<6}  {}'.format( kv[ 1 ], kv[ 0 ] ) )
 
 
-
 # == Main ====================================================
 
 
@@ -119,9 +127,8 @@ static_segment_end   = GC.STATIC_END
 static_segment_size  = static_segment_end - static_segment_start + 1
 
 largest_immediate = 2 ** ( nBits - 1 ) - 1
-negative_one = 2 ** nBits - 1
-largest_address = 2 ** 26 - 1
-
+negative_one      = 2 ** nBits - 1
+largest_address   = 2 ** 26 - 1
 
 
 # -- Extraction -------------------------------------
@@ -224,7 +231,13 @@ def tripleLabels_P1( cmdList ):
 
 			label = cmd[ 1 : - 1 ]  # get the label
 
-			labels.append( label )
+			if isValidName( label ):
+
+				labels.append( label )
+
+			else:
+
+				raise Exception( 'Invalid name - {}'.format( cmd ) )
 
 	# Triple references
 	for i in range( len( cmdList ) ):
@@ -239,6 +252,13 @@ def tripleLabels_P1( cmdList ):
 
 				cmdList2.append( 'placeholder' )
 				cmdList2.append( 'placeholder' )
+
+			# Throw invalid value check here...
+			elif cmd[ 1 : ].isdigit():
+
+				if int( cmd[ 1 : ] ) > largest_immediate:
+
+					raise Exception( 'Invalid integer - {}'.format( cmd ) )
 
 	# Check size
 	if len( cmdList2 ) > largest_address:
@@ -353,10 +373,14 @@ def handleVariables( cmdList ):
 			elif cmd in knownAddresses_DataMemory:
 
 				cmdList[ i ] = knownAddresses_DataMemory[ cmd ]
-			
+
 			# Allocate it
-			else:  
-					
+			else:
+
+				if not isValidName( cmd[ 1 : ] ):
+
+					raise Exception( 'Invalid name - {}'.format( cmd ) )
+
 				if freeAddress > static_segment_end:
 
 					raise Exception( 'Ran out of static memory' )
@@ -406,6 +430,13 @@ def translateInstructions( cmdList ):
 		elif cmd_s.upper() == 'RETI':
 
 			opcode = LT.fxType[ 'RETI' ]
+			cmd_b = '1' + opcode + '0' * 10
+
+
+		# HALT instruction
+		elif cmd_s.upper() == 'HALT':
+
+			opcode = LT.fxType[ 'HALT' ]
 			cmd_b = '1' + opcode + '0' * 10
 
 

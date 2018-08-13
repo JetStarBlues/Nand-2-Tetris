@@ -1,1 +1,0 @@
-from ._x__synchTests import runTests

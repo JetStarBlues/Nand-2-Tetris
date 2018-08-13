@@ -40,7 +40,7 @@ class IO():
 		self.oneN  = self.intToBitArray( 1 )
 
 		# Pygame ---
-		self.maxFps = SCREEN_FPS
+		self.maxFps = FPS
 		self.surface = None
 		self.clock = None
 
@@ -249,9 +249,12 @@ class IO():
 	def setColor( self ):
 
 		# Get args
-		r = self.main_memory.read( self.addrScreenArg0 )
-		g = self.main_memory.read( self.addrScreenArg1 )
-		b = self.main_memory.read( self.addrScreenArg2 )
+		cPtr = self.main_memory.read( self.addrScreenArg0 )
+		cPtr = self.bitArrayToInt( cPtr )
+
+		r = self.main_memory.read( cPtr     )
+		g = self.main_memory.read( cPtr + 1 )
+		b = self.main_memory.read( cPtr + 2 )
 
 		r = self.bitArrayToInt( r )
 		g = self.bitArrayToInt( g )
@@ -497,7 +500,7 @@ class IO():
 
 				register = self.main_memory.read( regIdx + word )
 
-				register = bitArrayToBinaryString( register )
+				register = self.bitArrayToBinaryString( register )
 
 				for i in range( self.nPixelsPerWord_1 ):
 
@@ -532,7 +535,7 @@ class IO():
 
 			register = self.main_memory.read( regIdx )
 
-			register = bitArrayToBinaryString( register )
+			register = self.bitArrayToBinaryString( register )
 
 			for i in range( self.N ):
 
@@ -576,7 +579,7 @@ class IO():
 
 				register = self.main_memory.read( regIdx + word )
 
-				register = bitArrayToBinaryString( register )
+				register = self.bitArrayToBinaryString( register )
 
 				for i in range( 0, self.N, 4 ):  # loop through pixels in register
 
@@ -612,7 +615,7 @@ class IO():
 
 			register = self.main_memory.read( idx )
 
-			register = bitArrayToBinaryString( register )
+			register = self.bitArrayToBinaryString( register )
 
 			for i in range( 0, self.N, 4 ):  # loop through pixels in register
 
@@ -641,8 +644,8 @@ class IO():
 		if button == 1:  # left button
 
 			# Convert to binary
-			mouseX = self.intToBitArray( pos[0] )
-			mouseY = self.intToBitArray( pos[1] )
+			mouseX = self.intToBitArray( pos[ 0 ] )
+			mouseY = self.intToBitArray( pos[ 1 ] )
 
 			# Write to memory
 			self.main_memory.write( 1, self.oneN, 1, self.addrMouseP )
@@ -655,6 +658,8 @@ class IO():
 		    Note: Too fast, cleared long before Hack program has chance to poll
 		'''
 
+		# print( 'Mouse released' )
+
 		if button == 1:  # left button
 
 			# Write to memory
@@ -665,13 +670,12 @@ class IO():
 		''' If mouse is moved, update mouseX and mouseY '''
 
 		# Convert to binary
-		mouseX = self.intToBitArray( pos[0] )
-		mouseY = self.intToBitArray( pos[1] )
+		mouseX = self.intToBitArray( pos[ 0 ] )
+		mouseY = self.intToBitArray( pos[ 1 ] )
 
 		# Write to memory
-		self.main_memory.write( 1, self.oneN, 1, self.addrMouseP )
-		self.main_memory.write( 1,    mouseX, 1, self.addrMouseX )
-		self.main_memory.write( 1,    mouseY, 1, self.addrMouseY )
+		self.main_memory.write( 1, mouseX, 1, self.addrMouseX )
+		self.main_memory.write( 1, mouseY, 1, self.addrMouseY )
 
 
 	# Keyboard --------------------------------------------------
@@ -684,7 +688,7 @@ class IO():
 		keyCode = self.lookupKey( key, modifier )
 
 		# print( 'Key pressed', key, modifier, keyCode )
-		print( 'Key pressed', keyCode )
+		print( 'Key pressed', self.bitArrayToInt( keyCode ) )
 
 		# Write to memory
 		self.main_memory.write( 1, self.oneN, 1, self.addrKeyP )

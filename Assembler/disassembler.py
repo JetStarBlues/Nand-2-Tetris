@@ -1,5 +1,3 @@
-# TODO: Update for new ISA
-
 # == Imports =================================================
 
 import Assembler.lookupTables as LT
@@ -14,23 +12,48 @@ def disassemble( instruction ):
 	disassembled = ''
 
 	# @address
-	if instruction[0] == '0' :
+	if instruction[ 0 ] == '0' :
 
 		disassembled = '@{}'.format( int( instruction[ 1 : ], 2 ) )
 
-	# dest = cmp ; jmp
-	else :
+	else:
 
-		comp = LT.comp_[ instruction[  1 : 10 ] ]
-		dest = LT.dest_[ instruction[ 10 : 13 ] ]
-		jump = LT.jump_[ instruction[ 13 : 16 ] ]
+		opcode = instruction[ 1 : 6 ]
 
-		if dest != 'NULL':
-			disassembled += dest + ' = '
+		if opcode in LT.fxType_:
 
-		disassembled += comp
+			disassembled = LT.fxType_[ opcode ]
 
-		if jump != 'NULL':
-			disassembled += ' ; ' + jump
+			if disassembled == 'AA_IMMED':
+
+				disassembled = '@@{}'.format( int( instruction[ 6 : ], 2 ) )
+
+			elif disassembled == 'DST_EQ_IOBUS':
+
+				dest = LT.dest_[ instruction[ 10 : 13 ] ]
+
+				disassembled = '{} = IOBUS'.format( dest )
+
+		# dest = cmp ; jmp
+		else:
+
+			xSel = LT.xySel_[ instruction[  6 :  8 ] ]
+			ySel = LT.xySel_[ instruction[  8 : 10 ] ]
+			dest = LT.dest_[  instruction[ 10 : 13 ] ]
+			jump = LT.jump_[  instruction[ 13 : 16 ] ]
+
+			comp = LT.comp_[ opcode ]
+			comp = comp.replace( 'x', xSel )
+			comp = comp.replace( 'y', ySel )
+
+			if dest != 'NULL':
+
+				disassembled = '{} = '.format( dest )
+
+			disassembled += comp
+
+			if jump != 'NULL':
+
+				disassembled += ' ; {}'.format( jump )
 
 	return disassembled

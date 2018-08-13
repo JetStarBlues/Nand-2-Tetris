@@ -69,7 +69,7 @@ class MemoryROMXN_():
 
 	def readDecimal( self, address ):
 
-		return self.RAM.readDecimal( address )
+		return self.ROM.readDecimal( address )
 
 
 
@@ -118,9 +118,12 @@ class ComputerN_():
 		# CPU
 		self.CPU = CPU_( N )
 
-		# Signals
-		self.reset = 1  # Start with known state
+		# Signals (input)
+		self.reset              = 1  # Start with known state
 		self.interruptRequested = 0
+
+		# Signals (output)
+		self.halted             = 0
 
 		# Buses
 		self.IODatabus = ( 0, ) * N
@@ -141,14 +144,15 @@ class ComputerN_():
 
 	def run( self, clk ):
 
-		self.CPU.doTheThing( 
+		self.CPU.doTheThing(
+
+			self,  # pass CPU a pointer to self...
 
 			clk,
 			self.reset,
 			self.interruptRequested,
-			self.IODatabus,
-			self.data_memory,
-			self.program_memory
+
+			self.IODatabus
 		)
 
 		# Reset the reset

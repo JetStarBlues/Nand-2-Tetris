@@ -33,6 +33,7 @@ import yappi
 # Hack computer
 import Components
 from commonHelpers import *
+import Assembler.disassembler as dis
 
 
 # Configure computer ---------------
@@ -44,7 +45,7 @@ debugPath = 'Debug/CPUEmulator/'  # Folder where logs go
 
 debugMode = True
 
-printCurrentInstruction = False
+# printCurrentInstruction = False
 
 runYappiProfile = False
 
@@ -68,11 +69,11 @@ def updateWithDebug():
 
 	global instructionAddress
 
+	instructionAddress = computer.CPU.programCounter.readDecimal()
+
 	update()
 
 	if breakpoint():
-
-		instructionAddress = computer.CPU.programCounter.readDecimal()
 
 		clock.stop()
 
@@ -90,10 +91,7 @@ def negate( x ):
 
 def breakpoint( fx = None ):
 
-	# return computer.data_memory.readDecimal( 1 ) == 55
-	return computer.data_memory.readDecimal( 0 ) == 6000
-	# return computer.data_memory.read( 9000 ) == 12345
-	# return computer.data_memory.read( 8001 ) == negate( 180 )
+	return computer.halted  # assembly HALT instruction
 	# return instructionAddress == 16551  # Sys.halt (position changes with recompile)
 
 	# return False
@@ -111,7 +109,7 @@ def debug2File():
 		file.write( 'Instruction' + '\n' )
 		file.write( '\taddress      {}'.format( instructionAddress ) + '\n' )
 		file.write( '\tinstruction  {}'.format( instruction ) + '\n' )
-		# file.write( '\tinstruction  {}'.format( disassemble( instruction ) ) + '\n' )
+		file.write( '\t             {}'.format( dis.disassemble( instruction ) ) + '\n' )
 		file.write( '\n' )
 
 		file.write( 'Registers' + '\n' )
@@ -154,6 +152,19 @@ def debug2File():
 		file.write( 'Heap' + '\n' )
 		for i in range( Components.HEAP_START, Components.HEAP_END + 1 ):
 			file.write( '\t{:<5}  {}'.format( i, computer.data_memory.readDecimal( i ) ) + '\n' )
+		file.write( '\n' )
+
+		# io
+		file.write( 'IO' + '\n' )
+		file.write( '\tscreen' + '\n' )
+		for i in range( Components.IO_START, Components.KEYBOARD_MEMORY_MAP ):
+			file.write( '\t\t{:<5}  {}'.format( i, computer.data_memory.readDecimal( i ) ) + '\n' )
+		file.write( '\tkeyboard' + '\n' )
+		for i in range( Components.KEYBOARD_MEMORY_MAP, Components.MOUSE_MEMORY_MAP ):
+			file.write( '\t\t{:<5}  {}'.format( i, computer.data_memory.readDecimal( i ) ) + '\n' )
+		file.write( '\tmouse' + '\n' )
+		for i in range( Components.MOUSE_MEMORY_MAP, Components.IO_END + 1 ):
+			file.write( '\t\t{:<5}  {}'.format( i, computer.data_memory.readDecimal( i ) ) + '\n' )
 		file.write( '\n' )
 
 
@@ -201,13 +212,13 @@ def tick():
 
 def update():
 
-	global instructionAddress
+	# global instructionAddress
 
-	if printCurrentInstruction:
+	# if printCurrentInstruction:
 
-		instructionAddress = computer.CPU.programCounter.readDecimal()
+	# 	instructionAddress = computer.CPU.programCounter.readDecimal()
 
-		print( 'PC', instructionAddress )
+	# 	print( 'PC', instructionAddress )
 
 	tick()
 

@@ -10,6 +10,7 @@ import math
 
 # Hack computer
 from ._x__components import *
+import Assembler.disassembler as dis
 
 
 '''------------------------------- CPU -------------------------------'''
@@ -68,26 +69,29 @@ class CPU_():
 
 	def __init__( self, N ):
 		
+		self.debugMode = False
+
 		self.N = N
 
-		# Counters
+		# Program counter
 		self.programCounter = CounterN_( 2 * N )
 
+		# Microstep counter
 		nStepsPerInstruction = 4
 		self.microCounter    = CounterN_( int( math.log( nStepsPerInstruction, 2 ) ) )
 
-		# Internal ROM
-		nInstructionTypes    = 7
+		# Microcode ROM
+		nControlSignals      = 18
+		nInstructionTypes    = 8
+		self.nBitsInOpType   = math.ceil( math.log( nInstructionTypes, 2 ) )
 		nEntriesMicrocodeROM = nInstructionTypes * nStepsPerInstruction
-		nControlSignals      = 17
-		self.nBitsInOpType   = 3
-		nBitsInStep          = 2
 		self.microcodeROM    = ROMXN_( nEntriesMicrocodeROM, nControlSignals )
 
+		# ALU ROM
 		nEntriesALUROM = 32
 		nBitsInFxSel   = 4
-		nBitsInFxFlag  = 5
-		self.ALUROM    = ROMXN_( nEntriesALUROM, nBitsInFxSel + nBitsInFxFlag )
+		nBitsInFxFlags = 5
+		self.ALUROM    = ROMXN_( nEntriesALUROM, nBitsInFxSel + nBitsInFxFlags )
 		
 		self.initInternalROM()
 
@@ -131,10 +135,11 @@ class CPU_():
 		self.nBitsInOp = 5
 
 		# Corresponds to encoding in instruction...
-		self.op_AAimmed     = ( 1, 1, 1, 0, 0 )
-		self.op_dstEqIOBus  = ( 1, 1, 1, 0, 1 )
-		self.op_reti        = ( 1, 1, 1, 1, 0 )
-		self.op_nop         = ( 1, 1, 1, 1, 1 )
+		self.op_AAimmed     = ( 1, 1, 0, 1, 1 )
+		self.op_dstEqIOBus  = ( 1, 1, 1, 0, 0 )
+		self.op_reti        = ( 1, 1, 1, 0, 1 )
+		self.op_nop         = ( 1, 1, 1, 1, 0 )
+		self.op_halt        = ( 1, 1, 1, 1, 1 )
 
 		# Corresponds to microcode ROM base address...
 		self.opType_Aimmed      = self.intToBitArray( 0, self.nBitsInOpType )
@@ -144,13 +149,14 @@ class CPU_():
 		self.opType_intAck      = self.intToBitArray( 4, self.nBitsInOpType )
 		self.opType_reti        = self.intToBitArray( 5, self.nBitsInOpType )
 		self.opType_nop         = self.intToBitArray( 6, self.nBitsInOpType )
+		self.opType_halt        = self.intToBitArray( 7, self.nBitsInOpType )
 
 		# Location of ISRHandler in program
 		self.ISRHandlerAddress = self.intToBitArray( 0, 2 * N )
 
 		# Miscellaneous
 		self.zero = self.intToBitArray( 0, N )
-		self.AA_registerMask = ( 0, ) * 6 + ( 1, ) * 10
+		self.AA_registerMask = ( 0, ) * 6 + ( 1, ) * 10  # ???
 
 
 		# Temp debug
@@ -163,14 +169,16 @@ class CPU_():
 			( 1, 0, 0 ) : 'opType_intAck',
 			( 1, 0, 1 ) : 'opType_reti',
 			( 1, 1, 0 ) : 'opType_nop',
+			( 1, 1, 1 ) : 'opType_halt',
 		}
 
 		self.opLookup = {
 
-			( 1, 1, 1, 0, 0 ) : 'op_AAimmed',
-			( 1, 1, 1, 0, 1 ) : 'op_dstEqIOBus',
-			( 1, 1, 1, 1, 0 ) : 'op_reti',
-			( 1, 1, 1, 1, 1 ) : 'op_nop',
+			( 1, 1, 0, 1, 1 ) : 'op_AAimmed',
+			( 1, 1, 1, 0, 0 ) : 'op_dstEqIOBus',
+			( 1, 1, 1, 0, 1 ) : 'op_reti',
+			( 1, 1, 1, 1, 0 ) : 'op_nop',
+			( 1, 1, 1, 1, 1 ) : 'op_halt',
 		}
 
 		self.ALUFxLookup = {
@@ -224,61 +232,68 @@ class CPU_():
 
 		# Microcode ROM
 		'''
-			                                     |  opType_Aimmed       |  opType_AAimmed      |  opType_dstEqCmpJmp  |  opType_dstEqIOBus   |  opType_intAck       |  opType_reti         |  opType_nop          |
-			                                     |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |
-			-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-			c_cInst                              |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_ARegisterWr                        |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_ARegisterInSel_instructionRegister |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_AARegisterWr                       |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_instructionRegisterWr              |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |
-			c_PCIncrement                        |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |
-			c_PCWr                               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
-			c_PCInSel_ISRHandler                 |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
-			c_readIODatabus                      |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
-			c_dstInSel_IOInputRegister           |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_enableInterrupts                   |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |
-			c_disableInterrupts                  |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_acknowledgeInterrupt               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_servicedInterrupt                  |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |
-			c_enableRegisterBackup               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |
-			c_disableRegisterBackup              |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |
-			c_restoreRegisters                   |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |
+			                                     |  opType_Aimmed       |  opType_AAimmed      |  opType_dstEqCmpJmp  |  opType_dstEqIOBus   |  opType_intAck       |  opType_reti         |  opType_nop          |  opType_halt         |
+			                                     |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |
+			------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+			c_cInst                              |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_ARegisterWr                        |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_ARegisterInSel_instructionRegister |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_AARegisterWr                       |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_instructionRegisterWr              |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |
+			c_PCIncrement                        |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |  1  0  0  0          |
+			c_PCWr                               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_PCInSel_ISRHandler                 |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_readIODatabus                      |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_dstInSel_IOInputRegister           |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_enableInterrupts                   |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
+			c_disableInterrupts                  |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_acknowledgeInterrupt               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_servicedInterrupt                  |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
+			c_enableRegisterBackup               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  1  0          |  0  0  0  0          |  0  0  0  0          |
+			c_disableRegisterBackup              |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_restoreRegisters                   |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |
+			c_halt                               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  1  1          |
 		'''
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  0 )
-		self.microcodeROM.write( 1, ( 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  1 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  2 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  3 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  4 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  5 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  6 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  7 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  8 )
-		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  9 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 10 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 11 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 12 )
-		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 ), 1, 13 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 14 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 15 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 16 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0 ), 1, 17 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 18 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 19 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 20 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 21 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0 ), 1, 22 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 23 )
-
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 24 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 25 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 26 )
-		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 27 )
+		# opType_Aimmed
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  0 )
+		self.microcodeROM.write( 1, ( 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  1 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  2 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  3 )
+		# opType_AAimmed
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  4 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  5 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  6 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  7 )
+		# opType_dstEqCmpJmp
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  8 )
+		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  9 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 10 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 11 )
+		# opType_dstEqIOBus
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 12 )
+		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 13 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 14 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 15 )
+		# opType_intAck
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 16 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0 ), 1, 17 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 18 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 19 )
+		# opType_reti
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 20 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ), 1, 21 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0 ), 1, 22 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 23 )
+		# opType_nop
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 24 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 25 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 26 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 27 )
+		# opType_halt
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 28 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 29 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 30 )
+		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 31 )
 
 
 		# ALU ROM
@@ -333,12 +348,30 @@ class CPU_():
 		return d
 
 
-	def doTheThing( self, clk, RESET, interruptRequested, IODatabus, data_memory, program_memory ):
+	def doTheThing( 
+
+			self,
+
+			computer,            # ...
+
+			clk,                 # input
+			RESET,               # input
+			interruptRequested,  # input
+
+			IODatabus            # bidirectional
+		):
 
 		'''
 			. Everything happens at once/simultaneously
 			. Assumes all memory modules can be read asynchronously
 		'''
+
+
+		# Alias -
+
+		data_memory    = computer.data_memory
+		program_memory = computer.program_memory
+
 
 		# Constants -
 
@@ -377,9 +410,12 @@ class CPU_():
 		instructionAddress = self.programCounter.read()
 		microStep          = self.microCounter.read()
 
-		print( 'instruction         {}'.format( self.bitArrayToBinaryString( instruction ) ) )
-		print( 'instructionAddress  {}'.format( self.programCounter.readDecimal() ) )
-		print( 'microStep           {}'.format( self.bitArrayToInt( microStep ) ) )
+		if self.debugMode:
+
+			print( 'instruction         {}'.format( self.bitArrayToBinaryString( instruction ) ) )
+			print( '                    {}'.format( dis.disassemble( self.bitArrayToBinaryString( instruction ) ) ) )
+			print( 'instructionAddress  {}'.format( self.programCounter.readDecimal() ) )
+			print( 'microStep           {}'.format( self.bitArrayToInt( microStep ) ) )
 
 		programMemoryOut = program_memory.read( self.programCounter.read() )
 
@@ -390,7 +426,7 @@ class CPU_():
 
 		aInst = not_( instruction[ self.TECSInstrType ] )
 
-		iDecode3 = muxN_(
+		iDecode4 = muxN_(
 
 			self.nBitsInOpType,
 
@@ -398,6 +434,15 @@ class CPU_():
 			self.opType_dstEqCmpJmp,
 
 			self.compareOp( op, self.op_dstEqIOBus )
+		)
+		iDecode3 = muxN_(
+
+			self.nBitsInOpType,
+
+			self.opType_halt,
+			iDecode4,
+
+			self.compareOp( op, self.op_halt )
 		)
 		iDecode2 = muxN_(
 
@@ -452,12 +497,18 @@ class CPU_():
 
 		microInstruction = self.microcodeROM.read( microAddress )
 
-		if op in self.opLookup:
-			print( 'op                  {} {}'.format( op, self.opLookup[ op ] ) )
-		else:
-			print( 'op                  {} alu {}'.format( op, self.ALUFxLookup[ op ] ) )
-		print( 'instructionType     {}       {}'.format( instructionType, self.instructionTypeLookup[ instructionType ] ) )
-		# print( 'microAddr           {}'.format( microAddress ) )
+		if self.debugMode:
+
+			if op in self.opLookup:
+
+				print( 'op                  {} {}'.format( op, self.opLookup[ op ] ) )
+
+			else:
+
+				print( 'op                  {} alu {}'.format( op, self.ALUFxLookup[ op ] ) )
+
+			print( 'instructionType     {}       {}'.format( instructionType, self.instructionTypeLookup[ instructionType ] ) )
+			# print( 'microAddr           {}'.format( microAddress ) )
 
 
 		# Control signals -
@@ -479,26 +530,30 @@ class CPU_():
 		c_enableRegisterBackup               = microInstruction[ 14 ]
 		c_disableRegisterBackup              = microInstruction[ 15 ]
 		c_restoreRegisters                   = microInstruction[ 16 ]
+		c_halt                               = microInstruction[ 17 ]
 
-		print( 'controlSignals      ', end='' )
-		if c_cInst:                              print( 'c_cInst',                              end=' | ' )
-		if c_ARegisterWr:                        print( 'c_ARegisterWr',                        end=' | ' )
-		if c_ARegisterInSel_instructionRegister: print( 'c_ARegisterInSel_instructionRegister', end=' | ' )
-		if c_AARegisterWr:                       print( 'c_AARegisterWr',                       end=' | ' )
-		if c_instructionRegisterWr:              print( 'c_instructionRegisterWr',              end=' | ' )
-		if c_PCIncrement:                        print( 'c_PCIncrement',                        end=' | ' )
-		if c_PCWr:                               print( 'c_PCWr',                               end=' | ' )
-		if c_PCInSel_ISRHandler:                 print( 'c_PCInSel_ISRHandler',                 end=' | ' )
-		if c_readIODatabus:                      print( 'c_readIODatabus',                      end=' | ' )
-		if c_dstInSel_IOInputRegister:           print( 'c_dstInSel_IOInputRegister',           end=' | ' )
-		if c_enableInterrupts:                   print( 'c_enableInterrupts',                   end=' | ' )
-		if c_disableInterrupts:                  print( 'c_disableInterrupts',                  end=' | ' )
-		if c_acknowledgeInterrupt:               print( 'c_acknowledgeInterrupt',               end=' | ' )
-		if c_servicedInterrupt:                  print( 'c_servicedInterrupt',                  end=' | ' )
-		if c_enableRegisterBackup:               print( 'c_enableRegisterBackup',               end=' | ' )
-		if c_disableRegisterBackup:              print( 'c_disableRegisterBackup',              end=' | ' )
-		if c_restoreRegisters:                   print( 'c_restoreRegisters',                   end=' | ' )
-		print()
+		if self.debugMode:
+
+			print( 'controlSignals      ', end='' )
+			if c_cInst:                              print( 'c_cInst',                              end = ' | ' )
+			if c_ARegisterWr:                        print( 'c_ARegisterWr',                        end = ' | ' )
+			if c_ARegisterInSel_instructionRegister: print( 'c_ARegisterInSel_instructionRegister', end = ' | ' )
+			if c_AARegisterWr:                       print( 'c_AARegisterWr',                       end = ' | ' )
+			if c_instructionRegisterWr:              print( 'c_instructionRegisterWr',              end = ' | ' )
+			if c_PCIncrement:                        print( 'c_PCIncrement',                        end = ' | ' )
+			if c_PCWr:                               print( 'c_PCWr',                               end = ' | ' )
+			if c_PCInSel_ISRHandler:                 print( 'c_PCInSel_ISRHandler',                 end = ' | ' )
+			if c_readIODatabus:                      print( 'c_readIODatabus',                      end = ' | ' )
+			if c_dstInSel_IOInputRegister:           print( 'c_dstInSel_IOInputRegister',           end = ' | ' )
+			if c_enableInterrupts:                   print( 'c_enableInterrupts',                   end = ' | ' )
+			if c_disableInterrupts:                  print( 'c_disableInterrupts',                  end = ' | ' )
+			if c_acknowledgeInterrupt:               print( 'c_acknowledgeInterrupt',               end = ' | ' )
+			if c_servicedInterrupt:                  print( 'c_servicedInterrupt',                  end = ' | ' )
+			if c_enableRegisterBackup:               print( 'c_enableRegisterBackup',               end = ' | ' )
+			if c_disableRegisterBackup:              print( 'c_disableRegisterBackup',              end = ' | ' )
+			if c_restoreRegisters:                   print( 'c_restoreRegisters',                   end = ' | ' )
+			if c_halt:                               print( 'c_halt',                               end = ' | ' )
+			print()
 
 
 		# Hold value over time (via register), but switch immediately with control signal
@@ -562,10 +617,12 @@ class CPU_():
 		zr = ALU_out[ 1 ]  # result is zero
 		ng = ALU_out[ 2 ]  # result is negative
 
-		# print( 'ALU_control         {}'.format( ALU_control ) )
-		print( 'x                   {} {} {}'.format( x, self.xyLookup[ instruction[ self.xSel : self.xSel + 2 ] ], self.bitArrayToInt( x ) ) )
-		print( 'y                   {} {} {}'.format( y, self.xyLookup[ instruction[ self.ySel : self.ySel + 2 ] ], self.bitArrayToInt( y ) ) )
-		print( 'z                   {}   {}'.format( z, self.bitArrayToInt( z ) ) )
+		if self.debugMode:
+
+			# print( 'ALU_control         {}'.format( ALU_control ) )
+			print( 'x                   {} {} {}'.format( x, self.xyLookup[ instruction[ self.xSel : self.xSel + 2 ] ], self.bitArrayToInt( x ) ) )
+			print( 'y                   {} {} {}'.format( y, self.xyLookup[ instruction[ self.ySel : self.ySel + 2 ] ], self.bitArrayToInt( y ) ) )
+			print( 'z                   {}   {}'.format( z, self.bitArrayToInt( z ) ) )
 
 
 		# Jump -
@@ -692,18 +749,30 @@ class CPU_():
 		self.backupEnabled_ff.doTheThing        ( clk,             c_disableRegisterBackup, or_( RESET, c_enableRegisterBackup ), 0 )
 
 		data_memory.write( clk, dataMemoryIn, dataMemoryWr, lowerAddress )
-		print( 'dataMemoryWr        {}'.format( dataMemoryWr ) )
-		print( 'dataMemoryIn        {} {}'.format( dataMemoryIn, self.bitArrayToInt( dataMemoryIn ) ) )
-		# print( 'lowerAddress', lowerAddress )
+
+		if self.debugMode:
+
+			print( 'dataMemoryWr        {}'.format( dataMemoryWr ) )
+			print( 'dataMemoryIn        {} {}'.format( dataMemoryIn, self.bitArrayToInt( dataMemoryIn ) ) )
+			# print( 'lowerAddress', lowerAddress )
 
 		self.programCounter.doTheThing( clk, RESET, PCIn, PCWr, c_PCIncrement )
 
 		self.microCounter.doTheThing( clk, RESET, microCounterIn, microCounterWr, microCounterIncrement )
 
-		print( 'ARegOut             {}'.format( self.A_register.readDecimal() ) )
+		if self.debugMode:
 
-		# print( 'mem_16 ', data_memory.readDecimal( 16 ) )
-		# print( 'mem_17 ', data_memory.readDecimal( 17 ) )
-		# print( 'mem_0  ', data_memory.readDecimal( 0 ) )
-		# print( 'mem_1  ', data_memory.readDecimal( 1 ) )
-		print()
+			print( 'ARegOut             {}'.format( self.A_register.readDecimal() ) )
+			print( 'DRegOut             {}'.format( self.D_register.readDecimal() ) )
+			print( 'BRegOut             {}'.format( self.B_register.readDecimal() ) )
+
+			# print( 'mem_16 ', data_memory.readDecimal( 16 ) )
+			# print( 'mem_17 ', data_memory.readDecimal( 17 ) )
+			# print( 'mem_0  ', data_memory.readDecimal( 0 ) )
+			# print( 'mem_1  ', data_memory.readDecimal( 1 ) )
+			print()
+
+
+		# Set output signals -
+
+		computer.halted = c_halt

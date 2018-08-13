@@ -47,6 +47,7 @@ OSClasses = [  # ordered by dependency
 	"GFX",
 	"String",
 	"Keyboard",
+	"Mouse",
 	"Sys",
 ]
 
@@ -57,17 +58,11 @@ OS_HLFiles = [ '{}/{}.jack'.format( OS_HLPath, c ) for c in OSClasses ]
 OS_VMFiles = [ '{}/{}.vm'.format( OS_VMPath, c ) for c in OSClasses ]
 
 
-# def compileOS():
-
-# 	# Generate VM files
-# 	print( 'Generating OS VM files...' )
-# 	hl2vm.genVMFiles( OSPath, useTECSCompatibleVM, useBespokeCompatibleVM )
+# def dirContains  # TODO? check if VM only ASM only
 
 
 def hl_to_bin( inputDirPath ):
 
-	#
-	# compileOS()
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )

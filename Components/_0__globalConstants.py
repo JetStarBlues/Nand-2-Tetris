@@ -1,46 +1,50 @@
 ''''
-	Constants that specify functionality of the Hack computer
+	Constants specifying functionality of the Hack computer
 '''
 
-# --- Hack Hardware ---------------------------------
+# __ nBits ________________________
 
 N_BITS = 16
 
-# CLOCK_HALF_PERIOD = 0.02  # seconds   ( clock rate = 1 / (2 * halfperiod) )
 
-SCREEN_FPS = 1
-# SCREEN_FPS = 15
-# SCREEN_FPS = 30
+# __ Update rate __________________
 
-# Note, addressable memory is one less than N_BITS since 
-#  first bit reserved ( used to decide if A or C instruction )
-PROGRAM_MEMORY_SIZE = 2**26
-DATA_MEMORY_SIZE    = 2**16
+# affects mouse/keyboard sampling rate. Screen update called manually
+# FPS = 1
+FPS = 30
 
-# RAM Allocation (compatible)
+
+# __ Memory _______________________
+
+# Size
+PROGRAM_MEMORY_SIZE = 2 ** 26
+DATA_MEMORY_SIZE    = 2 ** 16
+
+
+# Data memory allocation
 STATIC_START = 16
-STATIC_END   = 255  # TODO, make static bigger
+STATIC_END   = 255    # TODO, make static bigger
 STACK_START  = 256
 STACK_END    = 2047
 HEAP_START   = 2048
-HEAP_END     = 32755  # 32767 - ( 8 + 2 + 3 ) + 1
+HEAP_END     = 32754
+IO_START     = 32755  # 32767 - ( 8 + 2 + 3 ) + 1
+IO_END       = 32767
 
-SCREEN_MEMORY_MAP   = HEAP_END + 0   # 8
-KEYBOARD_MEMORY_MAP = HEAP_END + 8   # 2
-MOUSE_MEMORY_MAP    = HEAP_END + 10  # 3
+SCREEN_MEMORY_MAP   = IO_START + 0   # 8
+KEYBOARD_MEMORY_MAP = IO_START + 8   # 2
+MOUSE_MEMORY_MAP    = IO_START + 10  # 3
 # IO_BANK1_MEMORY_MAP = None  # 15 downto 0
 # IO_BANK2_MEMORY_MAP = None  # 31 downto 16
 
 
-# Performance mode --
-# Uses python built-ins for arithmetic operations and storage
-PERFORMANCE_MODE = False
+# __ Performance mode _____________
 
-if PERFORMANCE_MODE :
-	CLOCK_HALF_PERIOD = 0  # Can get away with no clock period as flip flops are not used for memory
+# Use python built-ins for arithmetic
+PERFORMANCE_MODE = True
 
 
-# --- Emulator --------------------------------------
+# __ Colors _______________________
 
 COLOR_PALETTE_1BIT = {
 

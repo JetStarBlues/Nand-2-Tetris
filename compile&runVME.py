@@ -32,8 +32,9 @@ import sys
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/string'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/memory'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/math'
-# inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
-inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
+inputDirPath = '../N2T_Code/Programs/OSLibTests/keyboard'
+# inputDirPath = '../N2T_Code/Programs/OSLibTests/mouse'
+# inputDirPath = '../N2T_Code/Programs/OSLibTests/gfx'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/font'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
@@ -53,8 +54,13 @@ if __name__ == '__main__':
 
 
 	# Compile
+	Assembler.hl2bin.compileBinaries        = False
+	Assembler.hl2bin.useBespokeCompatibleVM = False
+	Assembler.hl2bin.useTECSCompatibleVM    = False
+
 	Assembler.hl2bin.hl_to_bin( inputDirPath )
 	print()
+
 
 	# Run
 	Emulators.vmEmulator.run( '{}/Main.vmx'.format( inputDirPath ) )

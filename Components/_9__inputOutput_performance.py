@@ -57,7 +57,7 @@ class IO():
 		self.hasExited = False
 
 		# Pygame ---
-		self.maxFps = SCREEN_FPS
+		self.maxFps = FPS
 		self.surface = None
 		self.clock = None
 
@@ -250,9 +250,10 @@ class IO():
 	def setColor( self ):
 
 		# Get args
-		r = self.main_memory.read( self.addrScreenArg0 )
-		g = self.main_memory.read( self.addrScreenArg1 )
-		b = self.main_memory.read( self.addrScreenArg2 )
+		cPtr = self.main_memory.read( self.addrScreenArg0 )
+		r    = self.main_memory.read( cPtr     )
+		g    = self.main_memory.read( cPtr + 1 )
+		b    = self.main_memory.read( cPtr + 2 )
 
 		# print( 'setColor( {}, {}, {} )'.format( r, g, b ) )
 
@@ -619,6 +620,8 @@ class IO():
 		    Note: Too fast, cleared long before Hack program has chance to poll
 		'''
 
+		# print( 'Mouse released' )
+
 		if button == 1:  # left button
 
 			# Write to memory
@@ -629,7 +632,6 @@ class IO():
 		''' If mouse is moved, update mouseX and mouseY '''
 
 		# Write to memory
-		self.main_memory.write( 1,        1, 1, self.addrMouseP )
 		self.main_memory.write( 1, pos[ 0 ], 1, self.addrMouseX )
 		self.main_memory.write( 1, pos[ 1 ], 1, self.addrMouseY )
 
