@@ -341,10 +341,12 @@ class Test_Arithmetic( unittest.TestCase ):
 	def test_ALU_( self ):
 		''' ALU '''
 		for g in k_ALU16:
-			result = ALU_( 16, g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7], g[8], g[9] )
-			self.assertEqual( toString( result[0] ), g[10] )
-			self.assertEqual( result[1], g[11] )
-			self.assertEqual( result[2], g[12] )
+			result = ALU_( 16, toBitArray( g[0] ), toBitArray( g[1] ), toBitArray( g[2] + g[3] ) )
+			if toString( result[0] ) != g[4]:
+				print( '>', g )
+			self.assertEqual( toString( result[0] ), g[4] )
+			self.assertEqual( result[1], g[5] )
+			self.assertEqual( result[2], g[6] )
 
 
 
