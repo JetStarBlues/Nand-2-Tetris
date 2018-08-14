@@ -95,17 +95,17 @@ def fastIncrement_( x ):
 	# Is this implementable with logic gates? See vid 2.3
 	#  Doubt it atm due to break-statement
 
-	summ = list( x ) # mutable
+	x = list( x )  # mutable
 
-	for i in range ( len( summ ) - 1, - 1, - 1 ): # RtoL
+	for i in range ( len( x ) - 1, - 1, - 1 ): # RtoL
 
-		summ[i] = not_( summ[i] )
+		x[i] = not_( x[i] )
 
-		if summ[i] == 1: # flipped a zero
+		if x[i] == 1: # flipped a zero
 
 			break
 
-	return summ
+	return tuple( x )
 
 
 

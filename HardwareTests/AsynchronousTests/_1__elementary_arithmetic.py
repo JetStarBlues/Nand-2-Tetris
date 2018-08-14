@@ -181,37 +181,37 @@ class Test_Elementary( unittest.TestCase ):
 	def test_notN_( self ):
 		''' notN '''
 		for g in k_not16:
-			result = notN_( 16, g[0] )
+			result = notN_( 16, toBitArray( g[0] ) )
 			self.assertEqual( toString( result ), g[1] )
 
 	def test_andN_( self ):
 		''' andN '''
 		for g in k_and16:
-			result = andN_( 16, g[0], g[1] )
+			result = andN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_orN_( self ):
 		''' orN '''
 		for g in k_or16:
-			result = orN_( 16, g[0], g[1] )
+			result = orN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_muxN_( self ):
 		''' muxN '''
 		for g in k_mux16:
-			result = muxN_( 16, g[0], g[1], g[2] )
+			result = muxN_( 16, toBitArray( g[0] ), toBitArray( g[1] ), g[2] )
 			self.assertEqual( toString( result ), g[3] )
 
 	def test_muxN4to1_( self ):
 		''' muxN4to1 '''
 		for g in k_muxN4to1:
-			result = muxN4to1_( 16, g[0], g[1], g[2], g[3], g[4], g[5] )
+			result = muxN4to1_( 16, toBitArray( g[0] ), toBitArray( g[1] ), toBitArray( g[2] ), toBitArray( g[3] ), g[4], g[5] )
 			self.assertEqual( toString( result ), g[6] )
 
 	def test_muxN8to1_( self ):
 		''' muxN8to1 '''
 		for g in k_muxN8to1:
-			result = muxN8to1_( 16, g[0], g[1], g[2], g[3], g[4], g[5], g[6], g[7], g[8], g[9], g[10] )
+			result = muxN8to1_( 16, toBitArray( g[0] ), toBitArray( g[1] ), toBitArray( g[2] ), toBitArray( g[3] ), toBitArray( g[4] ), toBitArray( g[5] ), toBitArray( g[6] ), toBitArray( g[7] ), g[8], g[9], g[10] )
 			self.assertEqual( toString( result ), g[11] )
 
 	def test_or3_( self ):
@@ -220,7 +220,7 @@ class Test_Elementary( unittest.TestCase ):
 	def test_orNto1_( self ):
 		''' orNto1 '''
 		for g in k_or8to1:
-			result = orNto1_( g[0] )
+			result = orNto1_( 8, toBitArray( g[0] ) )
 			self.assertEqual( int( result ), g[1] )
 
 	def test_and3_( self ):
@@ -293,31 +293,31 @@ class Test_Arithmetic( unittest.TestCase ):
 	def test_addN_( self ):
 		''' addN '''
 		for g in k_add16:
-			result = addN_( 16, g[0], g[1] )
+			result = addN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_subtractN_( self ):
 		''' subtractN '''
 		for g in k_subtract16:
-			result = subtractN_( 16, g[0], g[1] )
+			result = subtractN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_subtractN_v2_( self ):
 		''' subtractN_v2 '''
 		for g in k_subtract16:
-			result = subtractN_v2_( 16, g[0], g[1] )
+			result = subtractN_v2_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_incrementN_( self ):
 		''' incrementN '''
 		for g in k_increment16:
-			result = incrementN_( 16, g[0] )
+			result = incrementN_( 16, toBitArray( g[0] ) )
 			self.assertEqual( toString( result ), g[1] )
 
 	def test_fastIncrement_( self ):  # temp unless can make it all with gates
 		''' fast increment '''
 		for g in k_increment16:
-			result = fastIncrement_( g[0] )
+			result = fastIncrement_( toBitArray( g[0] ) )
 			self.assertEqual( toString( result ), g[1] )
 
 	def test_negate_( self ): 
@@ -329,13 +329,13 @@ class Test_Arithmetic( unittest.TestCase ):
 	def test_shiftRightN_( self ):
 		''' shift right '''
 		for g in k_shiftRight16:
-			result = shiftRightN_( 16, g[0], g[1] )
+			result = shiftRightN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_shiftLeftN_( self ):
 		''' shift left '''
 		for g in k_shiftLeft16:
-			result = shiftLeftN_( 16, g[0], g[1] )
+			result = shiftLeftN_( 16, toBitArray( g[0] ), toBitArray( g[1] ) )
 			self.assertEqual( toString( result ), g[2] )
 
 	def test_ALU_( self ):

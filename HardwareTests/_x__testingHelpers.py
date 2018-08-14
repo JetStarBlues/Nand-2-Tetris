@@ -22,6 +22,9 @@ def toBinary( N, x ):
 	if x < 0: x = 2**N + x  # 2s complement
 	return bin(x)[2:].zfill(N)
 
+def toBitArray( bitSeq ):
+	return tuple( [ int( b ) for b in bitSeq ] )
+
 
 
 # Logging ---
