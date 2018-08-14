@@ -645,12 +645,14 @@ class IO():
 		# Lookup keyCode
 		keyCode = self.lookupKey( key, modifier )
 
-		# print( 'Key pressed', key, modifier, keyCode )
-		print( 'Key pressed', keyCode )
+		print( 'Key pressed', key, modifier, keyCode )
+		# print( 'Key pressed', keyCode )
 
 		# Write to memory
-		self.main_memory.write( 1, 1, 1, self.addrKeyP )
-		self.main_memory.write( 1, keyCode, 1, self.addrKeyCode )
+		if keyCode != 0:
+
+			self.main_memory.write( 1,       1, 1, self.addrKeyP    )
+			self.main_memory.write( 1, keyCode, 1, self.addrKeyCode )
 
 	def handleKeyReleased( self ):
 
@@ -658,8 +660,11 @@ class IO():
 			Note: Too fast, cleared long before Hack program has chance to poll
 		'''
 
+		print( 'Key released' )
+
 		# Write to memory
 		self.main_memory.write( 1, 0, 1, self.addrKeyP )
+		# self.main_memory.write( 1, 0, 1, self.addrKeyCode )
 
 	def lookupKey( self, key, modifier ):
 
@@ -667,7 +672,7 @@ class IO():
 		if key in lookup_keys:
 
 			# Handle shift modified presses
-			if modifier == 3 :
+			if modifier == 1 or modifier == 2 :
 
 				if key in lookup_shiftModifiedKeys:
 
@@ -675,13 +680,6 @@ class IO():
 
 				else:
 
-					'''
-						Ideally shift modifer would be 0 when shift key pressed alone.
-						However not the case. Sometimes it's 0 sometimes it's set (1 or 2).
-						Not sure how to work around. For now, ignoring all shift key presses
-						where shift modifier is set.
-						TLDR, shift key will not register consistently unless used as a modifier
-					'''
 					return 0
 
 			# Handle caps_lock modified presses
@@ -715,18 +713,18 @@ lookup_keyModifiers = [
 	0,     # None
 	1,     # Shift_left
 	2,     # Shift_right
-	3,     # Shift
-	8192,  # Caps
+	# 3,     # Shift
 	64,    # Ctrl_left
 	128,   # Ctrl_right
-	192,   # Ctrl
+	# 192,   # Ctrl
 	256,   # Alt_left
 	512,   # Alt_right
-	768,   # Alt
+	# 768,   # Alt
 	# 1024,  # Meta_left
 	# 2048,  # Meta_right
 	# 3072,  # Meta
 	# 4096,  # Num
+	8192,  # Caps
 	# 16384, # Mode
 ]
 
