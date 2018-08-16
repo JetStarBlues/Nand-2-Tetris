@@ -29,6 +29,7 @@
 # Built ins
 import time
 import yappi
+import re
 
 # Hack computer
 import Components
@@ -45,8 +46,6 @@ debugPath = 'Debug/CPUEmulator/'  # Folder where logs go
 
 debugMode = True
 
-# printCurrentInstruction = False
-
 runYappiProfile = False
 
 
@@ -61,6 +60,7 @@ io       = None
 startTime = None
 
 instructionAddress = None
+sysHaltAddress     = None
 
 
 # Debug -----------------------------
@@ -78,10 +78,12 @@ def updateWithDebug():
 		clock.stop()
 
 		# print( 'Breakpoint reached' )
-		print( 'Breakpoint reached after {} clock cycles'.format( clock.currentCycle ) )
+		print( '\nBreakpoint reached after {} clock cycles'.format( clock.currentCycle ) )
 		print( 'Took {} seconds to reach breakpoint'.format( time.time() - startTime ) )
 
 		debug2File()
+
+		stepMode()
 
 
 def negate( x ):
@@ -89,12 +91,26 @@ def negate( x ):
 	return ( x ^ ( 2 ** 16 - 1 ) ) + 1
 
 
-def breakpoint( fx = None ):
+def breakpoint():
 
-	return computer.halted  # assembly HALT instruction
-	# return instructionAddress == 16551  # Sys.halt (position changes with recompile)
+	# return computer.halted  # assembly HALT instruction
+	# return instructionAddress == sysHaltAddress
+	# return computer.data_memory.readDecimal( 9000 ) == 12345
 
-	# return False
+	# return instructionAddress ==  #  Sys.init
+	# return instructionAddress ==  #  GlobalConstants.init
+	# return instructionAddress ==   #  DataMemory.init
+	# return instructionAddress == 6558   #  Math.init
+	return instructionAddress == 27656  #  Font.init  # 40 sec
+	# return instructionAddress ==   #  Colors.init
+	# return instructionAddress ==   #  GFX.init
+	# return instructionAddress ==   #  Keyboard.init
+	# return instructionAddress ==   #  Mouse.init
+	# return instructionAddress == 721  #  Sys.runProgram
+
+	# return instructionAddress == 4740   #  DataMemory.alloc
+
+	return False
 
 
 def debug2File():
@@ -168,6 +184,58 @@ def debug2File():
 		file.write( '\n' )
 
 
+def stepMode():
+
+	print( "\nEntered manual step mode..." )
+	print( "Type 'n' to step, and 'q' to quit" )
+	print( "To step multiple, type 'nX' where X is nSteps wish to advance" )
+
+	skipAhead = 0
+
+	def _smUpdate():
+
+		global instructionAddress
+
+		instructionAddress = computer.CPU.programCounter.readDecimal()
+
+		step()
+
+		clock.currentCycle += 1  # ...
+
+		debug2File()
+
+	while True:
+
+		if skipAhead > 0:
+
+			_smUpdate()
+
+			skipAhead -= 1
+
+			continue
+
+
+		uInput = input()
+
+		if uInput == 'q':
+
+			print( 'Exited manual step mode\n' )
+
+			break
+
+		else:
+
+			nxt = re.match( r'n(\d*)', uInput )  # uInput is n or nX
+
+			if nxt:
+
+				_smUpdate()
+
+				if nxt.group( 1 ):
+
+					skipAhead = int( nxt.group( 1 ) ) - 1
+
+
 # Computer --------------------------
 
 def setup():
@@ -210,15 +278,16 @@ def tick():
 	io.updateScreen()
 
 
+def step():  # manual tick
+
+	computer.run( 1 )
+
+	io.updateScreen()
+
+
 def update():
 
-	# global instructionAddress
-
-	# if printCurrentInstruction:
-
-	# 	instructionAddress = computer.CPU.programCounter.readDecimal()
-
-	# 	print( 'PC', instructionAddress )
+	# print( 'PC', instructionAddress )
 
 	tick()
 
@@ -244,15 +313,25 @@ def update():
 
 # Run -------------------------------
 
-def run( programPath_ ):
+def run( programPath_, sysHaltAddress_ = None ):
 
 	global programPath
 	global startTime
+	global sysHaltAddress
 
 	# Specify program
 	if programPath_:
 		
-		programPath = programPath_ 
+		programPath = programPath_
+
+	# Spceify location of Sys.halt
+	if sysHaltAddress_:
+
+		sysHaltAddress = sysHaltAddress_
+
+		if debugMode:
+
+			print( 'Sys.halt at {}'.format( sysHaltAddress_ ) )
 
 	# Setup
 	setup()

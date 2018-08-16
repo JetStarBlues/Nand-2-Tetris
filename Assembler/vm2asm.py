@@ -619,19 +619,20 @@ class Compiler():
 		s.append( 'A = A - 1' )  # aReg = prevprev_addr
 
 		# Compare
-		if self.useGenerics:
+		# if self.useGenerics:
 
-			if op == 'eq' or op == 'ne':
+		# 	if op == 'eq' or op == 'ne':
 				
-				s.append( self.compile_comparisonOp_( op ) )  # simple
+		# 		s.append( self.compile_comparisonOp_( op ) )  # simple
 
-			else:
+		# 	else:
 
-				s.append( self.compile_comparisonOp2_( op ) )  # not so simple, but correct
+		# 		s.append( self.compile_comparisonOp2_( op ) )  # not so simple, but correct
 
-		else:
+		# else:
 		
-			s.append( self.compile_comparisonOp_( op ) )  # simple
+		# 	s.append( self.compile_comparisonOp_( op ) )  # simple
+		s.append( self.compile_comparisonOp_( op ) )  # simple
 
 		# Update stack
 		s.append( '@SP' )
@@ -1419,7 +1420,7 @@ def getVMFilesFromDir( dirPath ):
 	return filePaths
 
 
-def genASMFile( inputDirPath, debug = False, libraryPaths = None ):
+def genASMFile( inputDirPath, libraryPaths = None, debug = False ):
 
 	''' Translate the vm code in a directory to assembly code,
 	     and generate a single outputFile containing the translated code '''

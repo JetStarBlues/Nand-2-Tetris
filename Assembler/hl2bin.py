@@ -58,11 +58,10 @@ OS_HLFiles = [ '{}/{}.jack'.format( OS_HLPath, c ) for c in OSClasses ]
 OS_VMFiles = [ '{}/{}.vm'.format( OS_VMPath, c ) for c in OSClasses ]
 
 
-# def dirContains  # TODO? check if VM only ASM only
-
-
 def hl_to_bin( inputDirPath ):
 
+	# Helper... location of Sys.halt in asm/bin
+	sysHaltAddress = None
 
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
@@ -90,7 +89,9 @@ def hl_to_bin( inputDirPath ):
 
 		# Generate BIN file
 		print( 'Generating binary file...' )
-		asm2bin.genBINFile( inputDirPath )
-		# asm2bin.genBINFile( inputDirPath, debug = True )
+		# sysHaltAddress = asm2bin.genBINFile( inputDirPath )
+		sysHaltAddress = asm2bin.genBINFile( inputDirPath, debug = True )
 
 	print( 'Done!' )
+
+	return sysHaltAddress

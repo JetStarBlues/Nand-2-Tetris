@@ -5,11 +5,11 @@ import Assembler.asm2bin
 import Emulators.cpuEmulator
 
 import sys
+import os
 
 
 '''------------------------------- Main -------------------------------'''
 
-# inputDirPath = '../N2T_Code/Programs/EmulatorTests/simple'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/variableOrder'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/multiclass'
 # inputDirPath = '../N2T_Code/Programs/CompilerTests/accurateComps'
@@ -39,6 +39,7 @@ import sys
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/array'
 # inputDirPath = '../N2T_Code/Programs/OSLibTests/font'
 # inputDirPath = '../N2T_Code/Programs/precompiledOS'
+inputDirPath = '../N2T_Code/Programs/EmulatorTests/simple'
 
 # inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test1_add'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test2_flip'
@@ -53,7 +54,7 @@ import sys
 # inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test11_xor'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test12_shiftLeft'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Tests/test13_shiftRight'
-inputDirPath = '../N2T_Code/Programs/Assembly/Demos/demo_eo6_buffer'
+# inputDirPath = '../N2T_Code/Programs/Assembly/Demos/demo_eo6_buffer'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Demos/demo_eo6_color'
 
 if __name__ == '__main__':
@@ -71,15 +72,25 @@ if __name__ == '__main__':
 
 
 	# Compile
-	# Assembler.hl2bin.compileBinaries        = True
-	# Assembler.hl2bin.useBespokeCompatibleVM = True
-	# Assembler.hl2bin.useTECSCompatibleVM    = False
+	sysHaltAddress = None
 
-	# Assembler.hl2bin.hl_to_bin( inputDirPath )
-	Assembler.asm2bin.genBINFile( inputDirPath )
-	# Assembler.asm2bin.genBINFile( inputDirPath, debug = True )
+	# # Compile jack to binary
+	# if os.path.isfile( inputDirPath + '/Main.jack' ):  # check if a Main.jack file is present
+
+	# 	Assembler.hl2bin.compileBinaries        = True
+	# 	Assembler.hl2bin.useBespokeCompatibleVM = True
+	# 	Assembler.hl2bin.useTECSCompatibleVM    = False
+
+	# 	sysHaltAddress = Assembler.hl2bin.hl_to_bin( inputDirPath )
+
+	# # Compile assembly to binary
+	# else:
+
+	# 	sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath )
+	# 	# sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath, debug = True )
+
 	print()
 
 
 	# Run
-	Emulators.cpuEmulator.run( '{}/Main.bin'.format( inputDirPath ) )
+	Emulators.cpuEmulator.run( '{}/Main.bin'.format( inputDirPath ), sysHaltAddress )

@@ -13,7 +13,10 @@
 #
 # ========================================================================================
 
-# TODO: Rewrite this... outdated style
+# TODO:
+#   - Rewrite this... outdated style
+#   - Return Sys.halt final position...
+#   - Come up with more elegant algorithm instead of tripling every '@label'
 
 '''
 	Instruction - FEDCBA9876543210  // msb to lsb
@@ -61,7 +64,6 @@
 		5     JNE
 		6     JLE
 		7     JMP
-
 '''
 
 
@@ -75,27 +77,44 @@ import sys
 # Hack computer
 import Components._0__globalConstants as GC
 import Assembler.lookupTables as LT
-from commonHelpers import *
+from   commonHelpers import *
 
 
 # == Helpers =================================================
 
+namePattern = '''
+	\$?            # optional start with $
+	\w+            # letter|number|underscore sequence
+	(\.\w+)*       # dot followed by w+
+'''
+namePattern = re.compile( namePattern, re.X )
+
 def isValidName( name ):
 
-	return re.fullmatch( r'\w+', name )
+	return re.fullmatch( namePattern, name )
 
 
 # == Debug ===================================================
 
 def debugStuff( cmdList ):
 
-	for c in cmdList:
+	# Print final assembly
+	# for c in cmdList:
 
-		print( c )
+	# 	print( c )
 
-	print( '\n--\n' )
+	# print( '\n--\n' )
 
-	# for k, v in knownAddresses_ProgramMemory.items(): print( k, v )
+	debugFile = 'Debug/Main_debug.asm'
+
+	with open( debugFile, 'w' ) as file:
+
+		for c in cmdList:
+
+			file.write( c + '\n' )
+
+
+	# Print labels
 	for kv in sorted(
 
 		knownAddresses_ProgramMemory.items(),
@@ -105,7 +124,8 @@ def debugStuff( cmdList ):
 
 	print( '\n--\n' )
 
-	# for k, v in knownAddresses_DataMemory.items(): print( k, v )
+
+	# Print variables
 	for kv in sorted(
 
 		knownAddresses_DataMemory.items(),
@@ -115,7 +135,6 @@ def debugStuff( cmdList ):
 
 
 # == Main ====================================================
-
 
 # -- Constants -------------------------------------
 
@@ -131,9 +150,8 @@ negative_one      = 2 ** nBits - 1
 largest_address   = 2 ** 26 - 1
 
 
-# -- Extraction -------------------------------------
 
-# With regex --
+# -- Extraction -------------------------------------
 
 # Select everything that is not a comment
 cmdPattern = '''
@@ -146,8 +164,8 @@ cmdPattern = re.compile( cmdPattern, re.X )
 
 def extractCmd( line ):
 
-	line = line.replace( ' ', '' )   # remove spaces
-	line = line.replace( '\t', '' )  # remove tabs
+	line = line.replace( ' ', '' )          # remove spaces
+	line = line.replace( '\t', '' )         # remove tabs
 
 	found = re.search( cmdPattern, line ) 	# select everything that is not a comment
 
@@ -184,7 +202,6 @@ knownAddresses_ProgramMemory = {}
 knownAddresses_DataMemory = {}
 knownAddresses_DataMemory.update( LT.globalAddresses )  # fill with global addresses
 
-# TODO: Come up with more elegant algorithm instead of tripling every '@label'
 
 def tripleLabels_P1( cmdList ):
 
@@ -216,11 +233,8 @@ def tripleLabels_P1( cmdList ):
 		  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Is-it-possible-to-have-programs-longer-than-32K-with-the-Hack-instruction-set-td4031378.html
 	'''
 
-	''' Allocate space '''
-
 	cmdList2 = []
-
-	labels = []
+	labels   = []
 
 	# Get labels
 	for i in range( len( cmdList ) ):
@@ -231,13 +245,7 @@ def tripleLabels_P1( cmdList ):
 
 			label = cmd[ 1 : - 1 ]  # get the label
 
-			if isValidName( label ):
-
-				labels.append( label )
-
-			else:
-
-				raise Exception( 'Invalid name - {}'.format( cmd ) )
+			labels.append( label )
 
 	# Triple references
 	for i in range( len( cmdList ) ):
@@ -253,13 +261,6 @@ def tripleLabels_P1( cmdList ):
 				cmdList2.append( 'placeholder' )
 				cmdList2.append( 'placeholder' )
 
-			# Throw invalid value check here...
-			elif cmd[ 1 : ].isdigit():
-
-				if int( cmd[ 1 : ] ) > largest_immediate:
-
-					raise Exception( 'Invalid integer - {}'.format( cmd ) )
-
 	# Check size
 	if len( cmdList2 ) > largest_address:
 
@@ -273,17 +274,17 @@ def tripleLabels_P2( cmdList ):
 	''' Compute values '''
 
 	i = 0
-
 	n = len( cmdList )
 	
 	while i < n:
 
 		cmd = cmdList[ i ]
 
-		if ( cmd[ 0 ] == '@'                   and
-			 i < ( n - 2 )                     and
-			 cmdList[ i + 1 ] == 'placeholder' and
-			 cmdList[ i + 2 ] == 'placeholder' ):
+		if (  cmd[ 0 ] == '@'                   and
+			  i < ( n - 2 )                     and
+			  cmdList[ i + 1 ] == 'placeholder' and
+			  cmdList[ i + 2 ] == 'placeholder'
+			):
 
 			cmdList[ i + 1 ] = 'NOP'
 			cmdList[ i + 2 ] = 'NOP'
@@ -326,7 +327,7 @@ def tripleLabels_P2( cmdList ):
 
 def handleLabels( cmdList ):
 
-	''' Replace labels (function declarations) with integer addresses '''
+	''' Remove labels and store their integer addresses '''
 
 	trimmedCmdList = []
 
@@ -338,7 +339,12 @@ def handleLabels( cmdList ):
 
 			label = cmd[ 1 : - 1 ]  # get the label
 
+			if not isValidName( label ):
+
+				raise Exception( 'Invalid name - {}'.format( cmd ) )
+
 			addr = i - len( knownAddresses_ProgramMemory )  # and the corresponding address
+			                                                # Note, subtraction is for '(label)' statements which will later be removed
 
 			knownAddresses_ProgramMemory[ '@{}'.format( label ) ] = '@{}'.format( addr )  # add it to dict of knownAddresses_ProgramMemory
 
@@ -351,7 +357,7 @@ def handleLabels( cmdList ):
 
 def handleVariables( cmdList ):
 
-	''' Replace variable names with integer addresses '''
+	''' Replace label and variable names with integer addresses '''
 
 	freeAddress = static_segment_start
 
@@ -362,9 +368,16 @@ def handleVariables( cmdList ):
 		if cmd[ 0 ] == '@':
 
 			# Refers to an integer
-			if cmd[ 1 : ].isdigit(): continue  # skip
+			if cmd[ 1 : ].isdigit():
 
-			# Refers to a known function
+				# Check that valid immediate
+				if int( cmd[ 1 : ] ) > largest_immediate:
+
+					raise Exception( 'Invalid integer - {}'.format( cmd ) )
+
+				continue  # skip
+
+			# Refers to a known label
 			elif cmd in knownAddresses_ProgramMemory:
 
 				cmdList[ i ] = knownAddresses_ProgramMemory[ cmd ]
@@ -377,7 +390,9 @@ def handleVariables( cmdList ):
 			# Allocate it
 			else:
 
-				if not isValidName( cmd[ 1 : ] ):
+				name = cmd[ 1 : ]
+
+				if not isValidName( name ):
 
 					raise Exception( 'Invalid name - {}'.format( cmd ) )
 
@@ -539,11 +554,11 @@ def translateCmds( cmdList, debug ):
 	# binCmdList = translateInstructions( cmdList )
 
 	# Support for programs greater than largest_immediate lines long
-	cmdList    = tripleLabels_P1( cmdList )
-	cmdList    = handleLabels( cmdList )
-	cmdList    = handleVariables( cmdList )
-	cmdList    = tripleLabels_P2( cmdList )
-	binCmdList = translateInstructions( cmdList )
+	cmdList    = tripleLabels_P1( cmdList )        # 2 passes
+	cmdList    = handleLabels( cmdList )           # 1 pass
+	cmdList    = handleVariables( cmdList )        # 1 pass
+	cmdList    = tripleLabels_P2( cmdList )        # 1 pass
+	binCmdList = translateInstructions( cmdList )  # 1 pass
 
 	if debug: debugStuff( cmdList )
 
@@ -552,7 +567,6 @@ def translateCmds( cmdList, debug ):
 
 
 # -- Output --------------------------------------
-
 
 def writeToOutputFile( binCmdList, outputFile ):
 
@@ -564,10 +578,6 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 			file.write( cmd_binary )
 			file.write( '\n' )
-
-
-
-# -- Run ------------------------------------------
 
 
 def asm_to_bin( inputFile, outputFile, debug = False ):
@@ -606,3 +616,14 @@ def genBINFile( inputDirPath, debug = False ):
 	outputFilePath = inputDirPath + '/Main.bin'
 
 	asm_to_bin( inputFilePath, outputFilePath, debug )
+
+	# Return position of Sys.halt
+	sysHaltAddress = knownAddresses_ProgramMemory.get( '@Sys.halt' )
+
+	if sysHaltAddress:
+
+		return int( sysHaltAddress[ 1 : ] )
+
+	else:
+
+		return None

@@ -41,6 +41,7 @@ MOUSE_MEMORY_MAP    = IO_START + 10  # 3
 # __ Performance mode _____________
 
 # Use python built-ins for arithmetic
+# PERFORMANCE_MODE = True
 PERFORMANCE_MODE = False
 
 

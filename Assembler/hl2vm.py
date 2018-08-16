@@ -3185,7 +3185,9 @@ def genVMFiles( inputDirPath, libInputPaths = None, libOutputPath = None, useTEC
 	inputFilePaths = traverseProgramTree( startFilePath )
 
 	# Prepend library file paths
-	inputFilePaths = libInputPaths + inputFilePaths
+	if libInputPaths:
+
+		inputFilePaths = libInputPaths + inputFilePaths
 
 	# Translate files
 	classes = []
