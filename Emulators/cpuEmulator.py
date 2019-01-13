@@ -95,20 +95,20 @@ def breakpoint():
 
 	# return computer.halted  # assembly HALT instruction
 	# return instructionAddress == sysHaltAddress
-	# return computer.data_memory.readDecimal( 9000 ) == 12345
+	return computer.data_memory.readDecimal( 9000 ) == 12345
 
 	# return instructionAddress ==  #  Sys.init
 	# return instructionAddress ==  #  GlobalConstants.init
 	# return instructionAddress ==   #  DataMemory.init
 	# return instructionAddress == 6558   #  Math.init
-	return instructionAddress == 27656  #  Font.init  # 40 sec
+	# return instructionAddress == 27656  #  Font.init  # 40 sec
 	# return instructionAddress ==   #  Colors.init
 	# return instructionAddress ==   #  GFX.init
 	# return instructionAddress ==   #  Keyboard.init
 	# return instructionAddress ==   #  Mouse.init
-	# return instructionAddress == 721  #  Sys.runProgram
+	# return instructionAddress ==   #  Sys.runProgram
 
-	# return instructionAddress == 4740   #  DataMemory.alloc
+	# return instructionAddress == 1938   #  DataMemory.alloc
 
 	return False
 

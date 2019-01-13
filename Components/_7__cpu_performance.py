@@ -96,7 +96,7 @@ class CPU_():
 			# --- Execute C instruction ---
 
 			# - Computation -
-			 
+
 			x = self.D_register.read()
 
 			if instruction[ self.ysel ] == 0:

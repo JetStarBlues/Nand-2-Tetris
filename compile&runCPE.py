@@ -74,20 +74,22 @@ if __name__ == '__main__':
 	# Compile
 	sysHaltAddress = None
 
-	# # Compile jack to binary
-	# if os.path.isfile( inputDirPath + '/Main.jack' ):  # check if a Main.jack file is present
+	# Compile jack to binary
+	if os.path.isfile( inputDirPath + '/Main.jack' ):  # check if a Main.jack file is present
 
-	# 	Assembler.hl2bin.compileBinaries        = True
-	# 	Assembler.hl2bin.useBespokeCompatibleVM = True
-	# 	Assembler.hl2bin.useTECSCompatibleVM    = False
+		Assembler.hl2bin.useStandardLibrary     = False
+		Assembler.hl2bin.useTECSCompatibleVM    = False
+		Assembler.hl2bin.useBespokeCompatibleVM = True
+		Assembler.hl2bin.compileVMX             = False
+		Assembler.hl2bin.compileBinaries        = True
 
-	# 	sysHaltAddress = Assembler.hl2bin.hl_to_bin( inputDirPath )
+		sysHaltAddress = Assembler.hl2bin.hl_to_bin( inputDirPath )
 
-	# # Compile assembly to binary
-	# else:
+	# Compile assembly to binary
+	else:
 
-	# 	sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath )
-	# 	# sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath, debug = True )
+		sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath )
+		# sysHaltAddress = Assembler.asm2bin.genBINFile( inputDirPath, debug = True )
 
 	print()
 

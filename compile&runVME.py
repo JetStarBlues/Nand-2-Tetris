@@ -54,9 +54,9 @@ if __name__ == '__main__':
 
 
 	# Compile
-	Assembler.hl2bin.compileBinaries        = False
-	Assembler.hl2bin.useBespokeCompatibleVM = False
 	Assembler.hl2bin.useTECSCompatibleVM    = False
+	Assembler.hl2bin.useBespokeCompatibleVM = False
+	Assembler.hl2bin.compileBinaries        = False
 
 	Assembler.hl2bin.hl_to_bin( inputDirPath )
 	print()

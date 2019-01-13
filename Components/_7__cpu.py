@@ -74,18 +74,19 @@ class CPU_():
 		self.N = N
 
 		# Program counter
-		self.programCounter = CounterN_( 2 * N )
+		self.programCounter = CounterN_( 2 * N )  # TODO...this can be 26 instead
 
 		# Microstep counter
 		nStepsPerInstruction = 4
-		self.microCounter    = CounterN_( int( math.log( nStepsPerInstruction, 2 ) ) )
+		nBitsInCounter       = 2  # int( math.log( nStepsPerInstruction, 2 ) )
+		self.microCounter    = CounterN_( nBitsInCounter )
 
 		# Microcode ROM
-		nControlSignals      = 18
-		nInstructionTypes    = 8
-		self.nBitsInOpType   = math.ceil( math.log( nInstructionTypes, 2 ) )
-		nEntriesMicrocodeROM = nInstructionTypes * nStepsPerInstruction
-		self.microcodeROM    = ROMXN_( nEntriesMicrocodeROM, nControlSignals )
+		nControlSignals             = 18
+		nInstructionTypes           = 8
+		# self.nBitsInInstructionType = 3  # math.ceil( math.log( nInstructionTypes, 2 ) )
+		nEntriesMicrocodeROM        = nInstructionTypes * nStepsPerInstruction
+		self.microcodeROM           = ROMXN_( nEntriesMicrocodeROM, nControlSignals )
 
 		# ALU ROM
 		nEntriesALUROM = 32
@@ -115,15 +116,6 @@ class CPU_():
 		self.interruptAcknowledged_ff = DFlipFlop()
 		self.backupEnabled_ff         = DFlipFlop()
 
-		# Initial (reset) values
-		'''
-		    interruptsEnabled_ff     = 1
-		    interruptAcknowledged_ff = 0
-		    backupEnabled_ff         = 1
-		    programCounterOut        = 0
-		    microCounterOut          = 0
-		'''
-
 		# Instruction decode
 		self.TECSInstrType = 0
 		self.op            = 1
@@ -134,25 +126,18 @@ class CPU_():
 
 		self.nBitsInOp = 5
 
-		# Corresponds to encoding in instruction...
-		self.op_AAimmed     = ( 1, 1, 0, 1, 1 )
-		self.op_dstEqIOBus  = ( 1, 1, 1, 0, 0 )
-		self.op_reti        = ( 1, 1, 1, 0, 1 )
-		self.op_nop         = ( 1, 1, 1, 1, 0 )
-		self.op_halt        = ( 1, 1, 1, 1, 1 )
-
-		# Corresponds to microcode ROM base address...
-		self.opType_Aimmed      = self.intToBitArray( 0, self.nBitsInOpType )
-		self.opType_AAimmed     = self.intToBitArray( 1, self.nBitsInOpType )
-		self.opType_dstEqCmpJmp = self.intToBitArray( 2, self.nBitsInOpType )
-		self.opType_dstEqIOBus  = self.intToBitArray( 3, self.nBitsInOpType )
-		self.opType_intAck      = self.intToBitArray( 4, self.nBitsInOpType )
-		self.opType_reti        = self.intToBitArray( 5, self.nBitsInOpType )
-		self.opType_nop         = self.intToBitArray( 6, self.nBitsInOpType )
-		self.opType_halt        = self.intToBitArray( 7, self.nBitsInOpType )
+		# Instruction types
+		self.i_Aimmed      = ( 1, 1, 0, 0, 0 )
+		self.i_AAimmed     = ( 1, 1, 0, 0, 1 )
+		self.i_dstEqCmpJmp = ( 1, 1, 0, 1, 0 )
+		self.i_dstEqIOBus  = ( 1, 1, 0, 1, 1 )
+		self.i_intAck      = ( 1, 1, 1, 0, 0 )
+		self.i_reti        = ( 1, 1, 1, 0, 1 )
+		self.i_nop         = ( 1, 1, 1, 1, 0 )
+		self.i_halt        = ( 1, 1, 1, 1, 1 )
 
 		# Location of ISRHandler in program
-		self.ISRHandlerAddress = self.intToBitArray( 0, 2 * N )
+		self.ISRHandlerAddress = self.intToBitArray( 0, 2 * N )  # TODO
 
 		# Miscellaneous
 		self.zero = self.intToBitArray( 0, N )
@@ -162,23 +147,14 @@ class CPU_():
 		# Temp debug
 		self.instructionTypeLookup = {
 
-			( 0, 0, 0 ) : 'opType_Aimmed',
-			( 0, 0, 1 ) : 'opType_AAimmed',
-			( 0, 1, 0 ) : 'opType_dstEqCmpJmp',
-			( 0, 1, 1 ) : 'opType_dstEqIOBus',
-			( 1, 0, 0 ) : 'opType_intAck',
-			( 1, 0, 1 ) : 'opType_reti',
-			( 1, 1, 0 ) : 'opType_nop',
-			( 1, 1, 1 ) : 'opType_halt',
-		}
-
-		self.opLookup = {
-
-			( 1, 1, 0, 1, 1 ) : 'op_AAimmed',
-			( 1, 1, 1, 0, 0 ) : 'op_dstEqIOBus',
-			( 1, 1, 1, 0, 1 ) : 'op_reti',
-			( 1, 1, 1, 1, 0 ) : 'op_nop',
-			( 1, 1, 1, 1, 1 ) : 'op_halt',
+			( 1, 1, 0, 0, 0 ) : 'i_Aimmed',
+			( 1, 1, 0, 0, 1 ) : 'i_AAimmed',
+			( 1, 1, 0, 1, 0 ) : 'i_dstEqCmpJmp',
+			( 1, 1, 0, 1, 1 ) : 'i_dstEqIOBus',
+			( 1, 1, 1, 0, 0 ) : 'i_intAck',
+			( 1, 1, 1, 0, 1 ) : 'i_reti',
+			( 1, 1, 1, 1, 0 ) : 'i_nop',
+			( 1, 1, 1, 1, 1 ) : 'i_halt',
 		}
 
 		self.ALUFxLookup = {
@@ -232,7 +208,7 @@ class CPU_():
 
 		# Microcode ROM
 		'''
-			                                     |  opType_Aimmed       |  opType_AAimmed      |  opType_dstEqCmpJmp  |  opType_dstEqIOBus   |  opType_intAck       |  opType_reti         |  opType_nop          |  opType_halt         |
+			                                     |  i_Aimmed            |  i_AAimmed           |  i_dstEqCmpJmp       |  i_dstEqIOBus        |  i_intAck            |  i_reti              |  i_nop               |  i_halt              |
 			                                     |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |  0  1  2  3          |
 			------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 			c_cInst                              |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |
@@ -254,42 +230,42 @@ class CPU_():
 			c_restoreRegisters                   |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  0  0          |  0  0  0  0          |  0  0  0  0          |
 			c_halt                               |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  0  0  0          |  0  1  1  1          |
 		'''
-		# opType_Aimmed
+	 	# i_Aimmed
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  0 )
 		self.microcodeROM.write( 1, ( 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  1 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  2 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  3 )
-		# opType_AAimmed
+	 	# i_AAimmed
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  4 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  5 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  6 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  7 )
-		# opType_dstEqCmpJmp
+	 	# i_dstEqCmpJmp
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  8 )
 		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1,  9 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 10 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 11 )
-		# opType_dstEqIOBus
+	 	# i_dstEqIOBus
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 12 )
 		self.microcodeROM.write( 1, ( 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 13 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 14 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 15 )
-		# opType_intAck
+	 	# i_intAck
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 16 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0 ), 1, 17 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 18 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 19 )
-		# opType_reti
+	 	# i_reti
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 20 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ), 1, 21 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0 ), 1, 22 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 23 )
-		# opType_nop
+	 	# i_nop
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 24 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 25 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 26 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 27 )
-		# opType_halt
+	 	# i_halt
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ), 1, 28 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 29 )
 		self.microcodeROM.write( 1, ( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ), 1, 30 )
@@ -422,93 +398,51 @@ class CPU_():
 
 		# Decode -
 
+		interruptsEnabled = 1  # TODO, fix me!
+
 		op = instruction[ self.op : self.op + self.nBitsInOp ]
 
-		aInst = not_( instruction[ self.TECSInstrType ] )
+		isAimmed = not_( instruction[ self.TECSInstrType ] )
 
-		iDecode4 = muxN_(
-
-			self.nBitsInOpType,
-
-			self.opType_dstEqIOBus,
-			self.opType_dstEqCmpJmp,
-
-			self.compareOp( op, self.op_dstEqIOBus )
-		)
-		iDecode3 = muxN_(
-
-			self.nBitsInOpType,
-
-			self.opType_halt,
-			iDecode4,
-
-			self.compareOp( op, self.op_halt )
-		)
 		iDecode2 = muxN_(
 
-			self.nBitsInOpType,
+			self.nBitsInOp,
 
-			self.opType_nop,
-			iDecode3,
+			op,                  # 11xxx (special op)
+			self.i_dstEqCmpJmp,  # everything else ('dst=cmp;jmp')
 
-			self.compareOp( op, self.op_nop )
+			and_( instruction[ self.op ], instruction[ self.op + 1 ] )
 		)
 		iDecode1 = muxN_(
 
-			self.nBitsInOpType,
+			self.nBitsInOp,
 
-			self.opType_reti,
+			self.i_Aimmed,       # '@' instruction
 			iDecode2,
 
-			self.compareOp( op, self.op_reti )
+			isAimmed
 		)
-		iDecode0 = muxN_(
-
-			self.nBitsInOpType,
-
-			self.opType_AAimmed,
-			iDecode1,
-
-			self.compareOp( op, self.op_AAimmed )
-		)
-		instructionType_p = muxN_(
-
-			self.nBitsInOpType,
-
-			self.opType_Aimmed,
-			iDecode0,
-
-			aInst
-		)
-
-		interruptsEnabled = 1  # TODO, fix me!
-
 		instructionType = muxN_(
 
-			self.nBitsInOpType,
+			self.nBitsInOp,
 
-			self.opType_intAck,
-			instructionType_p,
+			self.i_intAck,      # interrupt acknowledge
+			iDecode1,
 
 			and_( interruptRequested, interruptsEnabled )
 		)
 
-		microAddress = instructionType + microStep   # 3bits(8) + 2bits(4)
+		microAddress = instructionType[ 2 : ] + microStep   # 3bits(8) + 2bits(4)
 
 		microInstruction = self.microcodeROM.read( microAddress )
 
 		if self.debugMode:
 
-			if op in self.opLookup:
-
-				print( 'op                  {} {}'.format( op, self.opLookup[ op ] ) )
-
-			else:
-
-				print( 'op                  {} alu {}'.format( op, self.ALUFxLookup[ op ] ) )
-
 			print( 'instructionType     {}       {}'.format( instructionType, self.instructionTypeLookup[ instructionType ] ) )
-			# print( 'microAddr           {}'.format( microAddress ) )
+
+			if instructionType == self.i_dstEqCmpJmp:
+				
+				print( '  alu op            {}'.format( self.ALUFxLookup[ op ] ) )
 
 
 		# Control signals -

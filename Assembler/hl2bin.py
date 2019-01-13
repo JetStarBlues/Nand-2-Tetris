@@ -25,18 +25,21 @@ import Assembler.asm2bin as asm2bin
 # == Main ==========================================================
 
 # Use VM instructions that are compatible with the official TECS specifications
-# useTECSCompatibleVM = True
 useTECSCompatibleVM = False
 
 # Use VM instructions that are compatible with our bespoke CPU
 useBespokeCompatibleVM = True
-# useBespokeCompatibleVM = False
+
+# Generate VMX file (used by VMEmulator)
+compileVMX = True
 
 # Generate assembly and binary files
 compileBinaries = True
-# compileBinaries = False
 
-OSClasses = [  # ordered by dependency
+# Use standard library files
+useStandardLibrary = True
+
+stdLibClasses = [  # ordered by dependency
 
 	"GlobalConstants",
 	"DataMemory",
@@ -51,11 +54,11 @@ OSClasses = [  # ordered by dependency
 	"Sys",
 ]
 
-OS_HLPath = '../N2T_Code/OS'
-OS_VMPath = '../N2T_Code/Programs/precompiledOS'
+stdLib_HLPath = '../N2T_Code/OS'
+stdLib_VMPath = '../N2T_Code/Programs/precompiledOS'
 
-OS_HLFiles = [ '{}/{}.jack'.format( OS_HLPath, c ) for c in OSClasses ]
-OS_VMFiles = [ '{}/{}.vm'.format( OS_VMPath, c ) for c in OSClasses ]
+stdLib_HLFiles = [ '{}/{}.jack'.format( stdLib_HLPath, c ) for c in stdLibClasses ]
+stdLib_VMFiles = [ '{}/{}.vm'.format( stdLib_VMPath, c )   for c in stdLibClasses ]
 
 
 def hl_to_bin( inputDirPath ):
@@ -63,29 +66,38 @@ def hl_to_bin( inputDirPath ):
 	# Helper... location of Sys.halt in asm/bin
 	sysHaltAddress = None
 
+	# Ignore standard library
+	if not useStandardLibrary:
+
+		stdLib_HLPath  = None
+		stdLib_VMPath  = None
+		stdLib_HLFiles = None
+		stdLib_VMFiles = None
+
 	# Generate VM files and return includes
 	print( 'Generating VM files...' )
 	hl2vm.genVMFiles( 
 
 		inputDirPath,
-		libInputPaths = OS_HLFiles,
-		libOutputPath = OS_VMPath,
-		useTECSCompatibleVM = useTECSCompatibleVM,
+		libInputPaths          = stdLib_HLFiles,
+		libOutputPath          = stdLib_VMPath,
+		useTECSCompatibleVM    = useTECSCompatibleVM,
 		useBespokeCompatibleVM = useBespokeCompatibleVM
 	)
 
-	# Generate VMX file
-	print( 'Generating VMX file...' )
-	# vm2vmx.genVMXFile( inputDirPath )
-	vm2vmx.genVMXFile( inputDirPath, libraryPaths = OS_VMFiles )
+	if compileVMX:
+
+		# Generate VMX file
+		print( 'Generating VMX file...' )
+		# vm2vmx.genVMXFile( inputDirPath )
+		vm2vmx.genVMXFile( inputDirPath, libraryPaths = stdLib_VMFiles )
 
 	if compileBinaries:
 
 		# Generate ASM file
 		print( 'Generating assembly file...' )
-		# vm2asm.genASMFile( inputDirPath )
-		vm2asm.genASMFile( inputDirPath, libraryPaths = OS_VMFiles )
-		# vm2asm.genASMFile( inputDirPath, libraryPaths = OS_VMFiles, debug = True )
+		vm2asm.genASMFile( inputDirPath, libraryPaths = stdLib_VMFiles )
+		# vm2asm.genASMFile( inputDirPath, libraryPaths = stdLib_VMFiles, debug = True )
 
 		# Generate BIN file
 		print( 'Generating binary file...' )

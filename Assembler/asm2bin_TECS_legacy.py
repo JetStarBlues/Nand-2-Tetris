@@ -1,69 +1,48 @@
 # ========================================================================================
-#
+# 
 #  Description:
 # 
-#    Compiles Hack ASM (assembly) code to Hack BIN (binary) code
-#
+#     Compiles Hack ASM (assembly) code to Hack BIN (binary) code
+#     Uses the vanilla TECS specification
+# 
 #  Attribution:
 # 
-#    Code by www.jk-quantized.com
+#     Code by www.jk-quantized.com
 # 
 #  Redistribution and use of this code in source and binary forms must retain
 #  the above attribution notice and this condition.
-#
+# 
 # ========================================================================================
 
-# TODO:
-#   - Rewrite this... outdated style
-#   - Come up with more elegant algorithm instead of tripling every '@label'
-#   - Add 'IOBUS=comp' instruction
-
 '''
-	Instruction - FEDCBA9876543210  // msb to lsb
-	              0123456789ABCDEF  // array indexing
+	--- Notes ---
 
-		F . 0  -> TECS instruction type (C if 1, @ if 0)
-		E . 1  -> op
-		D . 2  -> op
-		C . 3  -> op
-		B . 4  -> op
-		A . 5  -> op
-		9 . 6  -> xSel
-		8 . 7  -> xSel
-		7 . 8  -> ySel
-		6 . 9  -> ySel
-		5 . A  -> dst
-		4 . B  -> dst
-		3 . C  -> dst
-		2 . D  -> jmp
-		1 . E  -> jmp
-		0 . F  -> jmp
+	> Instruction
 
-	x/y sel
-		0     D
-		1     A
-		2     B
-		3     M
+		Instruction - 0123456789ABCDEF
 
-	dst
-		0     NULL
-		1     D
-		2     A
-		3     B
-		4     M
-		5     unused
-		6     unused
-		7     unused
+			0 -> opCode
 
-	jmp
-		0     NULL
-		1     JGT
-		2     JEQ
-		3     JGE
-		4     JLT
-		5     JNE
-		6     JLE
-		7     JMP
+			if opCode == 0, address instruction
+
+				123456789ABCDEF -> address
+
+			else, computation instruction
+
+				1   -> unused
+				2   -> unused
+				3   -> y = A (0) | M (1)
+				4   -> comp, zero_x  
+				5   -> comp, not_x  
+				6   -> comp, zero_y  
+				7   -> comp, not_y  
+				8   -> comp, and (0) | add (1)  
+				9   -> comp, not_out
+				ABC -> destination
+				DEF -> jump
+
+				comp(utation) bits are sent to ALU
+
 '''
 
 
@@ -72,18 +51,120 @@
 # Built ins
 import re
 import os
-import sys
 
 # Hack computer
 import Components._0__globalConstants as GC
-import Assembler.lookupTables as LT
-from   commonHelpers import *
+from commonHelpers import *
+
+
+
+# == Lookup Tables ===========================================
+
+LT = {
+
+	'globalAddresses' : {
+
+		'@R0'       : '@0',
+		'@R1'       : '@1',
+		'@R2'       : '@2',
+		'@R3'       : '@3',
+		'@R4'       : '@4',
+		'@R5'       : '@5',
+		'@R6'       : '@6',
+		'@R7'       : '@7',
+		'@R8'       : '@8',
+		'@R9'       : '@9',
+		'@R10'      : '@10',
+		'@R11'      : '@11',
+		'@R12'      : '@12',
+		'@R13'      : '@13',
+		'@R14'      : '@14',
+		'@R15'      : '@15',
+
+		'@SCREEN'   : '@' + str( GC.SCREEN_MEMORY_MAP ),
+		'@KEYBOARD' : '@' + str( GC.KEYBOARD_MEMORY_MAP ),
+		'@MOUSE'    : '@' + str( GC.MOUSE_MEMORY_MAP ),
+	},
+
+	'comp' : {
+
+		# ub1, ub0, ySel, zx, nx, zy, ny, f, no
+		'0'    : '110101010',
+		'1'    : '110111111',
+		'-1'   : '110111010',
+		'D'    : '110001100',
+		'A'    : '110110000',
+		'!D'   : '110001101',
+		'!A'   : '110110001',
+		'-D'   : '110001111',
+		'-A'   : '110110011',
+		'D+1'  : '110011111',
+		'A+1'  : '110110111',
+		'D-1'  : '110001110',
+		'A-1'  : '110110010',
+		'D+A'  : '110000010',
+		'A+D'  : '110000010',  # order doesn't matter
+		'D-A'  : '110010011',
+		'A-D'  : '110000111',
+		'D&A'  : '110000000',
+		'A&D'  : '110000000',  # order doesn't matter
+		'D|A'  : '110010101',
+		'A|D'  : '110010101',  # order doesn't matter
+		'M'    : '111110000',
+		'!M'   : '111110001',
+		'-M'   : '111110011',
+		'M+1'  : '111110111',
+		'M-1'  : '111110010',
+		'D+M'  : '111000010',
+		'M+D'  : '111000010',  # order doesn't matter
+		'D-M'  : '111010011',
+		'M-D'  : '111000111',
+		'D&M'  : '111000000',
+		'M&D'  : '111000000',  # order doesn't matter
+		'D|M'  : '111010101',
+		'M|D'  : '111010101',  # order doesn't matter
+	},
+
+	'dest' : {
+		
+		# d3, d2, d1
+		'NULL' : '000',
+		'M'    : '001',
+		'D'    : '010',
+		'A'    : '100',
+		'DM'   : '011',
+		'MD'   : '011',  # order doesn't matter
+		'AM'   : '101',
+		'MA'   : '101',  # order doesn't matter
+		'AD'   : '110',
+		'DA'   : '110',  # order doesn't matter
+		'MDA'  : '111',
+		'MAD'  : '111',  # order doesn't matter
+		'AMD'  : '111',  # order doesn't matter
+		'ADM'  : '111',  # order doesn't matter
+		'DMA'  : '111',  # order doesn't matter
+		'DAM'  : '111'   # order doesn't matter
+	},
+
+	'jump' : {
+		
+		# j3, j2, j1
+		'NULL' : '000',
+		'JGT'  : '001',
+		'JEQ'  : '010',
+		'JLT'  : '100',
+		'JGE'  : '011',
+		'JLE'  : '110',
+		'JNE'  : '101',
+		'JMP'  : '111'
+	}
+}
+
 
 
 # == Helpers =================================================
 
 namePattern = '''
-	\$?            # optional start with $
 	\w+            # letter|number|underscore sequence
 	(\.\w+)*       # dot followed by w+
 '''
@@ -100,20 +181,11 @@ def isValidName( name ):
 def debugStuff( cmdList ):
 
 	# Print final assembly
-	# for c in cmdList:
+	for c in cmdList:
 
-	# 	print( c )
+		print( c )
 
-	# print( '\n--\n' )
-
-	debugFile = 'Debug/Main_debug.asm'
-
-	with open( debugFile, 'w' ) as file:
-
-		for c in cmdList:
-
-			file.write( c + '\n' )
-
+	print( '\n--\n' )
 
 	# Print labels
 	for kv in sorted(
@@ -124,7 +196,6 @@ def debugStuff( cmdList ):
 		print( '{:<6}  {}'.format( kv[ 1 ], kv[ 0 ] ) )
 
 	print( '\n--\n' )
-
 
 	# Print variables
 	for kv in sorted(
@@ -138,6 +209,7 @@ def debugStuff( cmdList ):
 
 # == Main ====================================================
 
+
 # -- Constants -------------------------------------
 
 # nBits = GC.N_BITS
@@ -149,7 +221,7 @@ static_segment_size  = static_segment_end - static_segment_start + 1
 
 largest_immediate = 2 ** ( nBits - 1 ) - 1
 negative_one      = 2 ** nBits - 1
-largest_address   = 2 ** 26 - 1
+largest_address   = 2 ** 15 - 1
 
 
 
@@ -200,131 +272,10 @@ def extractCmds( inputFile ):
 
 # -- Translation -------------------------------------
 
+
 knownAddresses_ProgramMemory = {}
 knownAddresses_DataMemory = {}
-knownAddresses_DataMemory.update( LT.globalAddresses )  # fill with global addresses
-
-
-def tripleLabels_P1( cmdList ):
-
-	''' Allow for labels greater than largest_immediate.
-
-			For example,
-
-				// A = 262143  (3, 65535)
-				@0
-				A = !A
-				@@3
-
-				// A = 65536  (1, 0)
-				@0
-				NOP      // redundancy for simplicity
-				@@1
-				
-				// A = 61234   (0, 61234)
-				@4301
-				A = !A
-				NOP      // redundancy for simplicity
-				
-				// A = 555     (0, 555)
-				@555
-				NOP      // redundancy for simplicity
-				NOP      // redundancy for simplicity
-
-		Bit flip idea by @cadet1620
-		  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Is-it-possible-to-have-programs-longer-than-32K-with-the-Hack-instruction-set-td4031378.html
-	'''
-
-	cmdList2 = []
-	labels   = []
-
-	# Get labels
-	for i in range( len( cmdList ) ):
-
-		cmd = cmdList[ i ]
-
-		if cmd[ 0 ] == '(':
-
-			label = cmd[ 1 : - 1 ]  # get the label
-
-			labels.append( label )
-
-	# Triple references
-	for i in range( len( cmdList ) ):
-
-		cmd = cmdList[ i ]
-
-		cmdList2.append( cmd )
-
-		if cmd[ 0 ] == '@':
-
-			if cmd[ 1 : ] in labels:
-
-				cmdList2.append( 'placeholder' )
-				cmdList2.append( 'placeholder' )
-
-	# Check size
-	if len( cmdList2 ) > largest_address:
-
-		raise Exception( 'Program exceeds directly addressable memory by {} instructions'.format( len( cmdList2 ) - largest_address ) )
-
-	return cmdList2
-
-
-def tripleLabels_P2( cmdList ):
-
-	''' Compute values '''
-
-	i = 0
-	n = len( cmdList )
-	
-	while i < n:
-
-		cmd = cmdList[ i ]
-
-		if (  cmd[ 0 ] == '@'                   and
-			  i < ( n - 2 )                     and
-			  cmdList[ i + 1 ] == 'placeholder' and
-			  cmdList[ i + 2 ] == 'placeholder'
-			):
-
-			cmdList[ i + 1 ] = 'NOP'
-			cmdList[ i + 2 ] = 'NOP'
-
-			addr = int( cmd[ 1 : ] )
-
-			if addr > largest_immediate and addr <= negative_one:
-
-				addr ^= negative_one  # flip bits
-
-				cmdList[ i ] = '@{}'.format( addr )
-
-				cmdList[ i + 1 ] = 'A=!A'
-
-			elif addr > negative_one:
-
-				lo = addr & negative_one
-				hi = addr >> 16
-
-				if lo > largest_immediate:
-
-					lo ^= negative_one  # flip bits
-
-					cmdList[ i ] = '@{}'.format( lo )
-
-					cmdList[ i + 1 ] = 'A=!A'
-
-				else:
-
-					cmdList[ i ] = '@{}'.format( lo )
-
-				cmdList[ i + 2 ] = '@@{}'.format( hi )
-
-			i += 2  # skip subsequent associated @ instructions
-
-		i += 1
-
-	return cmdList
+knownAddresses_DataMemory.update( LT[ 'globalAddresses' ] )  # fill with global addresses
 
 
 def handleLabels( cmdList ):
@@ -388,9 +339,9 @@ def handleVariables( cmdList ):
 			elif cmd in knownAddresses_DataMemory:
 
 				cmdList[ i ] = knownAddresses_DataMemory[ cmd ]
-
+			
 			# Allocate it
-			else:
+			else:  
 
 				name = cmd[ 1 : ]
 
@@ -434,50 +385,30 @@ def translateInstructions( cmdList ):
 		#
 		cmd_s = cmdList[ i ]
 		cmd_b = None
+		# print( cmd_s )
 
 
-		# NOP instruction
-		if cmd_s.upper() == 'NOP':
+		# A instruction
+		if cmd_s[0] == '@':
 
-			opcode = LT.fxType[ 'NOP' ]
-			cmd_b = '1' + opcode + '0' * 10
-
-
-		# RETI instruction
-		elif cmd_s.upper() == 'RETI':
-
-			opcode = LT.fxType[ 'RETI' ]
-			cmd_b = '1' + opcode + '0' * 10
+			opcode = '0'
+			addr = int( cmd_s[ 1 : ] )
+			addr = toBinary( addr, nBits - 1 )
+			cmd_b = opcode + addr
 
 
-		# HALT instruction
+		# HALT instruction (not vanilla TECS but useful)
 		elif cmd_s.upper() == 'HALT':
 
-			opcode = LT.fxType[ 'HALT' ]
-			cmd_b = '1' + opcode + '0' * 10
-
-
-		# A and AA instruction
-		elif cmd_s[ 0 ] == '@':
-
-			# AA instruction
-			if cmd_s[ 1 ] == '@':
-
-				opcode = LT.fxType[ 'AA_IMMED' ]
-				addr = int( cmd_s[ 2 : ] )
-				addr = toBinary( addr, 10 )
-				cmd_b = '1' + opcode + addr
-
-			else:
-
-				addr = int( cmd_s[ 1 : ] )
-				addr = toBinary( addr, nBits - 1 )
-				cmd_b = '0' + addr
-
+			cmd_b = '1111110000000000'
 
 		# C instruction
 		else:
-
+	
+			opcode = '1'
+			nUnusedBits = ( nBits - 16 )  # 16 bits used to encode opcode(1), dest(3), comp( 2 + 1 + 6 ), jump(3)
+			header = opcode + '1' * nUnusedBits
+			
 			dest, comp, jump = [ None ] * 3
 
 			if '=' in cmd_s and ';' in cmd_s:
@@ -491,54 +422,11 @@ def translateInstructions( cmdList ):
 
 			# print( dest, comp, jump )
 
-			dest = LT.dest[ dest.upper() ] if dest else LT.dest[ 'NULL' ]
-			jump = LT.jump[ jump.upper() ] if jump else LT.jump[ 'NULL' ]
+			dest = LT[ 'dest' ][ dest.upper() ] if dest else LT[ 'dest' ][ 'NULL' ]
+			jump = LT[ 'jump' ][ jump.upper() ] if jump else LT[ 'jump' ][ 'NULL' ]
+			comp = LT[ 'comp' ][ comp.upper() ]
 
-			# dst=IOBus instruction
-			if comp == 'IOBUS':
-
-				opcode = LT.fxType[ 'DST_EQ_IOBUS' ]
-
-				xSel = '00'
-				ySel = '00'
-
-			# dst=cmp;jmp instruction
-			else:
-
-				z = None
-
-				for k,v in LT.comp.items():
-
-					z = re.fullmatch( k, comp )
-
-					if z:
-
-						z = z.groups()
-
-						if len( z ) == 0:
-
-							xSel = '00'
-							ySel = '00'
-
-						if len( z ) == 1:
-
-							xSel = LT.xySel[ z[ 0 ].upper() ]
-							ySel = '00'
-
-						elif len( z ) == 2:
-
-							xSel = LT.xySel[ z[ 0 ].upper() ]
-							ySel = LT.xySel[ z[ 1 ].upper() ]
-
-						opcode = v
-
-						break
-
-				if z == None:
-
-					raise Exception ( 'Unrecognized computation - {}'.format( comp ) )
-
-			cmd_b = '1' + opcode + xSel + ySel + dest + jump
+			cmd_b = header + comp + dest + jump
 
 
 		#
@@ -551,16 +439,9 @@ def translateCmds( cmdList, debug ):
 
 	''' Translate assembly to binary '''
 
-	# cmdList = handleLabels( cmdList )
-	# cmdList = handleVariables( cmdList )
-	# binCmdList = translateInstructions( cmdList )
-
-	# Support for programs greater than largest_immediate lines long
-	cmdList    = tripleLabels_P1( cmdList )        # 2 passes
-	cmdList    = handleLabels( cmdList )           # 1 pass
-	cmdList    = handleVariables( cmdList )        # 1 pass
-	cmdList    = tripleLabels_P2( cmdList )        # 1 pass
-	binCmdList = translateInstructions( cmdList )  # 1 pass
+	cmdList    = handleLabels( cmdList )
+	cmdList    = handleVariables( cmdList )
+	binCmdList = translateInstructions( cmdList )
 
 	if debug: debugStuff( cmdList )
 
@@ -569,6 +450,7 @@ def translateCmds( cmdList, debug ):
 
 
 # -- Output --------------------------------------
+
 
 def writeToOutputFile( binCmdList, outputFile ):
 
@@ -580,6 +462,10 @@ def writeToOutputFile( binCmdList, outputFile ):
 
 			file.write( cmd_binary )
 			file.write( '\n' )
+
+
+
+# -- Run ------------------------------------------
 
 
 def asm_to_bin( inputFile, outputFile, debug = False ):
@@ -618,14 +504,3 @@ def genBINFile( inputDirPath, debug = False ):
 	outputFilePath = inputDirPath + '/Main.bin'
 
 	asm_to_bin( inputFilePath, outputFilePath, debug )
-
-	# Return position of Sys.halt
-	sysHaltAddress = knownAddresses_ProgramMemory.get( '@Sys.halt' )
-
-	if sysHaltAddress:
-
-		return int( sysHaltAddress[ 1 : ] )
-
-	else:
-
-		return None
