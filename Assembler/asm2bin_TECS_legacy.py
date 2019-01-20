@@ -81,6 +81,24 @@ LT = {
 		'@R14'      : '@14',
 		'@R15'      : '@15',
 
+		# VM structure
+		'@SP'       : '@0',
+		'@LCL'      : '@1',
+		'@ARG'      : '@2',
+		'@THIS'     : '@3',
+		'@THAT'     : '@4',
+		'@TEMP0'    : '@5',
+		'@TEMP1'    : '@6',
+		'@TEMP2'    : '@7',
+		'@TEMP3'    : '@8',
+		'@TEMP4'    : '@9',
+		'@TEMP5'    : '@10',
+		'@TEMP6'    : '@11',
+		'@TEMP7'    : '@12',
+		'@GP0'      : '@13',
+		'@GP1'      : '@14',
+		'@GP2'      : '@15',
+
 		'@SCREEN'   : '@' + str( GC.SCREEN_MEMORY_MAP ),
 		'@KEYBOARD' : '@' + str( GC.KEYBOARD_MEMORY_MAP ),
 		'@MOUSE'    : '@' + str( GC.MOUSE_MEMORY_MAP ),
@@ -220,7 +238,6 @@ static_segment_end   = GC.STATIC_END
 static_segment_size  = static_segment_end - static_segment_start + 1
 
 largest_immediate = 2 ** ( nBits - 1 ) - 1
-negative_one      = 2 ** nBits - 1
 largest_address   = 2 ** 15 - 1
 
 

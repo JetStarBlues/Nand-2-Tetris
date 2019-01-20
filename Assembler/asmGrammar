@@ -1,0 +1,37 @@
+-- Hack ASM Grammar ----------------------------------------------------------------
+
+statement                     -> basicStatement | externalMemoryAccessStatement | jumpStatement | labelStatement | standaloneStatement
+
+basicStatement                -> op rX rY immediate?
+
+externalMemoryAccessStatement -> STO|LD rX '{' address '}'
+
+jumpStatement                 -> jumpOp '{' address '}'
+
+labelStatement                -> '(' label ')'
+
+standaloneStatement           -> opStandalone
+
+op                            -> opJump|MOV|STO|LD|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
+
+opJump                        -> JMP|JZ|JNZ|JC|JNC|JNG|JZP
+
+opStandalone                  -> HLT
+
+rX, rY                        -> r0..15
+
+immediate                     -> 16bit integerConstant
+
+address                       -> label | 32bit integerConstant
+
+label                         -> sequence of letters, digits, and underscore not starting with a digit
+
+integerConstant               -> decConstant | hexConstant | binConstant | charConstant
+
+decConstant                   -> ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 )+
+
+hexConstant                   -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
+
+binConstant                   -> ( '0b' | '0B' ) ( 0 | 1 )+
+
+charConstant                  -> single Ascii character wrapped in single quotes

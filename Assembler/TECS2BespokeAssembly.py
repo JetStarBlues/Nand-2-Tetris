@@ -187,13 +187,50 @@ compLookup[ 'M|D' ] = compLookup[ 'D|M' ]
 jumpLookup = {
 		
 	'NULL' : [],
-	'JGT'  : [],
-	'JEQ'  : [],
-	'JLT'  : [],
-	'JGE'  : [],
-	'JLE'  : [],
-	'JNE'  : [],
-	'JMP'  : []
+	'JMP'  : [
+
+		'JMP r0 rA'
+	]
+	'JEQ'  : [
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'JZ  r0 rA'
+	],
+	'JNE'  : [
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'JNZ r0 rA'
+	],
+	# stackoverflow.com/a/36909033
+	'JGT'  : [  # JC
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'JC  r0 rA'
+	],
+	'JLT'  : [  # NC & NZ
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'MOV rT rStatus'                # TODO, support
+		'AND rT r0 0b0000000000000110'  # TODO, support
+		'JZ  r0 rA'
+	],
+	'JGE'  : [  # C | ZR
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'JC  r0 rA'
+		'JZ  r0 rA'
+	],
+	'JLE'  : [  # NC
+
+		'MOV rT {}'
+		'SUB rT r0'
+		'JNC r0 rA'
+	],
 }
 
 
@@ -258,7 +295,7 @@ def cType ( inst )
 	# Convert rest of instruction
 
 	# dst = cmp
-	if ( dest and comp and not jump ):
+	if dest and comp and ( not jump ):
 
 		if not destIsDirect:  # M
 
@@ -267,16 +304,21 @@ def cType ( inst )
 			new_inst.append( i0 )
 
 	# cmp ; jmp
-	elif ( not dest and comp and jump ):
+	elif ( not dest ) and comp and jump:
 
-		i0 = '{} r0 {}'.format( jump, regs[ 'A' ] )
+		# i0 = '{} r0 {}'.format( jump, regs[ 'A' ] )
 
 		...
+
+		jumpLookup
+
+		# Replace rA/rD/rT with appropriate register
+		# Place r4/rDst
 
 		new_inst.append( i0 )
 
 	# dst = cmp ; jmp
-	elif ( dest and comp and jump ):
+	elif dest and comp and jump:
 
 		#
 
