@@ -16,4 +16,5 @@ inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test1_add'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test8_rect_buffer'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test8_rect_cmd'
 
-Assembler.asm2bin_Bespoke.genBINFile( inputDirPath )
+Assembler.asm2bin_Bespoke.genBINFile( inputDirPath, debug = True )
+# Assembler.asm2bin_Bespoke.genBINFile( inputDirPath )
