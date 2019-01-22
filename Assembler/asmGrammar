@@ -35,3 +35,9 @@ hexConstant                   -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 binConstant                   -> ( '0b' | '0B' ) ( 0 | 1 )+
 
 charConstant                  -> single Ascii character wrapped in single quotes
+
+
+EQU_directive                 -> label EQU integerConstant
+
+
+// TODO - MACRO

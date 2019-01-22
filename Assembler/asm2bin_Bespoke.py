@@ -180,9 +180,60 @@ def isValidName( name ):
 def debugStuff( cmdList ):
 
 	# Print final assembly
-	for c in cmdList:
+	for i in range( len( cmdList ) ):
 
-		print( c )
+		cmd = cmdList[ i ]
+
+		label =   # lookup i
+
+		op = cmd[ 'op' ]
+
+		if 'rX' in cmd:
+
+			rX = cmd[ 'rX' ]
+
+		else:
+
+			None
+
+		if 'rY' in cmd:
+
+			rY = cmd[ 'rY' ]
+
+		else:
+
+			None
+
+		if op:
+
+			print( '{:<5} - {} {} {} {}'.format( 
+
+				i,
+				'( ' + label + ' )' if label else '',
+				op,
+				rX                  if rX    else '',
+				rY                  if rY    else '',
+			) )
+
+		elif 'immediate' in cmd:  ... ??
+
+			print( '{:<5} - {}'.format(
+
+				i,
+				cmd[ 'immediate' ]
+			) )
+
+		elif 'address' in cmd:  ... ??  # { wHi, wLo }, { imm, rY }
+
+			print( '{:<5} - {}'.format(
+
+				i,
+				cmd[ 'address' ]
+			) )
+
+		else:
+
+			print( '{:<5} - ??? ... {}'.format( cmd ) )
 
 	print( '\n--\n' )
 
@@ -446,11 +497,14 @@ def decodeConstant( value, cmd, is32Bit = False ):
 	words = []
 
 	# Convert from string to integer
-	if value in knownAddresses_DataMemory:
 
-		value = knownAddresses_DataMemory[ value ]
+	# if value in knownAddresses_DataMemory:
 
-	elif value in knownAddresses_ProgramMemory:
+	# 	value = knownAddresses_DataMemory[ value ]
+
+	# TODO, check EQUs
+
+	if value in knownAddresses_ProgramMemory:
 
 		value = knownAddresses_ProgramMemory[ value ]
 
@@ -493,7 +547,7 @@ def decodeConstant( value, cmd, is32Bit = False ):
 	return words
 
 
-def translateInstructions( cmdList ):
+def translateInstructions( cmdList, debugCmdList ):
 
 	''' Translate assembly instructions to binary '''
 
@@ -589,10 +643,11 @@ def translateCmds( cmdList, debug ):
 
 	''' Translate assembly to binary '''
 
-	cmdList    = handleLabels( cmdList )
-	binCmdList = translateInstructions( cmdList )
+	debugCmdList = []
+	cmdList      = handleLabels( cmdList )
+	binCmdList   = translateInstructions( cmdList, debugCmdList )
 
-	if debug: debugStuff( cmdList )
+	if debug: debugStuff( debugCmdList )
 
 	return binCmdList
 
