@@ -236,13 +236,23 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 			op rX rPair
 			op rX rY imm
 		'''
-		print( '{:<5} -   {} {} {} {}'.format(
+		s_label = '( ' + label + ' )' if label else ''
+		s_op    = op
+		s_rX    = rX if rX else rPair if rPair else ''
+		s_rY    = rY if rY else rPair if ( rX and rPair ) else ''
+
+		if s_label : s_label += ' '
+		if s_op    : s_op    += ' '
+		if s_rX    : s_rX    += ' '
+		if s_rY    : s_rY    += ' '
+
+		print( '{:<5} -   {}{}{}{}'.format(
 
 			bIdx,
-			'( ' + label + ' )' if label else '',
-			op,
-			rX if rX else rPair if rPair else '',
-			rY if rY else rPair if ( rX and rPair ) else '',
+			s_label,
+			s_op,
+			s_rX,
+			s_rY,
 		) )
 
 		if immediate or address:
