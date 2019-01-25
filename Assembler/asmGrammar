@@ -1,43 +1,61 @@
 -- Hack ASM Grammar ----------------------------------------------------------------
 
-statement                     -> basicStatement | externalMemoryAccessStatement | jumpStatement | labelStatement | standaloneStatement
+statement                       -> basicStatement | immediateAddressStatementV1 | immediateAddressStatementV2 | registerPairAddressStatementV1 | registerPairAddressStatementV2 | labelStatement | standaloneStatement
 
-basicStatement                -> op rX rY immediate?
+basicStatement                  -> op rX rY immediate?
 
-externalMemoryAccessStatement -> STO|LD rX '{' address '}'
+immediateAddressStatementV1     -> STO|LD rX '{' address '}'
 
-jumpStatement                 -> jumpOp '{' address '}'
+immediateAddressStatementV2     -> opJump '{' address '}'
 
-labelStatement                -> '(' label ')'
+registerPairAddressStatementV1  -> STO|LD rX registerPair
 
-standaloneStatement           -> opStandalone
+registerPairAddressStatementV2  -> opJump|LXH registerPair
 
-op                            -> opJump|MOV|STO|LD|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
+labelStatement                  -> '(' label ')'
 
-opJump                        -> JMP|JZ|JNZ|JC|JNC|JNG|JZP
+standaloneStatement             -> opStandalone
 
-opStandalone                  -> HLT
+op                              -> opJump|MOV|STO|LD|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
 
-rX, rY                        -> r0..15
+opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP
 
-immediate                     -> 16bit integerConstant
+opStandalone                    -> HLT
 
-address                       -> label | 32bit integerConstant
+rX, rY                          -> r[0..15] | 'rStatus'
 
-label                         -> sequence of letters, digits, and underscore not starting with a digit
+registerPair                    -> r[0..15]r[0..15]
+                                 Together form a 32bit value { rHigh, rLow }
 
-integerConstant               -> decConstant | hexConstant | binConstant | charConstant
+immediate                       -> 16bit integerConstant
 
-decConstant                   -> ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 )+
+address                         -> label | 32bit integerConstant
 
-hexConstant                   -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
+label                           -> sequence of letters, digits, and underscore not starting with a digit
 
-binConstant                   -> ( '0b' | '0B' ) ( 0 | 1 )+
+integerConstant                 -> decConstant | hexConstant | binConstant | charConstant
 
-charConstant                  -> single Ascii character wrapped in single quotes
+decConstant                     -> ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 )+
+
+hexConstant                     -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
+
+binConstant                     -> ( '0b' | '0B' ) ( 0 | 1 )+
+
+charConstant                    -> single Ascii character wrapped in single quotes
 
 
-EQU_directive                 -> label EQU integerConstant
+//TODO
+
+EQU_directive                   -> label EQU integerConstant
+
+ORG_directive                   -> ORG '{' address '}'
+
+MACRO_directive                 -> 'MACRO' '(' MACROParameters ')' MACROBody 'ENDMACRO'
+
+MACROParameters                 -> ( label (, label)* )*
+
+MACROBody                       -> statement*
 
 
-// TODO - MACRO
+....
+update LXH

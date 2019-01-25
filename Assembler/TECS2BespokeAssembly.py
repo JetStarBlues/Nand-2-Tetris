@@ -193,9 +193,10 @@ jumpLookup = {
 	]
 	'JEQ'  : [
 
-		'MOV rT {}'
-		'SUB rT r0'
-		'JZ  r0 rA'
+		# 'MOV rT {}'
+		# 'SUB rT r0'
+		# 'JZ  r0 rA'
+		JEQ( {}, rA )  # <-- TODO: use macros
 	],
 	'JNE'  : [
 

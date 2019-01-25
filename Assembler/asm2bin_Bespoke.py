@@ -64,7 +64,19 @@ LT = {
 		'R14'      : 14,
 		'R15'      : 15,
 
-		'RSTATUS'  : 13,
+		'RSTATUS'  : 15,
+	},
+
+	'registerPairs' : {
+
+		# register pairs
+		'R2R1'     : 0,
+		'R4R3'     : 1,
+		'R6R5'     : 2,
+		'R8R7'     : 3,
+		'R10R9'    : 4,
+		'R12R11'   : 5,
+		'R14R13'   : 6,
 	},
 
 	'dataMemoryAddresses' : {
@@ -93,6 +105,14 @@ LT = {
 		'MOUSE'    : GC.MOUSE_MEMORY_MAP,
 	},
 
+	# directives such as EQU not part of program count
+	# 'dataMemoryAddresses' : [
+
+	# 	'SCREEN   EQU {}'.format( GC.SCREEN_MEMORY_MAP ),
+	# 	'KEYBOARD EQU {}'.format( GC.KEYBOARD_MEMORY_MAP ),
+	# 	'MOUSE    EQU {}'.format( GC.MOUSE_MEMORY_MAP ),
+	# ],
+
 	'op' : {
 
 		'MOV'  : 0,
@@ -116,13 +136,14 @@ LT = {
 		'JNC'  : 18,
 		'JNG'  : 19,
 		'JZP'  : 20,
-		'SWI'  : 21,
-		'RTI'  : 22,
-		'IORD' : 23,
-		'IOWR' : 24,
-		'IODR' : 25,
-		'HLT'  : 26,
-		'NOP'  : 27,
+		'LXH'  : 21,
+		'SWI'  : 22,
+		'RTI'  : 23,
+		'IORD' : 24,
+		'IOWR' : 25,
+		'IODR' : 26,
+		'HLT'  : 27,
+		'NOP'  : 28,
 	},
 
 	'opJump' : {
@@ -177,63 +198,79 @@ def isValidName( name ):
 
 # == Debug ===================================================
 
-def debugStuff( cmdList ):
+def getKeyByValue( value, d ):
 
-	# Print final assembly
-	for i in range( len( cmdList ) ):
+	# stackoverflow.com/a/8023337
 
-		cmd = cmdList[ i ]
+	for k, v in d.items():
 
-		label =   # lookup i
+		if v == value:
+
+			return k
+
+	return None
+
+
+def printFinalAssembly( asmCmdList, binCmdList ):
+
+	bIdx = 0
+
+	for cmd in asmCmdList:
+
+		label = getKeyByValue( bIdx, knownAddresses_ProgramMemory )
 
 		op = cmd[ 'op' ]
 
-		if 'rX' in cmd:
+		rX        = cmd.get( 'rX' )
+		rY        = cmd.get( 'rY' )
+		rPair     = cmd.get( 'rPair' )
+		immediate = cmd.get( 'immediate' )
+		address   = cmd.get( 'address' )
 
-			rX = cmd[ 'rX' ]
+		'''
+			op
+			op {addr}
+			op rPair
+			op rX rY
+			op rX {addr}
+			op rX rPair
+			op rX rY imm
+		'''
+		print( '{:<5} -   {} {} {} {}'.format(
 
-		else:
+			bIdx,
+			'( ' + label + ' )' if label else '',
+			op,
+			rX if rX else rPair if rPair else '',
+			rY if rY else rPair if ( rX and rPair ) else '',
+		) )
 
-			None
+		if immediate or address:
 
-		if 'rY' in cmd:
+			bIdx += 1
 
-			rY = cmd[ 'rY' ]
+			w = int( binCmdList[ bIdx ], 2 )
 
-		else:
+			print( '{:<5} -   {}'.format( bIdx, w ) )
 
-			None
+		if address:
 
-		if op:
+			bIdx += 1
 
-			print( '{:<5} - {} {} {} {}'.format( 
+			w = int( binCmdList[ bIdx ], 2 )	
 
-				i,
-				'( ' + label + ' )' if label else '',
-				op,
-				rX                  if rX    else '',
-				rY                  if rY    else '',
-			) )
+			print( '{:<5} -   {}'.format( bIdx , w ) )
 
-		elif 'immediate' in cmd:  ... ??
+		# update
+		bIdx += 1
+	
 
-			print( '{:<5} - {}'.format(
+def debugStuff( asmCmdList, binCmdList ):
 
-				i,
-				cmd[ 'immediate' ]
-			) )
+	print( '\n--\n' )
 
-		elif 'address' in cmd:  ... ??  # { wHi, wLo }, { imm, rY }
-
-			print( '{:<5} - {}'.format(
-
-				i,
-				cmd[ 'address' ]
-			) )
-
-		else:
-
-			print( '{:<5} - ??? ... {}'.format( cmd ) )
+	# Print final assembly
+	printFinalAssembly( asmCmdList, binCmdList )
 
 	print( '\n--\n' )
 
@@ -254,6 +291,8 @@ def debugStuff( cmdList ):
 		key = lambda x : x[ 1 ]
 	):
 		print( '{:<6}  {}'.format( kv[ 1 ], kv[ 0 ] ) )
+
+	print( '\n--\n' )
 
 
 
@@ -304,6 +343,8 @@ def extractCmd( line ):
 
 	if cmdRaw :  # wasn't just a comment
 
+		# DRY
+		op = cmdRaw[ 0 ].upper()
 
 		# Handle char, merge into one
 		if "'" in cmdRaw:
@@ -357,8 +398,6 @@ def extractCmd( line ):
 
 				raiseError()
 
-			op = cmdRaw[ 0 ].upper()
-
 			# Check for length
 			if len( cmdRaw ) == 2 or len( cmdRaw ) == 3:
 
@@ -391,36 +430,75 @@ def extractCmd( line ):
 		# Type 4 - op
 		elif len( cmdRaw ) == 1:
 
-			op = cmdRaw[ 0 ].upper()
-
 			# Check validity
 			if op not in LT[ 'opStandalone' ]:
 
 				raiseError()
-			
+
 			cmd[ 'op' ] = op
 
 
-		# Type5 & Type6 - op rX rY immediate, op rX rY
-		else:
+		# Type5 - op rPair
+		elif len( cmdRaw ) == 2:
 
-			if len( cmdRaw ) == 3:
+			# Check validity
+			if ( op not in LT[ 'opJump' ] ) and ( op != 'LXH' ):
 
-				cmd[ 'op' ] = cmdRaw[ 0 ].upper()
-				cmd[ 'rX' ] = cmdRaw[ 1 ].upper()
-				cmd[ 'rY' ] = cmdRaw[ 2 ].upper()
+				raiseError()
 
-			elif len( cmdRaw ) == 4:
+			cmd[ 'op' ] = op
 
-				cmd[ 'op' ]        = cmdRaw[ 0 ].upper()
-				cmd[ 'rX' ]        = cmdRaw[ 1 ].upper()
-				cmd[ 'rY' ]        = cmdRaw[ 2 ].upper()
-				cmd[ 'immediate' ] = cmdRaw[ 3 ]
+			rPair = cmdRaw[ 1 ].upper()
+
+			# Check validity
+			if rPair not in LT[ 'registerPairs' ]:
+
+				raiseError()
+
+			cmd[ 'rPair' ] = rPair
+
+
+		# Type6 - op rX rY, op rX rPair
+		elif len( cmdRaw ) == 3:
+
+			cmd[ 'op' ] = op
+			cmd[ 'rX' ] = cmdRaw[ 1 ].upper()
+
+			rY = cmdRaw[ 2 ].upper()
+
+			if rY in LT[ 'registers' ]:
+
+				cmd[ 'rY' ] = rY
+
+			elif rY in LT[ 'registerPairs' ]:
+
+				cmd[ 'rPair' ] = rY
 
 			else:
 
 				raiseError()
 
+
+		# Type7 - op rX rY immediate
+		elif len( cmdRaw ) == 4:
+
+			# Check validity
+			if ( op in LT[ 'opStandalone' ] ) or ( op == 'LXH' ):
+
+				raiseError()
+
+			cmd[ 'op' ]        = op
+			cmd[ 'rX' ]        = cmdRaw[ 1 ].upper()
+			cmd[ 'rY' ]        = cmdRaw[ 2 ].upper()
+			cmd[ 'immediate' ] = cmdRaw[ 3 ]
+
+
+		# Unknown
+		else:
+
+			raiseError()
+
+		# Debug
 		print( '{} -> {}'.format( line.rstrip(), cmd ) )
 
 	return cmd
@@ -449,6 +527,13 @@ def extractCmds( inputFile ):
 knownAddresses_ProgramMemory = {}
 knownAddresses_DataMemory = {}
 knownAddresses_DataMemory.update( LT[ 'dataMemoryAddresses' ] )  # fill with global addresses
+
+def handleMacros( cmdList ):
+
+	expandedCmdList = []
+
+	# return expandedCmdList
+	return cmdList
 
 
 def handleLabels( cmdList ):
@@ -480,7 +565,7 @@ def handleLabels( cmdList ):
 
 			trimmedCmdList.append( cmd )  # not a label so include it
 
-			# check if has immediate (just count args and assume validity is checked later)
+			# check if has immediate
 			if 'immediate' in cmd:
 
 				nImmediates += 1
@@ -498,13 +583,13 @@ def decodeConstant( value, cmd, is32Bit = False ):
 
 	# Convert from string to integer
 
-	# if value in knownAddresses_DataMemory:
+	if value in knownAddresses_DataMemory:
 
-	# 	value = knownAddresses_DataMemory[ value ]
+		value = knownAddresses_DataMemory[ value ]
 
 	# TODO, check EQUs
 
-	if value in knownAddresses_ProgramMemory:
+	elif value in knownAddresses_ProgramMemory:
 
 		value = knownAddresses_ProgramMemory[ value ]
 
@@ -547,7 +632,7 @@ def decodeConstant( value, cmd, is32Bit = False ):
 	return words
 
 
-def translateInstructions( cmdList, debugCmdList ):
+def encodeInstructions( cmdList ):
 
 	''' Translate assembly instructions to binary '''
 
@@ -604,17 +689,64 @@ def translateInstructions( cmdList, debugCmdList ):
 			binCmdList.append( cmd_b )
 
 
-		# Type5 & Type6 - op rX rY immediate, op rX rY
-		else:
+		# Type 5 - op rPair
+		elif len( cmd ) == 2:
+
+			rPair = LT[ 'registerPairs' ][ cmd[ 'rPair' ] ]
+
+			isRegisterPair = '11'
+
+			cmd_b = '0{}{}{}{}'.format(
+
+				isRegisterPair,
+				op,
+				rPair,
+				rZero
+			)
+
+			binCmdList.append( cmd_b )
+
+
+		# Type6 - op rX rY, op rX rPair
+		elif len( cmd ) == 3:
+
+			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
+
+			if 'rPair' in cmd:
+
+				rY = LT[ 'registerPairs' ][ cmd[ 'rPair' ] ]
+
+				isRegisterPair = '11'
+
+				cmd_b = '0{}{}{}{}'.format(
+
+					isRegisterPair,
+					op,
+					rX,
+					rY
+				)
+
+			else:
+
+				rY = LT[ 'registers' ][ cmd[ 'rY' ] ]
+
+				cmd_b = '000{}{}{}'.format(
+
+					op,
+					rX,
+					rY
+				)
+
+			binCmdList.append( cmd_b )
+
+
+		# Type7 - op rX rY immediate
+		elif len( cmd ) == 4:
 
 			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
 			rY = LT[ 'registers' ][ cmd[ 'rY' ] ]
 
-			has16BitImmediate = 0
-
-			if 'immediate' in cmd:
-
-				has16BitImmediate = 1
+			has16BitImmediate = 1
 
 			cmd_b = '00{}{}{}{}'.format(
 
@@ -627,14 +759,19 @@ def translateInstructions( cmdList, debugCmdList ):
 			binCmdList.append( cmd_b )
 
 			# immediate
-			if has16BitImmediate:
+			print( '--> 16 --> {}'.format( cmd ) )
 
-				print( '--> 16 --> {}'.format( cmd ) )
+			binCmdList.extend(
 
-				binCmdList.extend(
+				decodeConstant( cmd[ 'immediate' ], cmd, is32Bit = False )
+			)
 
-					decodeConstant( cmd[ 'immediate' ], cmd, is32Bit = False )
-				)
+
+		# Unknown
+		else:
+
+			raise Exception( "Shouldn't reach here!" )
+
 
 	return binCmdList
 
@@ -643,11 +780,11 @@ def translateCmds( cmdList, debug ):
 
 	''' Translate assembly to binary '''
 
-	debugCmdList = []
+	cmdList      = handleMacros( cmdList )
 	cmdList      = handleLabels( cmdList )
-	binCmdList   = translateInstructions( cmdList, debugCmdList )
+	binCmdList   = encodeInstructions( cmdList )
 
-	if debug: debugStuff( debugCmdList )
+	if debug: debugStuff( cmdList, binCmdList )
 
 	return binCmdList
 
