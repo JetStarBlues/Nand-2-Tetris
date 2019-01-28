@@ -2,7 +2,7 @@
 
 statement                       -> basicStatement | immediateAddressStatementV1 | immediateAddressStatementV2 | registerPairAddressStatementV1 | registerPairAddressStatementV2 | labelStatement | standaloneStatement
 
-basicStatement                  -> op rX rY immediate?
+basicStatement                  -> opVanilla rX rY immediate?
 
 immediateAddressStatementV1     -> STO|LD rX '{' address '}'
 
@@ -16,7 +16,7 @@ labelStatement                  -> '(' label ')'
 
 standaloneStatement             -> opStandalone
 
-op                              -> opJump|MOV|STO|LD|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
+opVanilla                       -> opJump|STO|LD|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
 
 opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP
 

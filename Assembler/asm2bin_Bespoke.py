@@ -28,6 +28,8 @@
 
 '''
 
+# TODO - test all op variants (are they all encoded correctly)
+
 
 # == Imports =================================================
 
@@ -211,6 +213,11 @@ def getKeyByValue( value, d ):
 	return None
 
 
+def getHex4( value ):
+
+	return hex( int( value, 2 ) )[ 2 : ].zfill( 4 )
+
+
 def printFinalAssembly( asmCmdList, binCmdList ):
 
 	bIdx = 0
@@ -246,30 +253,50 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 		if s_rX    : s_rX    += ' '
 		if s_rY    : s_rY    += ' '
 
-		print( '{:<5} -   {}{}{}{}'.format(
+		print( '{:<6} -   {}{}{}{}'.format(
+		# print( '{:<4} :    {:<6} -   {}{}{}{}'.format(
 
+			# getHex4( binCmdList[ bIdx ] ),
 			bIdx,
 			s_label,
 			s_op,
 			s_rX,
-			s_rY,
+			s_rY
+
 		) )
 
 		if immediate or address:
 
 			bIdx += 1
 
-			w = int( binCmdList[ bIdx ], 2 )
+			wLo = int( binCmdList[ bIdx ], 2 )
 
-			print( '{:<5} -   {}'.format( bIdx, w ) )
+			print( '{:<6} -   {}'.format(
+			# print( '{:<4} :    {:<6} -   {}'.format(
+
+				# getHex4( binCmdList[ bIdx ] ),
+				bIdx,
+				wLo
+			) )
 
 		if address:
 
 			bIdx += 1
 
-			w = int( binCmdList[ bIdx ], 2 )	
+			wHi = int( binCmdList[ bIdx ], 2 )	
 
-			print( '{:<5} -   {}'.format( bIdx , w ) )
+			label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_ProgramMemory )
+
+			if not label: label = '???'
+
+			print( '{:<6} -   {}   // {}'.format(
+			# print( '{:<4} :    {:<6} -   {}'.format(
+
+				# getHex4( binCmdList[ bIdx ] ),
+				bIdx, 
+				wHi,
+				label
+			) )
 
 		# update
 		bIdx += 1
@@ -710,8 +737,8 @@ def encodeInstructions( cmdList ):
 
 				isRegisterPair,
 				op,
-				rPair,
-				rZero
+				rZero,
+				rPair  # rPair encoded in rY slot
 			)
 
 			binCmdList.append( cmd_b )
@@ -733,7 +760,7 @@ def encodeInstructions( cmdList ):
 					isRegisterPair,
 					op,
 					rX,
-					rY
+					rY  # rPair encoded in rY slot
 				)
 
 			else:
