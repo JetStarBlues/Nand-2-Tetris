@@ -26,7 +26,7 @@ MACRO JLT ( _rValue_, _dest_, _rTemp_ )  // NC & NZ
 
 	SUB  _rValue_    r0
 	MOV  _rTemp_     rStatus
-	AND  _rTemp_     r0       0b110  // check if zero(2) and carry(1) bits are set
+	AND  _rTemp_     r0       0b11  // check if carry(1) and zero(0) bits are set
 	JZ   { _dest_ }  
 
 ENDMACRO

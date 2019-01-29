@@ -19,10 +19,9 @@
 
 	> Instruction (16)
 
-		15    -> unused
-		14    -> has32BitImmediate
-		13    -> has16BitImmediate
-		12..8 -> fxSel
+		15    -> has32BitImmediate
+		14    -> has16BitImmediate
+		13..8 -> fxSel
 		7..4  -> xSel
 		3..0  -> ySel
 
@@ -40,6 +39,15 @@ import os
 # Hack computer
 import Components._0__globalConstants as GC
 from commonHelpers import *
+
+
+
+# == Helpers =================================================
+
+def newDictFromKeys( baseDict, keys ):
+
+	# stackoverflow.com/q/12117080
+	return { k : baseDict[ k ] for k in keys }
 
 
 
@@ -117,9 +125,9 @@ LT = {
 
 	'op' : {
 
-		'MOV'  : 0,
-		'STO'  : 1,
-		'LD'   : 2,
+		'STO'  : 0,
+		'LD'   : 1,
+		'MOV'  : 2,
 		'ADD'  : 3,
 		'SUB'  : 4,
 		'AND'  : 5,
@@ -138,63 +146,57 @@ LT = {
 		'JNC'  : 18,
 		'JNG'  : 19,
 		'JZP'  : 20,
-		'LXH'  : 21,
-		'SWI'  : 22,
-		'RTI'  : 23,
-		'IORD' : 24,
-		'IOWR' : 25,
-		'IODR' : 26,
-		'HLT'  : 27,
-		'NOP'  : 28,
+		'JSR'  : 21,
+		'RTS'  : 22,
+		'LXH'  : 23,
+		'SWI'  : 24,
+		'RTI'  : 25,
+		'IORD' : 26,
+		'IOWR' : 27,
+		'IODR' : 28,
+		'HLT'  : 29,
+		'NOP'  : 30,
 	},
 
-	'opJump' : {
-
-		'JMP'  : 14,
-		'JZ'   : 15,
-		'JNZ'  : 16,
-		'JC'   : 17,
-		'JNC'  : 18,
-		'JNG'  : 19,
-		'JZP'  : 20,
-	},
-
-	'opStandalone' : {
-
-		'HLT' : 26,
-	}
+	'opJump'       : None,
+	'opStandalone' : None
 }
 
-
+# Convert to binary string
 for k, v in LT[ 'registers' ].items():
 
 	LT[ 'registers' ][ k ] = toBinary( v, 4 )
 
+for k, v in LT[ 'registerPairs' ].items():
+
+	LT[ 'registerPairs' ][ k ] = toBinary( v, 4 )
+
 for k, v in LT[ 'op' ].items():
 
-	LT[ 'op' ][ k ] = toBinary( v, 5 )
+	LT[ 'op' ][ k ] = toBinary( v, 6 )
 
-for k, v in LT[ 'opJump' ].items():
+# Create subsets
+LT[ 'opJump' ] = newDictFromKeys( LT[ 'op' ],
 
-	LT[ 'opJump' ][ k ] = toBinary( v, 5 )
+	[
+		'JMP',
+		'JZ',
+		'JNZ',
+		'JC',
+		'JNC',
+		'JNG',
+		'JZP',
+		'JSR',
+	]
+)
+LT[ 'opStandalone' ] = newDictFromKeys( LT[ 'op' ],
 
-for k, v in LT[ 'opStandalone' ].items():
-
-	LT[ 'opStandalone' ][ k ] = toBinary( v, 5 )
-
-
-
-# == Helpers =================================================
-
-namePattern = '''
-	\w+            # letter|number|underscore sequence
-	(\.\w+)*       # dot followed by w+
-'''
-namePattern = re.compile( namePattern, re.X )
-
-def isValidName( name ):
-
-	return re.fullmatch( namePattern, name )
+	[
+		'RTS',
+		'HLT',
+		'NOP',
+	]
+)
 
 
 
@@ -219,6 +221,22 @@ def getHex4( value ):
 
 
 def printFinalAssembly( asmCmdList, binCmdList ):
+
+	showBinary = False
+
+	def getBinaryString():  # DRY
+
+		s = ''
+
+		if showBinary:
+
+			s = '{:<4}  {:<16}  |    '.format(
+
+				getHex4( binCmdList[ bIdx ] ),
+				binCmdList[ bIdx ]
+			)
+
+		return s
 
 	bIdx = 0
 
@@ -253,10 +271,9 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 		if s_rX    : s_rX    += ' '
 		if s_rY    : s_rY    += ' '
 
-		print( '{:<6} -   {}{}{}{}'.format(
-		# print( '{:<4} :    {:<6} -   {}{}{}{}'.format(
+		print( '{}{:<6} -   {}{}{}{}'.format(
 
-			# getHex4( binCmdList[ bIdx ] ),
+			getBinaryString(),
 			bIdx,
 			s_label,
 			s_op,
@@ -271,10 +288,9 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 			wLo = int( binCmdList[ bIdx ], 2 )
 
-			print( '{:<6} -   {}'.format(
-			# print( '{:<4} :    {:<6} -   {}'.format(
+			print( '{}{:<6} -   {}'.format(
 
-				# getHex4( binCmdList[ bIdx ] ),
+				getBinaryString(),
 				bIdx,
 				wLo
 			) )
@@ -283,19 +299,28 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 			bIdx += 1
 
-			wHi = int( binCmdList[ bIdx ], 2 )	
+			wHi = int( binCmdList[ bIdx ], 2 )
 
-			label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_ProgramMemory )
+			# program address
+			if ( op in LT[ 'opJump' ] ) or ( op == 'LXH' ):
 
-			if not label: label = '???'
+				label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_ProgramMemory )
 
-			print( '{:<6} -   {}   // {}'.format(
-			# print( '{:<4} :    {:<6} -   {}'.format(
+				if not label: label = '???'
 
-				# getHex4( binCmdList[ bIdx ] ),
+			# data address
+			elif op in [ 'STO', 'LD' ]:
+
+				label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_DataMemory )
+
+			s_label = '   // {}'.format( label ) if label else ''
+
+			print( '{}{:<6} -   {}{}'.format(
+
+				getBinaryString(),
 				bIdx, 
 				wHi,
-				label
+				s_label
 			) )
 
 		# update
@@ -352,6 +377,13 @@ largest_address   = 2 ** 32 - 1
 
 # -- Extraction -------------------------------------
 
+namePattern = '''
+	\w+            # letter|number|underscore sequence
+	(\.\w+)*       # dot followed by w+
+'''
+namePattern = re.compile( namePattern, re.X )
+
+
 cmdPattern = '''
 	//    |       # start of comment
 	\'    |       # char wrappers
@@ -360,6 +392,12 @@ cmdPattern = '''
 	\w+           # word or digit sequence
 '''
 cmdPattern = re.compile( cmdPattern, re.X )
+
+
+def isValidName( name ):
+
+	return re.fullmatch( namePattern, name )
+
 
 def extractCmd( line ):
 
@@ -440,6 +478,7 @@ def extractCmd( line ):
 
 				cmd[ 'op' ] = op
 
+				# op {address}
 				if len( cmdRaw ) == 2:
 
 					# Check validity
@@ -449,10 +488,11 @@ def extractCmd( line ):
 
 					cmd[ 'address' ] = cmdRaw[ 1 ]
 
+				# op rX {address}
 				else:
 
 					# Check validity
-					if ( op not in LT[ 'opJump' ] ) and ( op not in [ 'LD', 'STO' ] ):
+					if op not in [ 'STO', 'LD' ]:
 
 						raiseError()
 
@@ -503,11 +543,18 @@ def extractCmd( line ):
 
 			rY = cmdRaw[ 2 ].upper()
 
+			# op rX rY
 			if rY in LT[ 'registers' ]:
 
 				cmd[ 'rY' ] = rY
 
+			# op rX rPair
 			elif rY in LT[ 'registerPairs' ]:
+
+				# Check validity
+				if op not in [ 'STO', 'LD' ]:
+
+					raiseError()
 
 				cmd[ 'rPair' ] = rY
 
@@ -536,7 +583,7 @@ def extractCmd( line ):
 			raiseError()
 
 		# Debug
-		print( '{} -> {}'.format( line.rstrip(), cmd ) )
+		# print( '{} -> {}'.format( line.rstrip(), cmd ) )
 
 	return cmd
 
@@ -664,8 +711,6 @@ def decodeConstant( value, cmd, is32Bit = False ):
 
 		raise Exception( 'Invalid value - {} - in command - {}'.format( value, cmd ) )
 
-	print( '-- {} -- {}'.format( value, words ) )
-
 	return words
 
 
@@ -694,9 +739,7 @@ def encodeInstructions( cmdList ):
 
 			has32BitImmediate = 1
 
-			print( '--> 32 --> {}'.format( cmd ) )
-
-			cmd_b = '0{}0{}{}{}'.format(
+			cmd_b = '{}0{}{}{}'.format(
 
 				has32BitImmediate,
 				op,
@@ -716,7 +759,7 @@ def encodeInstructions( cmdList ):
 		# Type 4 - op
 		elif len( cmd ) == 1:
 
-			cmd_b = '000{}{}{}'.format(
+			cmd_b = '00{}{}{}'.format(
 
 				op,
 				rZero,
@@ -733,7 +776,7 @@ def encodeInstructions( cmdList ):
 
 			isRegisterPair = '11'
 
-			cmd_b = '0{}{}{}{}'.format(
+			cmd_b = '{}{}{}{}'.format(
 
 				isRegisterPair,
 				op,
@@ -755,7 +798,7 @@ def encodeInstructions( cmdList ):
 
 				isRegisterPair = '11'
 
-				cmd_b = '0{}{}{}{}'.format(
+				cmd_b = '{}{}{}{}'.format(
 
 					isRegisterPair,
 					op,
@@ -767,7 +810,7 @@ def encodeInstructions( cmdList ):
 
 				rY = LT[ 'registers' ][ cmd[ 'rY' ] ]
 
-				cmd_b = '000{}{}{}'.format(
+				cmd_b = '00{}{}{}'.format(
 
 					op,
 					rX,
@@ -785,7 +828,7 @@ def encodeInstructions( cmdList ):
 
 			has16BitImmediate = 1
 
-			cmd_b = '00{}{}{}{}'.format(
+			cmd_b = '0{}{}{}{}'.format(
 
 				has16BitImmediate,
 				op,
@@ -796,8 +839,6 @@ def encodeInstructions( cmdList ):
 			binCmdList.append( cmd_b )
 
 			# immediate
-			print( '--> 16 --> {}'.format( cmd ) )
-
 			binCmdList.extend(
 
 				decodeConstant( cmd[ 'immediate' ], cmd, is32Bit = False )

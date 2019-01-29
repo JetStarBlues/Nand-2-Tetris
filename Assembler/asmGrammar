@@ -16,11 +16,11 @@ labelStatement                  -> '(' label ')'
 
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opJump|STO|LD|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR|NOP 
+opVanilla                       -> opJump|STO|LD|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR
 
-opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP
+opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP|JSR
 
-opStandalone                    -> HLT
+opStandalone                    -> RTS|HLT|NOP
 
 rX, rY                          -> r[0..15] | 'rStatus'
 
@@ -55,7 +55,3 @@ MACRO_directive                 -> 'MACRO' '(' MACROParameters ')' MACROBody 'EN
 MACROParameters                 -> ( label (, label)* )*
 
 MACROBody                       -> statement*
-
-
-....
-update LXH
