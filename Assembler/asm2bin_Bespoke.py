@@ -127,36 +127,37 @@ LT = {
 
 		'STO'  : 0,
 		'LD'   : 1,
-		'MOV'  : 2,
-		'ADD'  : 3,
-		'SUB'  : 4,
-		'AND'  : 5,
-		'OR'   : 6,
-		'XOR'  : 7,
-		'LSR'  : 8,
-		'LSL'  : 9,
-		'MUL'  : 10,
-		'DIV'  : 11,
-		'NOT'  : 12,
-		'NEG'  : 13,
-		'CMP'  : 14,
-		'JMP'  : 15,
-		'JZ'   : 16,
-		'JNZ'  : 17,
-		'JC'   : 18,
-		'JNC'  : 19,
-		'JNG'  : 20,
-		'JZP'  : 21,
-		'JSR'  : 22,
-		'RTS'  : 23,
-		'LXH'  : 24,
-		'SWI'  : 25,
-		'RTI'  : 26,
-		'IORD' : 27,
-		'IOWR' : 28,
-		'IODR' : 29,
-		'HLT'  : 30,
-		'NOP'  : 31,
+		'LPM'  : 2,
+		'MOV'  : 3,
+		'ADD'  : 4,
+		'SUB'  : 5,
+		'AND'  : 6,
+		'OR'   : 7,
+		'XOR'  : 8,
+		'LSR'  : 9,
+		'LSL'  : 10,
+		'MUL'  : 11,
+		'DIV'  : 12,
+		'NOT'  : 13,
+		'NEG'  : 14,
+		'CMP'  : 15,
+		'JMP'  : 16,
+		'JZ'   : 17,
+		'JNZ'  : 18,
+		'JC'   : 19,
+		'JNC'  : 20,
+		'JNG'  : 21,
+		'JZP'  : 22,
+		'JSR'  : 23,
+		'RTS'  : 24,
+		'LXH'  : 25,
+		'SWI'  : 26,
+		'RTI'  : 27,
+		'IORD' : 28,
+		'IOWR' : 29,
+		'IODR' : 30,
+		'HLT'  : 31,
+		'NOP'  : 32,
 	},
 
 	'opJump'       : None,
@@ -198,6 +199,12 @@ LT[ 'opStandalone' ] = newDictFromKeys( LT[ 'op' ],
 		'NOP',
 	]
 )
+LT[ 'opExtMemoryAccess' ] = [
+
+	'STO',
+	'LD',
+	'LPM',
+]
 
 
 
@@ -310,7 +317,7 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 				if not label: label = '???'
 
 			# data address
-			elif op in [ 'STO', 'LD' ]:
+			elif op in LT[ 'opExtMemoryAccess' ]:
 
 				label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_DataMemory )
 
@@ -493,7 +500,7 @@ def extractCmd( line ):
 				else:
 
 					# Check validity
-					if op not in [ 'STO', 'LD' ]:
+					if op not in LT[ 'opExtMemoryAccess' ]:
 
 						raiseError()
 
@@ -553,7 +560,7 @@ def extractCmd( line ):
 			elif rY in LT[ 'registerPairs' ]:
 
 				# Check validity
-				if op not in [ 'STO', 'LD' ]:
+				if op not in LT[ 'opExtMemoryAccess' ]:
 
 					raiseError()
 

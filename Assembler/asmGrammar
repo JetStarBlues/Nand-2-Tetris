@@ -4,11 +4,11 @@ statement                       -> basicStatement | immediateAddressStatementV1 
 
 basicStatement                  -> opVanilla rX rY immediate?
 
-immediateAddressStatementV1     -> STO|LD rX '{' address '}'
+immediateAddressStatementV1     -> opExtMemoryAccess rX '{' address '}'
 
 immediateAddressStatementV2     -> opJump '{' address '}'
 
-registerPairAddressStatementV1  -> STO|LD rX registerPair
+registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
 
 registerPairAddressStatementV2  -> opJump|LXH registerPair
 
@@ -16,7 +16,9 @@ labelStatement                  -> '(' label ')'
 
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opJump|STO|LD|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR
+opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR
+
+opExtMemoryAccess               -> STO|LD|LPM
 
 opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP|JSR
 
@@ -47,6 +49,7 @@ charConstant                    -> single Ascii character wrapped in single quot
 //TODO
 
 EQU_directive                   -> label EQU integerConstant
+                                   EQU label integerConstant  <- pick one of two styles
 
 ORG_directive                   -> ORG '{' address '}'
 
