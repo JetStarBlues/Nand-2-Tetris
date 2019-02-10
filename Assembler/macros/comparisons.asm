@@ -26,7 +26,7 @@ MACRO JLT ( _rX_, _rY_, _dest_, _rTemp_ )  // NC & NZ
 
 	CMP  _rX_  _rY_
 	MOV  _rTemp_  rStatus
-	AND  _rTemp_  _r0_  0b11  // check if both carry(1) and zero(0) bits are clear
+	AND  _rTemp_  r0  0b11  // check if both carry(1) and zero(0) bits are clear
 	JZ   { _dest_ }
 
 ENDMACRO

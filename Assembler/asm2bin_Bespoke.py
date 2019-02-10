@@ -50,6 +50,11 @@ def newDictFromKeys( baseDict, keys ):
 	return { k : baseDict[ k ] for k in keys }
 
 
+def raiseError( line ):
+
+	raise Exception( 'Invalid command - {}'.format( line ) )
+
+
 
 # == Lookup Tables ===========================================
 
@@ -205,6 +210,15 @@ LT[ 'opExtMemoryAccess' ] = [
 	'LD',
 	'LPM',
 ]
+
+# Data definitions
+dataDefinitions = {
+
+	# 'DBYTE'   : 0,  # half a word
+	'DWORD'   : 1,  # 1 word
+	'DDOUBLE' : 2,  # 2 words
+	'DQUAD'   : 4   # 4 words
+}
 
 
 
@@ -369,7 +383,7 @@ def debugStuff( asmCmdList, binCmdList ):
 # == Main ====================================================
 
 
-# -- Constants -------------------------------------
+# -- ... -------------------------------------------
 
 # nBits = GC.N_BITS
 nBits = 16
@@ -381,9 +395,251 @@ static_segment_size  = static_segment_end - static_segment_start + 1
 largest_immediate = 2 ** nBits - 1
 largest_address   = 2 ** 32 - 1
 
+knownAliases = {}
+knownAddresses_ProgramMemory = {}
+knownAddresses_DataMemory = {}
+knownAddresses_DataMemory.update( LT[ 'dataMemoryAddresses' ] )  # fill with global addresses
 
 
-# -- Extraction -------------------------------------
+
+
+# -- ... --------------------------------------------
+
+cmdPattern = '''
+	//    |       # start of comment
+	\'    |       # char wrappers
+	\(|\) |       # label wrappers
+	\[|\] |       # address wrappers
+	\w+           # word or digit sequence
+'''
+cmdPattern = re.compile( cmdPattern, re.X )
+
+
+def readInputFile( inputFile ):
+
+	cmdList = []
+
+	with open( inputFile, 'r' ) as file:
+
+		for line in file:
+
+			# Extract words from command
+			cmd = re.findall( cmdPattern, line )
+
+			# Ignore comment
+			if '//' in cmd:
+
+				cmd = cmd[ 0 : cmd.index( '//' ) ]
+
+			# If not blank line or comment, add to list
+			if cmd:
+
+				cmdList.append( [ cmd, line.rstrip() ] )
+
+	return cmdList
+
+
+
+# -- Expand -----------------------------------------
+
+def expandMACRO( cmdList ):
+
+	expandedCmdList = []
+
+	macros       = {}
+	macroDefName = ''
+	isMacroDef   = False
+
+	for cmdEl in cmdList:
+
+		cmdRaw = cmdEl[ 0 ]
+		line   = cmdEl[ 1 ]
+
+		op = cmdRaw[ 0 ].upper()
+
+		# Start of macro defenition
+		if op == 'MACRO':
+
+			# No support for nested
+			if isMacroDef:
+
+				raise Exception( 'Nested MACRO definitions are currently unsupported\n->  {}'.format( line ) )
+
+			# Check for parentheses
+			if ( cmdRaw[ 2 ] != '(' ) or ( cmdRaw[ - 1 ] != ')' ):
+
+				raiseError( line )
+
+			#
+			macroDefName = cmdRaw[ 1 ]
+			parameters   = cmdRaw[ 3 : - 1 ]  # everything in between parentheses
+
+			macros[ macroDefName ] = {
+
+				'parameters' : parameters,
+				'statements' : []
+			}
+
+			#
+			isMacroDef = True
+
+			continue
+
+
+		# Rest of macro definition
+		elif isMacroDef:
+
+			# End of macro definition
+			if op == 'ENDMACRO':
+
+				# Check for length
+				if len( cmdRaw ) != 1:
+
+					raiseError( line )
+
+				#
+				isMacroDef = False
+				macroDefName = ''
+
+
+			# Collect macro body
+			else:
+
+				macros[ macroDefName ][ 'statements' ].append( cmdEl )
+
+			continue
+
+
+		# Call of macro
+		elif cmdRaw[ 0 ] in macros:  # preserve case
+
+			name = cmdRaw[ 0 ]
+
+			# Check for parentheses
+			if ( cmdRaw[ 1 ] != '(' ) or ( cmdRaw[ - 1 ] != ')' ):
+
+				raiseError( line )
+
+			# Get arguments
+			parameters = macros[ name ][ 'parameters' ]
+
+			arguments = cmdRaw[ 2 : - 1 ]  # everything in between parentheses
+
+			if len( arguments ) != len( parameters ):
+
+				raise Exception(
+
+					'Invalid number of arguments, expected {} but got {}\n->  {}'.format(
+
+						len( parameters ),
+						len( arguments ),
+						line
+					)
+				)
+
+			argLookup = {}
+
+			for i in range( len( parameters ) ):
+
+				argLookup[ parameters[ i ] ] = arguments[ i ]
+
+			# Add commands to list
+			for statement in macros[ name ][ 'statements' ]:
+
+				_cmdRaw = statement[ 0 ]
+				_line   = statement[ 1 ]
+
+				_cmdRaw2 = []
+
+				# replace
+				for w in _cmdRaw:
+
+					if w in parameters:
+
+						_cmdRaw2.append( argLookup[ w ] )
+
+					else:
+
+						_cmdRaw2.append( w )
+
+				# add
+				_cmdEl = [ _cmdRaw2, _line ]
+				expandedCmdList.append( _cmdEl )
+
+			#
+			continue
+
+		# Not a macro definition or call
+		else:
+
+			expandedCmdList.append( cmdEl )
+
+
+	# Reached end without finding 'ENDMACRO'
+	if isMacroDef:
+
+		raise Exception( "Expected an 'ENDMACRO' statement" );
+
+
+	return expandedCmdList
+
+
+def handleEQU( cmdList ):
+
+	global knownAliases
+
+	trimmedCmdList = []
+
+	for cmdEl in cmdList:
+
+		cmdRaw = cmdEl[ 0 ]
+		line   = cmdEl[ 1 ]
+
+		op = cmdRaw[ 0 ].upper()
+
+		# EQU definition
+		if op == 'EQU':
+
+			# Check for length
+			if len( cmdRaw ) != 3:
+
+				raiseError( line )
+
+			#
+			alias = cmdRaw[ 1 ]
+			value = cmdRaw[ 2 ]
+
+			knownAliases[ alias ] = value
+
+			continue
+
+		#
+		else:
+
+			# Replace aliases
+			_cmdRaw = []
+
+			for w in cmdRaw:
+
+				if w in knownAliases:
+
+					_cmdRaw.append( knownAliases[ w ] )
+
+				else:
+
+					_cmdRaw.append( w )
+
+			# Add to list
+			_cmdEl = [ _cmdRaw, line ]
+
+			trimmedCmdList.append( _cmdEl )
+
+	# Done
+	return trimmedCmdList
+
+
+
+# -- Tokenize ---------------------------------------
 
 namePattern = '''
 	\w+            # letter|number|underscore sequence
@@ -392,42 +648,22 @@ namePattern = '''
 namePattern = re.compile( namePattern, re.X )
 
 
-cmdPattern = '''
-	//    |       # start of comment
-	\'    |       # char wrappers
-	\(|\) |       # label wrappers
-	\{|\} |       # address wrappers
-	\w+           # word or digit sequence
-'''
-cmdPattern = re.compile( cmdPattern, re.X )
-
-
 def isValidName( name ):
 
 	return re.fullmatch( namePattern, name )
 
 
-def extractCmd( line ):
+def tokenize( cmdList ):
 
-	# DRY
-	def raiseError ():
+	tokenizedCmdList = []
 
-		raise Exception( 'Invalid command - {}'.format( line.rstrip() ) )
+	for cmdEl in cmdList:
 
-	# Extract words from command (i.e. ignore whitespace)
-	cmdRaw = re.findall( cmdPattern, line )
-	cmd = {}
+		cmdRaw = cmdEl[ 0 ]
+		line   = cmdEl[ 1 ]
 
-	# Ignore comment
-	if '//' in cmdRaw:
-
-		cmdRaw = cmdRaw[ 0 : cmdRaw.index( '//' ) ]
-
-
-	if cmdRaw :  # wasn't just a comment
-
-		# DRY
-		op = cmdRaw[ 0 ].upper()
+		op  = cmdRaw[ 0 ].upper()
+		cmd = {}
 
 		# Handle char, merge into one
 		if "'" in cmdRaw:
@@ -437,79 +673,106 @@ def extractCmd( line ):
 			# Check for closing quote
 			if cmdRaw[ i + 2 ] != "'":
 
-				raiseError()
+				raiseError( line )
 
 			# stackoverflow.com/a/1142879
 			cmdRaw[ i : i + 3 ] = [ ''.join( cmdRaw[ i : i + 3 ] ) ]
 
 
-		# Type1 - (label)
-		if '(' in cmdRaw:
-
-			cmdRaw.remove( '(' )
-
-			# Check for and remove closing parenthesis
-			try:
-
-				cmdRaw.remove( ')' )
-
-			except:
-
-				raiseError()
+		# TypeD0 - ORG address
+		if op == 'ORG':
 
 			# Check for length
-			if len( cmdRaw ) == 1:
+			if len( cmdRaw ) != 2:
 
-				cmd[ 'label' ] = cmdRaw[ 0 ]
+				raiseError( line )
 
-			else:
-
-				raiseError()
+			cmd[ 'd_org' ] = cmdRaw[ 1 ]
 
 
-		# Type2 & Type3 - op rX {address}, op {address}
-		elif '{' in cmdRaw:
+		# TypeD1 - DDATA value
+		elif op in dataDefinitions:
 
-			cmdRaw.remove( '{' )
+			# Check for length
+			if len( cmdRaw ) != 2:
+
+				raiseError( line )
+
+			value = cmdRaw[ 1 ]
+			nWords = dataDefinitions[ op ]
+
+			cmd[ 'd_data' ] = {
+
+				'value'  : value,
+				'nWords' : nWords
+			}
+
+
+		# Type1 - [label]
+		elif cmdRaw[ 0 ] == '[':
+
+			cmdRaw.remove( '[' )
 
 			# Check for and remove closing bracket
 			try:
 
-				cmdRaw.remove( '}' )
+				cmdRaw.remove( ']' )
 
 			except:
 
-				raiseError()
+				raiseError( line )
+
+			# Check for length
+			if len( cmdRaw ) != 1:
+
+				raiseError( line )
+
+			cmd[ 'label' ] = cmdRaw[ 0 ]
+
+
+		# Type2 & Type3 - op rX [address], op [address]
+		elif '[' in cmdRaw:
+
+			cmdRaw.remove( '[' )
+
+			# Check for and remove closing bracket
+			try:
+
+				cmdRaw.remove( ']' )
+
+			except:
+
+				raiseError( line )
 
 			# Check for length
 			if len( cmdRaw ) == 2 or len( cmdRaw ) == 3:
 
 				cmd[ 'op' ] = op
 
-				# op {address}
+				# op [address]
 				if len( cmdRaw ) == 2:
 
 					# Check validity
 					if op not in LT[ 'opJump' ]:
 
-						raiseError()
+						raiseError( line )
 
 					cmd[ 'address' ] = cmdRaw[ 1 ]
 
-				# op rX {address}
+				# op rX [address]
 				else:
 
 					# Check validity
 					if op not in LT[ 'opExtMemoryAccess' ]:
 
-						raiseError()
+						raiseError( line )
 
 					cmd[ 'rX' ]      = cmdRaw[ 1 ].upper()
 					cmd[ 'address' ] = cmdRaw[ 2 ]
 
 			else:
 
-				raiseError()
+				raiseError( line )
 
 
 		# Type 4 - op
@@ -518,7 +781,7 @@ def extractCmd( line ):
 			# Check validity
 			if op not in LT[ 'opStandalone' ]:
 
-				raiseError()
+				raiseError( line )
 
 			cmd[ 'op' ] = op
 
@@ -529,7 +792,7 @@ def extractCmd( line ):
 			# Check validity
 			if ( op not in LT[ 'opJump' ] ) and ( op != 'LXH' ):
 
-				raiseError()
+				raiseError( line )
 
 			cmd[ 'op' ] = op
 
@@ -538,7 +801,7 @@ def extractCmd( line ):
 			# Check validity
 			if rPair not in LT[ 'registerPairs' ]:
 
-				raiseError()
+				raiseError( line )
 
 			cmd[ 'rPair' ] = rPair
 
@@ -562,13 +825,13 @@ def extractCmd( line ):
 				# Check validity
 				if op not in LT[ 'opExtMemoryAccess' ]:
 
-					raiseError()
+					raiseError( line )
 
 				cmd[ 'rPair' ] = rY
 
 			else:
 
-				raiseError()
+				raiseError( line )
 
 
 		# Type7 - op rX rY immediate
@@ -577,7 +840,7 @@ def extractCmd( line ):
 			# Check validity
 			if ( op in LT[ 'opStandalone' ] ) or ( op == 'LXH' ):
 
-				raiseError()
+				raiseError( line )
 
 			cmd[ 'op' ]        = op
 			cmd[ 'rX' ]        = cmdRaw[ 1 ].upper()
@@ -588,57 +851,36 @@ def extractCmd( line ):
 		# Unknown
 		else:
 
-			raiseError()
+			raiseError( line )
 
 		# Debug
-		# print( '{} -> {}'.format( line.rstrip(), cmd ) )
+		# print( '{} -> {}'.format( line, cmd ) )
 
-	return cmd
+		# Add to list
+		_cmdEl = [ cmd, line ]
+		tokenizedCmdList.append( _cmdEl )
 
-
-def extractCmds( inputFile ):
-
-	commands = []
-
-	with open( inputFile, 'r' ) as file:
-		
-		for line in file:
-
-			cmd = extractCmd( line )
-
-			if cmd:
-
-				commands.append( cmd )
-
-	return commands
+	# Done
+	return tokenizedCmdList
 
 
 
-# -- Translation -------------------------------------
-
-knownAddresses_ProgramMemory = {}
-knownAddresses_DataMemory = {}
-knownAddresses_DataMemory.update( LT[ 'dataMemoryAddresses' ] )  # fill with global addresses
-
-def handleMacros( cmdList ):
-
-	expandedCmdList = []
-
-	# return expandedCmdList
-	return cmdList
-
+# -- Label -------------------------------------------
 
 def handleLabels( cmdList ):
 
 	''' Remove labels and store their integer addresses '''
 
+	locationCounter = 0
+
 	trimmedCmdList = []
 
-	nImmediates = 0  # track as affects ultimate position
+	waitingForBytePair = False
 
-	for i in range( len( cmdList ) ):
+	for cmdEl in cmdList:
 
-		cmd = cmdList[ i ]
+		cmd  = cmdEl[ 0 ]
+		line = cmdEl[ 1 ]
 
 		if 'label' in cmd:
 
@@ -646,28 +888,54 @@ def handleLabels( cmdList ):
 
 			if not isValidName( label ):
 
-				raise Exception( 'Invalid name - {}'.format( cmd ) )
+				raise Exception( 'Invalid name - {}\n->  {}'.format( cmd, line ) )
 
-			addr = i + nImmediates - len( knownAddresses_ProgramMemory )  # and the corresponding address
-			                                                              # Note, subtraction is for '(label)' statements which will later be removed
+			knownAddresses_ProgramMemory[ label ] = locationCounter  # add it to known addresses
 
-			knownAddresses_ProgramMemory[ label ] = addr  # add it to dict of knownAddresses_ProgramMemory
+		elif 'd_org' in cmd:
+
+			newLoc = cmd[ 'd_org' ]  # TODO, convert to int (Raise error)
+
+			if locationCounter <= newLoc:
+
+				locationCounter = newLoc
+
+			else:
+
+				raise Exception(
+
+					'Invalid ORG value {}. Expecting a value greater than the current location counter {}.\n->  {}',
+					newLoc,
+					locationCounter,
+					line
+				)
 
 		else:
 
-			trimmedCmdList.append( cmd )  # not a label so include it
+			# Not a label so include it
+			trimmedCmdList.append( cmd )
 
-			# check if has immediate
-			if 'immediate' in cmd:
+			locationCounter += 1
 
-				nImmediates += 1
+			# Reserve space for immediates
+			if 'd_data' in cmd:
 
-			elif 'address' in cmd:
+				locationCounter += cmd[ 'd_data' ][ 'nWords' ] - 1
 
-				nImmediates += 2
+			elif 'immediate' in cmd:  # 16 bit immediate
+
+				locationCounter += 1
+
+			elif 'address' in cmd:    # 32 bit immediate
+
+				locationCounter += 2
+
 
 	return trimmedCmdList
 
+
+
+# -- Encode ------------------------------------------
 
 def decodeConstant( value, cmd, is32Bit = False ):
 
@@ -678,8 +946,6 @@ def decodeConstant( value, cmd, is32Bit = False ):
 	if value in knownAddresses_DataMemory:
 
 		value = knownAddresses_DataMemory[ value ]
-
-	# TODO, check EQUs
 
 	elif value in knownAddresses_ProgramMemory:
 
@@ -734,7 +1000,7 @@ def encodeInstructions( cmdList ):
 
 		op = LT[ 'op' ][ cmd[ 'op' ] ]
 
-		# Type2 & Type3 - op rX {address}, op {address}
+		# Type2 & Type3 - op rX [address], op [address]
 		if 'address' in cmd:
 
 			if 'rX' in cmd:
@@ -862,22 +1128,51 @@ def encodeInstructions( cmdList ):
 	return binCmdList
 
 
-def translateCmds( cmdList, debug ):
+
+# -- Main ----------------------------------------
+
+def doTheThing( cmds_raw, debug ):
 
 	''' Translate assembly to binary '''
 
-	cmdList      = handleMacros( cmdList )
-	cmdList      = handleLabels( cmdList )
-	binCmdList   = encodeInstructions( cmdList )
+	'''
+		TODO:
+		1) expand
+		2) replace EQU
+		3) spacefill DDATA?
+		3) remove labels and ORG?
+	'''
 
-	if debug: debugStuff( cmdList, binCmdList )
+	# Expand MACROs
+	cmds_assembly = expandMACRO( cmds_raw )
+	for c in cmds_assembly: print( c[ 0 ] )
+	# for c in cmds_assembly: print( c[ 0 ], "   ~~~   ", c[ 1 ] )
+	print( '====\n' )
 
-	return binCmdList
+	# Replace EQUs
+	cmds_assembly = handleEQU( cmds_assembly )
+	for c in cmds_assembly: print( c[ 0 ] )
+	print( '====\n' )
+
+	# Tokenize
+	cmds_assembly = tokenize( cmds_assembly )
+	for c in cmds_assembly: print( c[ 0 ] )
+
+	# # ?
+	# cmds_assembly = handleLabels( cmds_assembly )
+	# # handleDDATA, handleORG
+
+	# # Encode
+	# cmds_binary = encodeInstructions( cmds_assembly )
+
+	# # Print debug
+	# if debug: debugStuff( cmds_assembly, cmds_binary )
+
+	# return cmds_binary
 
 
 
-# -- Output --------------------------------------
-
+# -- Run ------------------------------------------
 
 def writeToOutputFile( binCmdList, outputFile ):
 
@@ -891,29 +1186,23 @@ def writeToOutputFile( binCmdList, outputFile ):
 			file.write( '\n' )
 
 
-
-# -- Run ------------------------------------------
-
-
 def asm_to_bin( inputFile, outputFile, debug = False ):
 
-	# Read
-	cmds_assembly = extractCmds( inputFile )
+	cmds_assembly = readInputFile( inputFile )
 
-	# Translate
-	cmds_binary = translateCmds( cmds_assembly, debug )
+	cmds_binary = doTheThing( cmds_assembly, debug )
 
-	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
+	# print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
 
-	# Check size
-	if len( cmds_binary ) > largest_address:
+	# # Check size
+	# if len( cmds_binary ) > largest_address:
 
-		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
+	# 	print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
 
-	# Write
-	writeToOutputFile( cmds_binary, outputFile )
+	# # Write
+	# writeToOutputFile( cmds_binary, outputFile )
 
-	# print( 'Done' )
+	# # print( 'Done' )
 
 
 def genBINFile( inputDirPath, debug = False ):

@@ -37,3 +37,40 @@ Array initialization
 	...
 
 
+Pointer type
+
+	...
+
+
+Data type (alignment, padding)
+
+	 8 - char, byte,  halfWord
+	16 - int,         word
+	32 - float,       doubleWord
+	64 - doubleFloat, quadWord
+
+	https://en.wikipedia.org/wiki/C_data_types
+	https://en.wikipedia.org/wiki/Data_structure_alignment
+	https://stackoverflow.com/questions/4306186/structure-padding-and-packing
+	http://www.catb.org/esr/structure-packing/
+
+
+	doubleWord storage in memory:
+
+		0  least signigicant word
+		1  most  significant word
+
+
+Variable number of arguments
+
+	. see 'stdarg.h'
+		- man
+		- http://pubs.opengroup.org/onlinepubs/007908799/xsh/stdarg.h.html
+
+	. something about macros, va_start, va_arg, va_end, va_copy
+
+	. source code of gcc standard libs can be found at:
+	     '/usr/include'
+	     '/usr/lib/gcc/$CTARGET/$VERSION/include/'
+	     'gcc --print-file-name=libm.a'  // system dependent math
+

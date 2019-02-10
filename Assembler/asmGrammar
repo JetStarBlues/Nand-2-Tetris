@@ -4,15 +4,15 @@ statement                       -> basicStatement | immediateAddressStatementV1 
 
 basicStatement                  -> opVanilla rX rY immediate?
 
-immediateAddressStatementV1     -> opExtMemoryAccess rX '{' address '}'
+immediateAddressStatementV1     -> opExtMemoryAccess rX '[' address ']'
 
-immediateAddressStatementV2     -> opJump '{' address '}'
+immediateAddressStatementV2     -> opJump '[' address ']'
 
 registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
 
 registerPairAddressStatementV2  -> opJump|LXH registerPair
 
-labelStatement                  -> '(' label ')'
+labelStatement                  -> '[' label ']'
 
 standaloneStatement             -> opStandalone
 
@@ -29,9 +29,9 @@ rX, rY                          -> r[0..15] | 'rStatus'
 registerPair                    -> r[0..15]r[0..15]
                                  Together form a 32bit value { rHigh, rLow }
 
-immediate                       -> 16bit integerConstant
+immediate                       -> label | 16bit_integerConstant
 
-address                         -> label | 32bit integerConstant
+address                         -> label | 32bit_integerConstant
 
 label                           -> sequence of letters, digits, and underscore not starting with a digit
 
@@ -46,15 +46,41 @@ binConstant                     -> ( '0b' | '0B' ) ( 0 | 1 )+
 charConstant                    -> single Ascii character wrapped in single quotes
 
 
+-- Directives ----------------------------------------------------------------------
+
 //TODO
 
-EQU_directive                   -> label EQU integerConstant
-                                   EQU label integerConstant  <- pick one of two styles
+ORG_directive                   -> 'ORG' 32bit_integerConstant
 
-ORG_directive                   -> ORG '{' address '}'
+EQU_directive                   -> 'EQU' label textToSubstituteWith
 
-MACRO_directive                 -> 'MACRO' '(' MACROParameters ')' MACROBody 'ENDMACRO'
+//DBYTE_directive                 -> 'DBYTE'   8bit_integerConstant
+DWORD_directive                 -> 'DWORD'   16bit_integerConstant
+DDOUBLE_directive               -> 'DDOUBLE' 32bit_integerConstant
+DQUAD_directive                 -> 'DQUAD'   64bit_integerConstant
 
-MACROParameters                 -> ( label (, label)* )*
+MACRO_directive                 -> 'MACRO' label '(' MACROParameters ')' MACROBody 'ENDMACRO'
 
-MACROBody                       -> statement*
+MACROParameters                 -> ( label ( ',' label )* )?
+
+MACROBody                       -> statement?
+
+MACROArguments                  -> ( label|integerConstant ( ',' label|integerConstant )* )?
+
+MACROCall                       -> label '(' MACROArguments ')'
+
+
+Tentative rules...
+	- EQU
+		. can sub any word except op/directive name
+	- MACRO
+		. parameters same line as 'MACRO'
+		. 'ENDMACRO' in own line
+		. can't be nested
+	- ORG
+		. sequential ascending
+
+DDOUBLE storage in memory:
+
+	0  least signigicant word
+	1  most  significant word
