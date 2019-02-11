@@ -55,6 +55,42 @@ def raiseError( line ):
 	raise Exception( 'Invalid command - {}'.format( line ) )
 
 
+def strToInt( value ):
+
+	''' Convert from string to integer '''
+
+	if value in knownAddresses_DataMemory:
+
+		value = knownAddresses_DataMemory[ value ]
+
+	elif value in knownAddresses_ProgramMemory:
+
+		value = knownAddresses_ProgramMemory[ value ]
+
+	elif value[ 0 ] == "'":
+
+		value = ord( value )
+
+	else:
+
+		# remove underscore used to visually space digits/letters
+		value = value.replace( '_', '' )
+
+		if value[ 0 : 2 ].upper() == '0X':
+
+			value = int( value, 16 )
+
+		elif value[ 0 : 2 ].upper() == '0B':
+
+			value = int( value, 2 )
+
+		else:
+
+			value = int( value )
+
+	return value
+
+
 
 # == Lookup Tables ===========================================
 
@@ -244,7 +280,7 @@ def getHex4( value ):
 
 def printFinalAssembly( asmCmdList, binCmdList ):
 
-	showBinary = False
+	showBinary = True
 
 	def getBinaryString():  # DRY
 
@@ -262,12 +298,35 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 	bIdx = 0
 
-	for cmd in asmCmdList:
+	for cmdEl in asmCmdList:
+
+		cmd  = cmdEl[ 0 ]
+		line = cmdEl[ 1 ]
 
 		label = getKeyByValue( bIdx, knownAddresses_ProgramMemory )
 
-		op = cmd[ 'op' ]
+		# Data definition
+		if 'd_data' in cmd:
 
+			nWords = cmd[ 'd_data' ][ 'nWords' ]
+
+			for _ in range( nWords ):
+
+				w = int( binCmdList[ bIdx ], 2 )
+
+				print( '{}{:<6} -   {}'.format(
+
+					getBinaryString(),
+					bIdx,
+					w
+				) )
+
+				bIdx += 1
+
+			continue
+
+		# Everything else
+		op        = cmd.get( 'op' )
 		rX        = cmd.get( 'rX' )
 		rY        = cmd.get( 'rY' )
 		rPair     = cmd.get( 'rPair' )
@@ -276,14 +335,14 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 		'''
 			op
-			op {addr}
+			op [addr]
 			op rPair
 			op rX rY
-			op rX {addr}
+			op rX [addr]
 			op rX rPair
 			op rX rY imm
 		'''
-		s_label = '( ' + label + ' )' if label else ''
+		s_label = '[ ' + label + ' ]' if label else ''
 		s_op    = op
 		s_rX    = rX if rX else rPair if rPair else ''
 		s_rY    = rY if rY else rPair if ( rX and rPair ) else ''
@@ -679,15 +738,15 @@ def tokenize( cmdList ):
 			cmdRaw[ i : i + 3 ] = [ ''.join( cmdRaw[ i : i + 3 ] ) ]
 
 
-		# TypeD0 - ORG address
-		if op == 'ORG':
+		# # TypeD0 - ORG address
+		# if op == 'ORG':
 
-			# Check for length
-			if len( cmdRaw ) != 2:
+		# 	# Check for length
+		# 	if len( cmdRaw ) != 2:
 
-				raiseError( line )
+		# 		raiseError( line )
 
-			cmd[ 'd_org' ] = cmdRaw[ 1 ]
+		# 	cmd[ 'd_org' ] = cmdRaw[ 1 ]
 
 
 		# TypeD1 - DDATA value
@@ -892,28 +951,37 @@ def handleLabels( cmdList ):
 
 			knownAddresses_ProgramMemory[ label ] = locationCounter  # add it to known addresses
 
-		elif 'd_org' in cmd:
+		# elif 'd_org' in cmd:
 
-			newLoc = cmd[ 'd_org' ]  # TODO, convert to int (Raise error)
+		# 	newLoc = strToInt( cmd[ 'd_org' ] )
 
-			if locationCounter <= newLoc:
+		# 	# Check that newLoc is valid
+		# 	if newLoc > largest_address:
 
-				locationCounter = newLoc
+		# 		raise Exception( 'Invalid ORG value. {} is greater than largest program address {}.\n->  {}'.format(
 
-			else:
+		# 			newLoc,
+		# 			largest_address,
+		# 			line
+		# 		) )
 
-				raise Exception(
+		# 	elif locationCounter > newLoc:
 
-					'Invalid ORG value {}. Expecting a value greater than the current location counter {}.\n->  {}',
-					newLoc,
-					locationCounter,
-					line
-				)
+		# 		raise Exception( 'Invalid ORG value {}. Expecting a value greater than the current location counter {}.\n->  {}'.format(
+
+		# 			newLoc,
+		# 			locationCounter,
+		# 			line
+		# 		) )
+			
+		# 	locationCounter = newLoc
 
 		else:
 
 			# Not a label so include it
-			trimmedCmdList.append( cmd )
+			trimmedCmdList.append( cmdEl )
+
+			# print( locationCounter, cmd )
 
 			locationCounter += 1
 
@@ -937,39 +1005,22 @@ def handleLabels( cmdList ):
 
 # -- Encode ------------------------------------------
 
-def decodeConstant( value, cmd, is32Bit = False ):
+def decodeConstant( value, line, nWords ):
 
 	words = []
 
 	# Convert from string to integer
-
-	if value in knownAddresses_DataMemory:
-
-		value = knownAddresses_DataMemory[ value ]
-
-	elif value in knownAddresses_ProgramMemory:
-
-		value = knownAddresses_ProgramMemory[ value ]
-
-	elif value[ 0 : 2 ].upper() == '0X':
-
-		value = int( value, 16 )
-
-	elif value[ 0 : 2 ].upper() == '0B':
-
-		value = int( value, 2 )
-
-	elif value[ 0 ] == "'":
-
-		value = ord( value )
-
-	else:
-
-		value = int( value )
-
+	value = strToInt( value )
 
 	# Extract words
-	if is32Bit and value >= 0 and value <= largest_address:
+
+	# 16 bit
+	if ( nWords == 1 ) and ( value <= 2 ** 16 ):
+
+		words.append( toBinary( value, nBits ) )
+
+	# 32 bit
+	elif ( nWords == 2 ) and ( value <= 2 ** 32 ):
 
 		lo = value & 0xFFFF
 		hi = value >> 16
@@ -977,13 +1028,24 @@ def decodeConstant( value, cmd, is32Bit = False ):
 		words.append( toBinary( lo, nBits ) )
 		words.append( toBinary( hi, nBits ) )
 
-	elif value >= 0 and value <= largest_immediate:
+	# 64 bit
+	elif ( nWords == 4 ) and ( value <= 2 ** 64 ):
 
-		words.append( toBinary( value, nBits ) )
+		w0 = value & 0xFFFF
+		w1 = ( value >> ( 16 ) ) & 0xFFFF
+		w2 = ( value >> ( 32 ) ) & 0xFFFF
+		w3 =   value >> ( 48 )
+
+		words.append( toBinary( w0, nBits ) )
+		words.append( toBinary( w1, nBits ) )
+		words.append( toBinary( w2, nBits ) )
+		words.append( toBinary( w3, nBits ) )
 
 	else:
 
-		raise Exception( 'Invalid value - {} - in command - {}'.format( value, cmd ) )
+		line = cmdEl[ 1 ]
+
+		raise Exception( 'Invalid constant - {}\n->  {}'.format( value, line ) )
 
 	return words
 
@@ -996,7 +1058,24 @@ def encodeInstructions( cmdList ):
 
 	rZero = LT[ 'registers' ][ 'R0' ]
 
-	for cmd in cmdList:
+	for cmdEl in cmdList:
+
+		cmd  = cmdEl[ 0 ]
+		line = cmdEl[ 1 ]
+
+		# TypeD1 - DDATA value
+		if 'd_data' in cmd:
+
+			value  = cmd[ 'd_data' ][ 'value' ]
+			nWords = cmd[ 'd_data' ][ 'nWords' ]
+
+			binCmdList.extend(
+
+				decodeConstant( value, line, nWords )
+			)
+
+			continue
+
 
 		op = LT[ 'op' ][ cmd[ 'op' ] ]
 
@@ -1026,7 +1105,7 @@ def encodeInstructions( cmdList ):
 			# address
 			binCmdList.extend(
 
-				decodeConstant( cmd[ 'address' ], cmd, is32Bit = True )
+				decodeConstant( cmd[ 'address' ], line, 2 )
 			)
 
 
@@ -1115,7 +1194,7 @@ def encodeInstructions( cmdList ):
 			# immediate
 			binCmdList.extend(
 
-				decodeConstant( cmd[ 'immediate' ], cmd, is32Bit = False )
+				decodeConstant( cmd[ 'immediate' ], line, 1 )
 			)
 
 
@@ -1135,40 +1214,34 @@ def doTheThing( cmds_raw, debug ):
 
 	''' Translate assembly to binary '''
 
-	'''
-		TODO:
-		1) expand
-		2) replace EQU
-		3) spacefill DDATA?
-		3) remove labels and ORG?
-	'''
-
 	# Expand MACROs
 	cmds_assembly = expandMACRO( cmds_raw )
-	for c in cmds_assembly: print( c[ 0 ] )
+	# for c in cmds_assembly: print( c[ 0 ] )
 	# for c in cmds_assembly: print( c[ 0 ], "   ~~~   ", c[ 1 ] )
-	print( '====\n' )
+	# print( '====\n' )
 
 	# Replace EQUs
 	cmds_assembly = handleEQU( cmds_assembly )
-	for c in cmds_assembly: print( c[ 0 ] )
-	print( '====\n' )
+	# for c in cmds_assembly: print( c[ 0 ] )
+	# print( '====\n' )
 
 	# Tokenize
 	cmds_assembly = tokenize( cmds_assembly )
-	for c in cmds_assembly: print( c[ 0 ] )
+	# for c in cmds_assembly: print( c[ 0 ] )
+	# print( '====\n' )
 
-	# # ?
-	# cmds_assembly = handleLabels( cmds_assembly )
-	# # handleDDATA, handleORG
+	# Label
+	cmds_assembly = handleLabels( cmds_assembly )
+	# for c in cmds_assembly: print( c[ 0 ] )
+	# print( '====\n' )
 
-	# # Encode
-	# cmds_binary = encodeInstructions( cmds_assembly )
+	# Encode
+	cmds_binary = encodeInstructions( cmds_assembly )
 
-	# # Print debug
-	# if debug: debugStuff( cmds_assembly, cmds_binary )
+	# Print debug
+	if debug: debugStuff( cmds_assembly, cmds_binary )
 
-	# return cmds_binary
+	return cmds_binary
 
 
 
@@ -1192,17 +1265,17 @@ def asm_to_bin( inputFile, outputFile, debug = False ):
 
 	cmds_binary = doTheThing( cmds_assembly, debug )
 
-	# print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
+	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
 
-	# # Check size
-	# if len( cmds_binary ) > largest_address:
+	# Check size
+	if len( cmds_binary ) > largest_address:
 
-	# 	print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
+		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
 
-	# # Write
-	# writeToOutputFile( cmds_binary, outputFile )
+	# Write
+	writeToOutputFile( cmds_binary, outputFile )
 
-	# # print( 'Done' )
+	# print( 'Done' )
 
 
 def genBINFile( inputDirPath, debug = False ):

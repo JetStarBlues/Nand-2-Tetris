@@ -48,13 +48,8 @@ charConstant                    -> single Ascii character wrapped in single quot
 
 -- Directives ----------------------------------------------------------------------
 
-//TODO
-
-ORG_directive                   -> 'ORG' 32bit_integerConstant
-
 EQU_directive                   -> 'EQU' label textToSubstituteWith
 
-//DBYTE_directive                 -> 'DBYTE'   8bit_integerConstant
 DWORD_directive                 -> 'DWORD'   16bit_integerConstant
 DDOUBLE_directive               -> 'DDOUBLE' 32bit_integerConstant
 DQUAD_directive                 -> 'DQUAD'   64bit_integerConstant
@@ -68,19 +63,3 @@ MACROBody                       -> statement?
 MACROArguments                  -> ( label|integerConstant ( ',' label|integerConstant )* )?
 
 MACROCall                       -> label '(' MACROArguments ')'
-
-
-Tentative rules...
-	- EQU
-		. can sub any word except op/directive name
-	- MACRO
-		. parameters same line as 'MACRO'
-		. 'ENDMACRO' in own line
-		. can't be nested
-	- ORG
-		. sequential ascending
-
-DDOUBLE storage in memory:
-
-	0  least signigicant word
-	1  most  significant word
