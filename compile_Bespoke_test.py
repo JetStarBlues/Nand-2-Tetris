@@ -7,7 +7,7 @@ import Assembler.asm2bin_Bespoke
 
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test1_add'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test2_flip'
-# inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test3_gtZero'
+# inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test3_comparisons'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test4_statusRegister'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test5_array'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test6a_macros'

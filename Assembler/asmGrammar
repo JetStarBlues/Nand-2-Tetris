@@ -20,7 +20,7 @@ opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|SUB|AND|OR|X
 
 opExtMemoryAccess               -> STO|LD|LPM
 
-opJump                          -> JMP|JZ|JNZ|JC|JNC|JNG|JZP|JSR
+opJump                          -> JMP|JEQ|JNE|JGT|JGE|JLT|JLE|JSR
 
 opStandalone                    -> RTS|HLT|NOP
 
