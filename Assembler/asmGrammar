@@ -6,7 +6,7 @@ basicStatement                  -> opVanilla rX rY immediate?
 
 immediateAddressStatementV1     -> opExtMemoryAccess rX '[' address ']'
 
-immediateAddressStatementV2     -> opJump '[' address ']'
+immediateAddressStatementV2     -> opJump|SWI '[' address ']'
 
 registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
 
@@ -16,13 +16,13 @@ labelStatement                  -> '[' label ']'
 
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|SWI|RTI|IORD|IOWR|IODR
+opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
 
 opExtMemoryAccess               -> STO|LD|LPM
 
 opJump                          -> JMP|JEQ|JNE|JGT|JGE|JLT|JLE|JSR
 
-opStandalone                    -> RTS|HLT|NOP
+opStandalone                    -> RTS|RTI|HLT|NOP
 
 rX, rY                          -> r[0..15] | 'rStatus'
 

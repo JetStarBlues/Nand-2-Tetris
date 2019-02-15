@@ -247,6 +247,12 @@ LT[ 'opExtMemoryAccess' ] = [
 	'LD',
 	'LPM',
 ]
+LT[ 'opVanilla' ] = [
+
+	op for op in LT[ 'op' ] if
+	( op not in LT[ 'opStandalone' ] ) and
+	( op not in [ 'LXH', 'SWI' ] )
+]
 
 # Data definitions
 dataDefinitions = {
@@ -813,7 +819,7 @@ def tokenize( cmdList ):
 				if len( cmdRaw ) == 2:
 
 					# Check validity
-					if op not in LT[ 'opJump' ]:
+					if op not in LT[ 'opJump' ] and ( op != 'SWI' ):
 
 						raiseError( line )
 
@@ -877,6 +883,11 @@ def tokenize( cmdList ):
 			# op rX rY
 			if rY in LT[ 'registers' ]:
 
+				# Check validity
+				if op not in LT[ 'opVanilla' ]:
+
+					raiseError( line )
+
 				cmd[ 'rY' ] = rY
 
 			# op rX rPair
@@ -897,8 +908,13 @@ def tokenize( cmdList ):
 		# Type7 - op rX rY immediate
 		elif len( cmdRaw ) == 4:
 
+			# # Check validity
+			# if ( op in LT[ 'opStandalone' ] ) or ( op == 'LXH' ):
+
+			# 	raiseError( line )
+
 			# Check validity
-			if ( op in LT[ 'opStandalone' ] ) or ( op == 'LXH' ):
+			if op not in LT[ 'opVanilla' ]:
 
 				raiseError( line )
 
