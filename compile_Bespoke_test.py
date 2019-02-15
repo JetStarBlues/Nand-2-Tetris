@@ -17,11 +17,13 @@ import Assembler.asm2bin_Bespoke
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test8_linkRegister'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test9_addressVariants'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test10_miscArith'
+# inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test11_interrupt'
+inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test11a_interruptsRTI'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test990_fill'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test991_rect_cmd'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/Tests/test992_rect_buffer'
 
-inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/OPC/fib'
+# inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/OPC/fib'
 # inputDirPath = '../N2T_Code/Programs/Assembly/Assembly/OPC/sieve'
 
 

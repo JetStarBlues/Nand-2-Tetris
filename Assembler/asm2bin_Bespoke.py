@@ -236,6 +236,7 @@ LT[ 'opStandalone' ] = newDictFromKeys( LT[ 'op' ],
 
 	[
 		'RTS',
+		'RTI',
 		'HLT',
 		'NOP',
 	]
