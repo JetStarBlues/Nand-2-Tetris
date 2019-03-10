@@ -16,7 +16,7 @@ labelStatement                  -> '[' label ']'
 
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|SUB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
+opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|ADC|SUB|SBB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
 
 opExtMemoryAccess               -> STO|LD|LPM
 
