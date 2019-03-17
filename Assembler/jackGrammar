@@ -83,3 +83,10 @@ binConstant       -> ( '0b' | '0B' ) ( 0 | 1 )+
 constDec          -> 'const' 'int' varName '=' unaryOp? integerConstant ';'
 
 statementBlock    -> statement | ( '{' statements '}' )
+
+
+
+
+TODO:
+
+	. support '_' in bin/hex sequence e.g. 0b0000_1111_0000_1111

@@ -35,6 +35,8 @@
 # Built ins
 import re
 import os
+import struct
+import math
 
 # Hack computer
 import Components._0__globalConstants as GC
@@ -53,42 +55,6 @@ def newDictFromKeys( baseDict, keys ):
 def raiseError( line ):
 
 	raise Exception( 'Invalid command - {}'.format( line ) )
-
-
-def strToInt( value ):
-
-	''' Convert from string to integer '''
-
-	if value in knownAddresses_DataMemory:
-
-		value = knownAddresses_DataMemory[ value ]
-
-	elif value in knownAddresses_ProgramMemory:
-
-		value = knownAddresses_ProgramMemory[ value ]
-
-	elif value[ 0 ] == "'":
-
-		value = ord( value )
-
-	else:
-
-		# remove underscore used to visually space digits/letters
-		value = value.replace( '_', '' )
-
-		if value[ 0 : 2 ].upper() == '0X':
-
-			value = int( value, 16 )
-
-		elif value[ 0 : 2 ].upper() == '0B':
-
-			value = int( value, 2 )
-
-		else:
-
-			value = int( value )
-
-	return value
 
 
 
@@ -317,7 +283,7 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 		# Data definition
 		if 'd_data' in cmd:
 
-			nWords = cmd[ 'd_data' ][ 'nWords' ]
+			nWords = cmd[ 'd_data' ][ 'nWords' ] * cmd[ 'd_data' ][ 'nItems' ]
 
 			for _ in range( nWords ):
 
@@ -474,13 +440,15 @@ knownAddresses_DataMemory.update( LT[ 'dataMemoryAddresses' ] )  # fill with glo
 # -- ... --------------------------------------------
 
 cmdPattern = '''
-	//    |       # start of comment
-	\'    |       # char wrappers
-	\(|\) |       # label wrappers
-	\[|\] |       # address wrappers
+	//       |    # start of comment
+	::       |    # label marker
+	\(|\)    |    # macro argument wrappers
+	".+"     |    # string
+	\'.\'    |    # character
+	\d+\.\d+ |    # float
 	\w+           # word or digit sequence
 '''
-cmdPattern = re.compile( cmdPattern, re.X )
+cmdPattern = re.compile( cmdPattern, re.X | re.ASCII )
 
 
 def readInputFile( inputFile ):
@@ -733,19 +701,6 @@ def tokenize( cmdList ):
 		op  = cmdRaw[ 0 ].upper()
 		cmd = {}
 
-		# Handle char, merge into one
-		if "'" in cmdRaw:
-
-			i = cmdRaw.index( "'" )
-
-			# Check for closing quote
-			if cmdRaw[ i + 2 ] != "'":
-
-				raiseError( line )
-
-			# stackoverflow.com/a/1142879
-			cmdRaw[ i : i + 3 ] = [ ''.join( cmdRaw[ i : i + 3 ] ) ]
-
 
 		# # TypeD0 - ORG address
 		# if op == 'ORG':
@@ -759,43 +714,51 @@ def tokenize( cmdList ):
 
 
 		# TypeD1 - DDATA value
-		elif op in dataDefinitions:
+		if op in dataDefinitions:
+
+			# Check for length
+			if len( cmdRaw ) < 2:
+
+				raiseError( line )
+
+			nWords = dataDefinitions[ op ]
+			values  = cmdRaw[ 1 : ]
+			
+			nItems = 0
+			for value in values:
+
+				if value[ 0 ] == '"':
+
+					# String literals only allowed for DWORD
+					if nWords != 1:
+
+						raiseError( line )
+
+					nItems += len( value ) - 2
+
+				else:
+
+					nItems += 1
+
+			print( nItems, '-', values, '-', cmdRaw )
+
+			cmd[ 'd_data' ] = {
+
+				'nWords' : nWords,
+				'values' : values,
+				'nItems' : nItems,
+			}
+
+
+		# Type1 - [label]
+		elif cmdRaw[ 0 ] == '::':
 
 			# Check for length
 			if len( cmdRaw ) != 2:
 
 				raiseError( line )
 
-			value = cmdRaw[ 1 ]
-			nWords = dataDefinitions[ op ]
-
-			cmd[ 'd_data' ] = {
-
-				'value'  : value,
-				'nWords' : nWords
-			}
-
-
-		# Type1 - [label]
-		elif cmdRaw[ 0 ] == '[':
-
-			cmdRaw.remove( '[' )
-
-			# Check for and remove closing bracket
-			try:
-
-				cmdRaw.remove( ']' )
-
-			except:
-
-				raiseError( line )
-
-			# Check for length
-			if len( cmdRaw ) != 1:
-
-				raiseError( line )
-
-			cmd[ 'label' ] = cmdRaw[ 0 ]
+			cmd[ 'label' ] = cmdRaw[ 1 ]
 
 
 		# Type2 & Type3 - op rX [address], op [address]
@@ -1007,7 +970,7 @@ def handleLabels( cmdList ):
 			# Reserve space for immediates
 			if 'd_data' in cmd:
 
-				locationCounter += cmd[ 'd_data' ][ 'nWords' ] - 1
+				locationCounter += ( cmd[ 'd_data' ][ 'nWords' ] * cmd[ 'd_data' ][ 'nItems' ] ) - 1
 
 			elif 'immediate' in cmd:  # 16 bit immediate
 
@@ -1024,12 +987,83 @@ def handleLabels( cmdList ):
 
 # -- Encode ------------------------------------------
 
-def decodeConstant( value, line, nWords ):
+def floatToInt( value, precision ):
+
+	if precision == 1:
+
+		s = struct.pack( '>f', float( value ) )
+
+		i32 = struct.unpack( '>L', s )[ 0 ]
+
+		return i32
+
+	elif precision == 2:
+
+		s = struct.pack( '>d', float( value ) )
+
+		i64 = struct.unpack( '>Q', s )[ 0 ]
+
+		return i64
+
+
+def strToInt( value, nWords ):
+
+	''' Convert from string to integer '''
+
+	if value in knownAddresses_DataMemory:
+
+		value = knownAddresses_DataMemory[ value ]
+
+	elif value in knownAddresses_ProgramMemory:
+
+		value = knownAddresses_ProgramMemory[ value ]
+
+	elif value[ 0 ] == "'":
+
+		value = ord( value[ 1 ] )
+
+	elif value.count( '.' ) == 1:
+
+		value = floatToInt( value, nWords // 2 )
+
+	else:
+
+		# remove underscore used to visually space digits/letters
+		value = value.replace( '_', '' )
+
+		if value[ 0 : 2 ].upper() == '0X':
+
+			value = int( value, 16 )
+
+		elif value[ 0 : 2 ].upper() == '0B':
+
+			value = int( value, 2 )
+
+		else:
+
+			value = int( value )
+
+	return value
+
+
+def decodeConstant( value, nWords, line ):
 
 	words = []
 
+	# Literal string, extract characters
+	if value[ 0 ] == '"':
+
+		for c in value[ 1 : - 1 ]:
+
+			cValue = ord( c )
+
+			words.append( toBinary( cValue, nBits ) )
+
+		return words
+
+
 	# Convert from string to integer
-	value = strToInt( value )
+	value = strToInt( value, nWords )
 
 	# Extract words
 
@@ -1085,13 +1119,15 @@ def encodeInstructions( cmdList ):
 		# TypeD1 - DDATA value
 		if 'd_data' in cmd:
 
-			value  = cmd[ 'd_data' ][ 'value' ]
+			values = cmd[ 'd_data' ][ 'values' ]
 			nWords = cmd[ 'd_data' ][ 'nWords' ]
 
-			binCmdList.extend(
+			for value in values:
 
-				decodeConstant( value, line, nWords )
-			)
+				binCmdList.extend(
+
+					decodeConstant( value, nWords, line )
+				)
 
 			continue
 
@@ -1260,7 +1296,7 @@ def doTheThing( cmds_raw, debug ):
 	# Print debug
 	if debug: debugStuff( cmds_assembly, cmds_binary )
 
-	return cmds_binary
+	# return cmds_binary
 
 
 
@@ -1284,17 +1320,17 @@ def asm_to_bin( inputFile, outputFile, debug = False ):
 
 	cmds_binary = doTheThing( cmds_assembly, debug )
 
-	print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
+	# print( 'Assembled program has {} lines. Maximum is {}.'.format( len( cmds_binary ), largest_address ) )
 
-	# Check size
-	if len( cmds_binary ) > largest_address:
+	# # Check size
+	# if len( cmds_binary ) > largest_address:
 
-		print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
+	# 	print( 'Assembled program exceeds maximum length by {} lines.'.format( len( cmds_binary ) - largest_address ) )
 
-	# Write
-	writeToOutputFile( cmds_binary, outputFile )
+	# # Write
+	# writeToOutputFile( cmds_binary, outputFile )
 
-	# print( 'Done' )
+	# # print( 'Done' )
 
 
 def genBINFile( inputDirPath, debug = False ):

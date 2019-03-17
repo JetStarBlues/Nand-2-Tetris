@@ -12,7 +12,7 @@ registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
 
 registerPairAddressStatementV2  -> opJump|LXH registerPair
 
-labelStatement                  -> '[' label ']'
+labelStatement                  -> '::' label
 
 standaloneStatement             -> opStandalone
 
@@ -45,14 +45,18 @@ binConstant                     -> ( '0b' | '0B' ) ( 0 | 1 )+
 
 charConstant                    -> single Ascii character wrapped in single quotes
 
+stringLiteral                   -> sequence of Ascii characters wrapped in double quotes
+
+startOfComment                  -> '//'
+
 
 -- Directives ----------------------------------------------------------------------
 
 EQU_directive                   -> 'EQU' label textToSubstituteWith
 
-DWORD_directive                 -> 'DWORD'   16bit_integerConstant
-DDOUBLE_directive               -> 'DDOUBLE' 32bit_integerConstant
-DQUAD_directive                 -> 'DQUAD'   64bit_integerConstant
+DWORD_directive                 -> 'DWORD'   16bit_integerConstant | stringLiteral ( ',' 16bit_integerConstant | stringLiteral )*
+DDOUBLE_directive               -> 'DDOUBLE' 32bit_integerConstant                 ( ',' 32bit_integerConstant )*
+DQUAD_directive                 -> 'DQUAD'   64bit_integerConstant                 ( ',' 64bit_integerConstant )*
 
 MACRO_directive                 -> 'MACRO' label '(' MACROParameters ')' MACROBody 'ENDMACRO'
 
