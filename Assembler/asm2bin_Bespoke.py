@@ -317,7 +317,7 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 			op rX rPair
 			op rX rY imm
 		'''
-		s_label = '[ ' + label + ' ]' if label else ''
+		s_label = ':: ' + label if label else ''
 		s_op    = op
 		s_rX    = rX if rX else rPair if rPair else ''
 		s_rY    = rY if rY else rPair if ( rX and rPair ) else ''
@@ -698,6 +698,8 @@ def tokenize( cmdList ):
 		cmdRaw = cmdEl[ 0 ]
 		line   = cmdEl[ 1 ]
 
+		print( cmdRaw )
+
 		op  = cmdRaw[ 0 ].upper()
 		cmd = {}
 
@@ -750,7 +752,7 @@ def tokenize( cmdList ):
 			}
 
 
-		# Type1 - [label]
+		# Type1 - :: label
 		elif cmdRaw[ 0 ] == '::':
 
 			# Check for length
@@ -761,52 +763,7 @@ def tokenize( cmdList ):
 			cmd[ 'label' ] = cmdRaw[ 1 ]
 
 
-		# Type2 & Type3 - op rX [address], op [address]
-		elif '[' in cmdRaw:
-
-			cmdRaw.remove( '[' )
-
-			# Check for and remove closing bracket
-			try:
-
-				cmdRaw.remove( ']' )
-
-			except:
-
-				raiseError( line )
-
-			# Check for length
-			if len( cmdRaw ) == 2 or len( cmdRaw ) == 3:
-
-				cmd[ 'op' ] = op
-
-				# op [address]
-				if len( cmdRaw ) == 2:
-
-					# Check validity
-					if op not in LT[ 'opJump' ] and ( op != 'SWI' ):
-
-						raiseError( line )
-
-					cmd[ 'address' ] = cmdRaw[ 1 ]
-
-				# op rX [address]
-				else:
-
-					# Check validity
-					if op not in LT[ 'opExtMemoryAccess' ]:
-
-						raiseError( line )
-
-					cmd[ 'rX' ]      = cmdRaw[ 1 ].upper()
-					cmd[ 'address' ] = cmdRaw[ 2 ]
-
-			else:
-
-				raiseError( line )
-
-
-		# Type 4 - op
+		# Type2 - op
 		elif len( cmdRaw ) == 1:
 
 			# Check validity
@@ -817,27 +774,40 @@ def tokenize( cmdList ):
 			cmd[ 'op' ] = op
 
 
-		# Type5 - op rPair
+		# Type3 - op rPair
+		# Type4 - op address
 		elif len( cmdRaw ) == 2:
-
-			# Check validity
-			if ( op not in LT[ 'opJump' ] ) and ( op != 'LXH' ):
-
-				raiseError( line )
 
 			cmd[ 'op' ] = op
 
 			rPair = cmdRaw[ 1 ].upper()
 
-			# Check validity
-			if rPair not in LT[ 'registerPairs' ]:
 
-				raiseError( line )
+			# Type3 - op rPair
+			if rPair in LT[ 'registerPairs' ]:
 
-			cmd[ 'rPair' ] = rPair
+				# Check validity
+				if ( op not in LT[ 'opJump' ] ) and ( op != 'LXH' ):
+
+					raiseError( line )
+
+				cmd[ 'rPair' ] = rPair
 
 
-		# Type6 - op rX rY, op rX rPair
+			# Type4 - op address
+			else:
+
+				# Check validity
+				if op not in LT[ 'opJump' ] and ( op != 'SWI' ):
+
+					raiseError( line )
+
+				cmd[ 'address' ] = cmdRaw[ 1 ]  # preserve case
+
+
+		# Type5 - op rX rY
+		# Type6 - op rX rPair
+		# Type7 - op rX address
 		elif len( cmdRaw ) == 3:
 
 			cmd[ 'op' ] = op
@@ -845,7 +815,8 @@ def tokenize( cmdList ):
 
 			rY = cmdRaw[ 2 ].upper()
 
-			# op rX rY
+
+			# Type5 - op rX rY
 			if rY in LT[ 'registers' ]:
 
 				# Check validity
@@ -855,7 +826,8 @@ def tokenize( cmdList ):
 
 				cmd[ 'rY' ] = rY
 
-			# op rX rPair
+
+			# Type6 - op rX rPair
 			elif rY in LT[ 'registerPairs' ]:
 
 				# Check validity
@@ -865,18 +837,20 @@ def tokenize( cmdList ):
 
 				cmd[ 'rPair' ] = rY
 
+
+			# Type7 - op rX address
 			else:
 
-				raiseError( line )
+				# Check validity
+				if op not in LT[ 'opExtMemoryAccess' ]:
+
+					raiseError( line )
+
+				cmd[ 'address' ] = cmdRaw[ 2 ]  # preserve case
 
 
-		# Type7 - op rX rY immediate
+		# Type8 - op rX rY immediate
 		elif len( cmdRaw ) == 4:
-
-			# # Check validity
-			# if ( op in LT[ 'opStandalone' ] ) or ( op == 'LXH' ):
-
-			# 	raiseError( line )
 
 			# Check validity
 			if op not in LT[ 'opVanilla' ]:
@@ -1096,8 +1070,6 @@ def decodeConstant( value, nWords, line ):
 
 	else:
 
-		line = cmdEl[ 1 ]
-
 		raise Exception( 'Invalid constant - {}\n->  {}'.format( value, line ) )
 
 	return words
@@ -1134,7 +1106,9 @@ def encodeInstructions( cmdList ):
 
 		op = LT[ 'op' ][ cmd[ 'op' ] ]
 
-		# Type2 & Type3 - op rX [address], op [address]
+
+		# Type7 - op rX address
+		# Type4 - op address
 		if 'address' in cmd:
 
 			if 'rX' in cmd:
@@ -1160,11 +1134,11 @@ def encodeInstructions( cmdList ):
 			# address
 			binCmdList.extend(
 
-				decodeConstant( cmd[ 'address' ], line, 2 )
+				decodeConstant( cmd[ 'address' ], 2, line )
 			)
 
 
-		# Type 4 - op
+		# Type2 - op
 		elif len( cmd ) == 1:
 
 			cmd_b = '00{}{}{}'.format(
@@ -1177,7 +1151,7 @@ def encodeInstructions( cmdList ):
 			binCmdList.append( cmd_b )
 
 
-		# Type 5 - op rPair
+		# Type3 - op rPair
 		elif len( cmd ) == 2:
 
 			rPair = LT[ 'registerPairs' ][ cmd[ 'rPair' ] ]
@@ -1195,7 +1169,8 @@ def encodeInstructions( cmdList ):
 			binCmdList.append( cmd_b )
 
 
-		# Type6 - op rX rY, op rX rPair
+		# Type5 - op rX rY
+		# Type6 - op rX rPair
 		elif len( cmd ) == 3:
 
 			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
@@ -1228,7 +1203,7 @@ def encodeInstructions( cmdList ):
 			binCmdList.append( cmd_b )
 
 
-		# Type7 - op rX rY immediate
+		# Type8 - op rX rY immediate
 		elif len( cmd ) == 4:
 
 			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
@@ -1249,7 +1224,7 @@ def encodeInstructions( cmdList ):
 			# immediate
 			binCmdList.extend(
 
-				decodeConstant( cmd[ 'immediate' ], line, 1 )
+				decodeConstant( cmd[ 'immediate' ], 1, line )
 			)
 
 

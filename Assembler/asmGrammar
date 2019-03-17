@@ -4,9 +4,9 @@ statement                       -> basicStatement | immediateAddressStatementV1 
 
 basicStatement                  -> opVanilla rX rY immediate?
 
-immediateAddressStatementV1     -> opExtMemoryAccess rX '[' address ']'
+immediateAddressStatementV1     -> opExtMemoryAccess rX address
 
-immediateAddressStatementV2     -> opJump|SWI '[' address ']'
+immediateAddressStatementV2     -> opJump|SWI address
 
 registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
 
