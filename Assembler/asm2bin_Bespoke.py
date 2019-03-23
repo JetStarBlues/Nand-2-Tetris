@@ -84,18 +84,6 @@ LT = {
 		'RSTATUS'  : 15,
 	},
 
-	'registerPairs' : {
-
-		# register pairs
-		'R2R1'     : 0,
-		'R4R3'     : 1,
-		'R6R5'     : 2,
-		'R8R7'     : 3,
-		'R10R9'    : 4,
-		'R12R11'   : 5,
-		'R14R13'   : 6,
-	},
-
 	'dataMemoryAddresses' : {
 
 		# VM structure
@@ -167,20 +155,13 @@ LT = {
 		'IODR' : 32,
 		'HLT'  : 33,
 		'NOP'  : 34,
-	},
-
-	'opJump'       : None,
-	'opStandalone' : None
+	}
 }
 
 # Convert to binary string
 for k, v in LT[ 'registers' ].items():
 
 	LT[ 'registers' ][ k ] = toBinary( v, 4 )
-
-for k, v in LT[ 'registerPairs' ].items():
-
-	LT[ 'registerPairs' ][ k ] = toBinary( v, 4 )
 
 for k, v in LT[ 'op' ].items():
 
@@ -209,15 +190,10 @@ LT[ 'opStandalone' ] = newDictFromKeys( LT[ 'op' ],
 		'NOP',
 	]
 )
-LT[ 'opExtMemoryAccess' ] = [
-
-	'STO',
-	'LD',
-	'LPM',
-]
 LT[ 'opVanilla' ] = [
 
 	op for op in LT[ 'op' ] if
+	( op not in LT[ 'opJump' ] ) and
 	( op not in LT[ 'opStandalone' ] ) and
 	( op not in [ 'LXH', 'SWI' ] )
 ]
@@ -225,10 +201,10 @@ LT[ 'opVanilla' ] = [
 # Data definitions
 dataDefinitions = {
 
-	# 'DBYTE'   : 0,  # half a word
-	'DWORD'   : 1,  # 1 word
-	'DDOUBLE' : 2,  # 2 words
-	'DQUAD'   : 4   # 4 words
+	'DBYTE'   : 0.25,  # 1/4 word
+	'DHALF'   : 0.5,   # 1/2 word
+	'DWORD'   : 1,     # 1 word
+	'DDOUBLE' : 2,     # 2 words
 }
 
 
@@ -248,9 +224,30 @@ def getKeyByValue( value, d ):
 	return None
 
 
-def getHex4( value ):
+def getHex8( value ):
 
-	return hex( int( value, 2 ) )[ 2 : ].zfill( 4 )
+	return hex( value )[ 2 : ].zfill( 8 )
+
+def getASCII32( value ):
+
+	c3 = ( value >> 24 ) & 0xFF
+	c2 = ( value >> 16 ) & 0xFF
+	c1 = ( value >>  8 ) & 0xFF
+	c0 = value & 0xFF
+
+	s = ''
+
+	for c in [ c3, c2, c1, c0 ]:
+
+		if c >= 32 and c <= 126:  # printable
+
+			s += chr( c )
+
+		else:
+
+			s += '.'
+
+	return s
 
 
 def printFinalAssembly( asmCmdList, binCmdList ):
@@ -263,10 +260,18 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 		if showBinary:
 
-			s = '{:<4}  {:<16}  |    '.format(
+			iVal = int( binCmdList[ bIdx ], 2 )
 
-				getHex4( binCmdList[ bIdx ] ),
-				binCmdList[ bIdx ]
+			# s = '{:<8}  {:<32}  |   '.format(
+
+			# 	getHex8( iVal ),
+			# 	binCmdList[ bIdx ]
+			# )
+
+			s = '{:<8}  {}  |   '.format(
+
+				getHex8( iVal ),
+				getASCII32( iVal )
 			)
 
 		return s
@@ -283,16 +288,36 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 		# Data definition
 		if 'd_data' in cmd:
 
-			nWords = cmd[ 'd_data' ][ 'nWords' ] * cmd[ 'd_data' ][ 'nItems' ]
+			nWords  = cmd[ 'd_data' ][ 'nWords' ]
+			nValues = len( cmd[ 'd_data' ][ 'values' ] )
 
-			for _ in range( nWords ):
+			if nWords == 0.25:
+
+				n = math.ceil( nValues / 4 )
+
+			elif nWords == 0.5:
+
+				n = math.ceil( nValues / 2 )
+
+			elif nWords == 1:
+
+				n = nValues
+
+			elif nWords == 2:
+
+				n = nValues * 2
+
+			for _ in range( n ):
 
 				w = int( binCmdList[ bIdx ], 2 )
 
-				print( '{}{:<6} -   {}'.format(
+				s_label = ':: {} '.format( label ) if label else ''
+
+				print( '{}{:<11} -   {}{:<11}'.format(
 
 					getBinaryString(),
 					bIdx,
+					s_label,
 					w
 				) )
 
@@ -300,34 +325,26 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 			continue
 
+
 		# Everything else
+		'''
+			op
+			op rX
+			op immediate
+			op rX rY
+			op rX immediate
+		'''
 		op        = cmd.get( 'op' )
 		rX        = cmd.get( 'rX' )
 		rY        = cmd.get( 'rY' )
-		rPair     = cmd.get( 'rPair' )
 		immediate = cmd.get( 'immediate' )
-		address   = cmd.get( 'address' )
 
-		'''
-			op
-			op [addr]
-			op rPair
-			op rX rY
-			op rX [addr]
-			op rX rPair
-			op rX rY imm
-		'''
-		s_label = ':: ' + label if label else ''
-		s_op    = op
-		s_rX    = rX if rX else rPair if rPair else ''
-		s_rY    = rY if rY else rPair if ( rX and rPair ) else ''
+		s_label = ':: {} '.format( label ) if label else ''
+		s_op    =    '{} '.format( op )
+		s_rX    =    '{} '.format( rX ) if rX else ''
+		s_rY    =    '{} '.format( rY ) if rY else ''
 
-		if s_label : s_label += ' '
-		if s_op    : s_op    += ' '
-		if s_rX    : s_rX    += ' '
-		if s_rY    : s_rY    += ' '
-
-		print( '{}{:<6} -   {}{}{}{}'.format(
+		print( '{}{:<11} -   {}{}{}{}'.format(
 
 			getBinaryString(),
 			bIdx,
@@ -338,44 +355,32 @@ def printFinalAssembly( asmCmdList, binCmdList ):
 
 		) )
 
-		if immediate or address:
+		if immediate:
 
 			bIdx += 1
 
-			wLo = int( binCmdList[ bIdx ], 2 )
-
-			print( '{}{:<6} -   {}'.format(
-
-				getBinaryString(),
-				bIdx,
-				wLo
-			) )
-
-		if address:
-
-			bIdx += 1
-
-			wHi = int( binCmdList[ bIdx ], 2 )
+			w = int( binCmdList[ bIdx ], 2 )
 
 			# program address
-			if ( op in LT[ 'opJump' ] ) or ( op == 'LXH' ):
-
-				label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_ProgramMemory )
-
-				if not label: label = '???'
+			label = getKeyByValue( w, knownAddresses_ProgramMemory )
 
 			# data address
-			elif op in LT[ 'opExtMemoryAccess' ]:
+			if not label:
 
-				label = getKeyByValue( ( wHi << 16 ) | wLo, knownAddresses_DataMemory )
+				label = getKeyByValue( w, knownAddresses_DataMemory )
+
+			# Jumping to unknown location
+			if ( not label ) and ( op in LT[ 'opJump' ] ):
+
+				label = '???'
 
 			s_label = '   // {}'.format( label ) if label else ''
 
-			print( '{}{:<6} -   {}{}'.format(
+			print( '{}{:<11} -   {:<11}{}'.format(
 
 				getBinaryString(),
 				bIdx, 
-				wHi,
+				w,
 				s_label
 			) )
 
@@ -420,7 +425,7 @@ def debugStuff( asmCmdList, binCmdList ):
 # -- ... -------------------------------------------
 
 # nBits = GC.N_BITS
-nBits = 16
+nBits = 32
 
 static_segment_start = GC.STATIC_START
 static_segment_end   = GC.STATIC_END
@@ -715,7 +720,7 @@ def tokenize( cmdList ):
 		cmdRaw = cmdEl[ 0 ]
 		line   = cmdEl[ 1 ]
 
-		print( cmdRaw )
+		# print( cmdRaw )
 
 		op  = cmdRaw[ 0 ].upper()
 		cmd = {}
@@ -729,32 +734,34 @@ def tokenize( cmdList ):
 
 				raiseError( line )
 
-			nWords = dataDefinitions[ op ]
-			values  = cmdRaw[ 1 : ]
+			nWords  = dataDefinitions[ op ]
+			values_ = cmdRaw[ 1 : ]
+			values  = []
 			
-			nItems = 0
-			for value in values:
+			for value in values_:
 
 				if value[ 0 ] == '"':
 
-					# String literals only allowed for DWORD
-					if nWords != 1:
+					# ASCII strings only allowed for DBYTE
+					if nWords != 0.25:
 
 						raiseError( line )
 
-					nItems += len( value ) - 2
+					# Get characters from string
+					chars = [ "'{}'".format( c ) for c in value[ 1 : - 1 ] ]
+
+					values.extend( chars )
 
 				else:
 
-					nItems += 1
+					values.append( value )
 
-			print( nItems, '-', values, '-', cmdRaw )
+			# print( values, '-', cmdRaw )
 
 			cmd[ 'd_data' ] = {
 
 				'nWords' : nWords,
 				'values' : values,
-				'nItems' : nItems,
 			}
 
 
@@ -780,27 +787,27 @@ def tokenize( cmdList ):
 			cmd[ 'op' ] = op
 
 
-		# Type3 - op rPair
-		# Type4 - op address
+		# Type3 - op rX
+		# Type4 - op immediate
 		elif len( cmdRaw ) == 2:
 
 			cmd[ 'op' ] = op
 
-			rPair = cmdRaw[ 1 ].upper()
+			rX = cmdRaw[ 1 ].upper()
 
 
-			# Type3 - op rPair
-			if rPair in LT[ 'registerPairs' ]:
+			# Type3 - op rX
+			if rX in LT[ 'registers' ]:
 
 				# Check validity
-				if ( op not in LT[ 'opJump' ] ) and ( op != 'LXH' ):
+				if op != 'LXH':
 
 					raiseError( line )
 
-				cmd[ 'rPair' ] = rPair
+				cmd[ 'rX' ] = rX
 
 
-			# Type4 - op address
+			# Type4 - op immediate
 			else:
 
 				# Check validity
@@ -808,12 +815,11 @@ def tokenize( cmdList ):
 
 					raiseError( line )
 
-				cmd[ 'address' ] = cmdRaw[ 1 ]  # preserve case
+				cmd[ 'immediate' ] = cmdRaw[ 1 ]  # preserve case
 
 
 		# Type5 - op rX rY
-		# Type6 - op rX rPair
-		# Type7 - op rX address
+		# Type6 - op rX immediate
 		elif len( cmdRaw ) == 3:
 
 			cmd[ 'op' ] = op
@@ -833,40 +839,15 @@ def tokenize( cmdList ):
 				cmd[ 'rY' ] = rY
 
 
-			# Type6 - op rX rPair
-			elif rY in LT[ 'registerPairs' ]:
-
-				# Check validity
-				if op not in LT[ 'opExtMemoryAccess' ]:
-
-					raiseError( line )
-
-				cmd[ 'rPair' ] = rY
-
-
-			# Type7 - op rX address
+			# Type6 - op rX immediate
 			else:
 
 				# Check validity
-				if op not in LT[ 'opExtMemoryAccess' ]:
+				if op not in LT[ 'opVanilla' ]:
 
 					raiseError( line )
 
-				cmd[ 'address' ] = cmdRaw[ 2 ]  # preserve case
-
-
-		# Type8 - op rX rY immediate
-		elif len( cmdRaw ) == 4:
-
-			# Check validity
-			if op not in LT[ 'opVanilla' ]:
-
-				raiseError( line )
-
-			cmd[ 'op' ]        = op
-			cmd[ 'rX' ]        = cmdRaw[ 1 ].upper()
-			cmd[ 'rY' ]        = cmdRaw[ 2 ].upper()
-			cmd[ 'immediate' ] = cmdRaw[ 3 ]
+				cmd[ 'immediate' ] = cmdRaw[ 2 ]  # preserve case
 
 
 		# Unknown
@@ -921,17 +902,32 @@ def handleLabels( cmdList ):
 			locationCounter += 1
 
 			# Reserve space for immediates
-			if 'd_data' in cmd:
-
-				locationCounter += ( cmd[ 'd_data' ][ 'nWords' ] * cmd[ 'd_data' ][ 'nItems' ] ) - 1
-
-			elif 'immediate' in cmd:  # 16 bit immediate
+			if 'immediate' in cmd:
 
 				locationCounter += 1
 
-			elif 'address' in cmd:    # 32 bit immediate
+			elif 'd_data' in cmd:
 
-				locationCounter += 2
+				nWords  = cmd[ 'd_data' ][ 'nWords' ]
+				nValues = len( cmd[ 'd_data' ][ 'values' ] )
+
+				locationCounter -= 1  # one word will be on same line
+
+				if nWords == 0.25:
+
+					locationCounter += math.ceil( nValues / 4 )
+
+				elif nWords == 0.5:
+
+					locationCounter += math.ceil( nValues / 2 )
+
+				elif nWords == 1:
+
+					locationCounter += nValues
+
+				elif nWords == 2:
+
+					locationCounter += nValues * 2
 
 
 	return trimmedCmdList
@@ -959,7 +955,7 @@ def floatToInt( value, precision ):
 		return i64
 
 
-def strToInt( value, nWords ):
+def strToInt( value, nWords, line ):
 
 	''' Convert from string to integer '''
 
@@ -977,7 +973,7 @@ def strToInt( value, nWords ):
 
 	elif value.count( '.' ) == 1:
 
-		value = floatToInt( value, nWords // 2 )
+		value = floatToInt( value, nWords )  # nWords doubles as precision
 
 	else:
 
@@ -996,56 +992,94 @@ def strToInt( value, nWords ):
 
 			value = int( value )
 
+	#
+	if value > 2 ** ( 32 * nWords ):
+
+		raise Exception( 'Constant larger than defined size - {}\n->  {}'.format( value, line ) )
+
+
 	return value
 
 
-def decodeConstant( value, nWords, line ):
-
-	words = []
-
-	# Literal string, extract characters
-	if value[ 0 ] == '"':
-
-		for c in value[ 1 : - 1 ]:
-
-			cValue = ord( c )
-
-			words.append( toBinary( cValue, nBits ) )
-
-		return words
-
-
-	# Convert from string to integer
-	value = strToInt( value, nWords )
+def decodeConstants( values, nWords, line ):
 
 	# Extract words
+	words = []
+
+	if not isinstance( values, list ):
+
+		values = [ values ]  # make it a list =p
+
+
+	# 8 bit
+	if ( nWords == 0.25 ):
+
+		# Pad with zeros so that word aligned
+		pad = len( values ) % 4
+
+		if pad > 0:
+
+			pad = 4 - pad
+
+		for i in range( pad ):
+
+			values.append( '0' )  # Big endian, so append to end (lsb)
+
+		# Combine to form words
+		for i in range( 0, len( values ), 4 ):
+
+			b3 = strToInt( values[ i     ], nWords, line )
+			b2 = strToInt( values[ i + 1 ], nWords, line )
+			b1 = strToInt( values[ i + 2 ], nWords, line )
+			b0 = strToInt( values[ i + 3 ], nWords, line )
+
+			word = ( b3 << 24 ) | ( b2 << 16 ) | ( b1 << 8 ) | b0
+
+			words.append( toBinary( word, nBits ) )
+
 
 	# 16 bit
-	if ( nWords == 1 ) and ( value <= 2 ** 16 ):
+	elif ( nWords == 0.5 ):
 
-		words.append( toBinary( value, nBits ) )
+		# Pad with zeros so that word aligned
+		if len( values ) % 2 == 1:
+
+			values.append( '0' )  # Big endian, so append to end (lsb)
+
+		# Combine to form words
+		for i in range( 0, len( values ), 2 ):
+
+			hw1 = strToInt( values[ i     ], nWords, line )
+			hw0 = strToInt( values[ i + 1 ], nWords, line )
+
+			word = ( hw1 << 16 ) | hw0
+
+			words.append( toBinary( word, nBits ) )
+
 
 	# 32 bit
-	elif ( nWords == 2 ) and ( value <= 2 ** 32 ):
+	elif ( nWords == 1 ):
 
-		lo = value & 0xFFFF
-		hi = value >> 16
+		for value_ in values:
 
-		words.append( toBinary( lo, nBits ) )
-		words.append( toBinary( hi, nBits ) )
+			value = strToInt( value_, nWords, line )
+
+			words.append( toBinary( value, nBits ) )
+
 
 	# 64 bit
-	elif ( nWords == 4 ) and ( value <= 2 ** 64 ):
+	elif ( nWords == 2 ):
 
-		w0 = value & 0xFFFF
-		w1 = ( value >> ( 16 ) ) & 0xFFFF
-		w2 = ( value >> ( 32 ) ) & 0xFFFF
-		w3 =   value >> ( 48 )
+		for value_ in values:
 
-		words.append( toBinary( w0, nBits ) )
-		words.append( toBinary( w1, nBits ) )
-		words.append( toBinary( w2, nBits ) )
-		words.append( toBinary( w3, nBits ) )
+			value = strToInt( value_, nWords, line )
+
+			hi = value >> 32
+			lo = value & 0xFFFFFFFF
+
+			words.append( toBinary( hi, nBits ) )  # Big endian
+			words.append( toBinary( lo, nBits ) )
+
 
 	else:
 
@@ -1073,22 +1107,22 @@ def encodeInstructions( cmdList ):
 			values = cmd[ 'd_data' ][ 'values' ]
 			nWords = cmd[ 'd_data' ][ 'nWords' ]
 
-			for value in values:
 
-				binCmdList.extend(
+			binCmdList.extend(
 
-					decodeConstant( value, nWords, line )
-				)
+				decodeConstants( values, nWords, line )
+			)
 
 			continue
 
 
 		op = LT[ 'op' ][ cmd[ 'op' ] ]
 
+		unusedHalf = '0000000000000000'
 
-		# Type7 - op rX address
-		# Type4 - op address
-		if 'address' in cmd:
+		# Type4 - op immediate
+		# Type6 - op rX immediate
+		if 'immediate' in cmd:
 
 			if 'rX' in cmd:
 
@@ -1098,11 +1132,12 @@ def encodeInstructions( cmdList ):
 
 				rX = rZero
 
-			has32BitImmediate = 1
+			hasImmediate = 1
 
-			cmd_b = '{}0{}{}{}'.format(
+			cmd_b = '{}0{}{}{}{}'.format(
 
-				has32BitImmediate,
+				unusedHalf,
+				hasImmediate,
 				op,
 				rX,
 				rZero
@@ -1110,18 +1145,19 @@ def encodeInstructions( cmdList ):
 
 			binCmdList.append( cmd_b )
 
-			# address
+			# 32bit immediate
 			binCmdList.extend(
 
-				decodeConstant( cmd[ 'address' ], 2, line )
+				decodeConstants( cmd[ 'immediate' ], 1, line )
 			)
 
 
 		# Type2 - op
 		elif len( cmd ) == 1:
 
-			cmd_b = '00{}{}{}'.format(
+			cmd_b = '{}00{}{}{}'.format(
 
+				unusedHalf,
 				op,
 				rZero,
 				rZero
@@ -1130,81 +1166,37 @@ def encodeInstructions( cmdList ):
 			binCmdList.append( cmd_b )
 
 
-		# Type3 - op rPair
+		# Type3 - op rX
 		elif len( cmd ) == 2:
 
-			rPair = LT[ 'registerPairs' ][ cmd[ 'rPair' ] ]
+			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
 
-			isRegisterPair = '11'
+			cmd_b = '{}00{}{}{}'.format(
 
-			cmd_b = '{}{}{}{}'.format(
-
-				isRegisterPair,
+				unusedHalf,
 				op,
-				rZero,
-				rPair  # rPair encoded in rY slot
+				rX,
+				rZero
 			)
 
 			binCmdList.append( cmd_b )
 
 
 		# Type5 - op rX rY
-		# Type6 - op rX rPair
 		elif len( cmd ) == 3:
-
-			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
-
-			if 'rPair' in cmd:
-
-				rY = LT[ 'registerPairs' ][ cmd[ 'rPair' ] ]
-
-				isRegisterPair = '11'
-
-				cmd_b = '{}{}{}{}'.format(
-
-					isRegisterPair,
-					op,
-					rX,
-					rY  # rPair encoded in rY slot
-				)
-
-			else:
-
-				rY = LT[ 'registers' ][ cmd[ 'rY' ] ]
-
-				cmd_b = '00{}{}{}'.format(
-
-					op,
-					rX,
-					rY
-				)
-
-			binCmdList.append( cmd_b )
-
-
-		# Type8 - op rX rY immediate
-		elif len( cmd ) == 4:
 
 			rX = LT[ 'registers' ][ cmd[ 'rX' ] ]
 			rY = LT[ 'registers' ][ cmd[ 'rY' ] ]
 
-			has16BitImmediate = 1
+			cmd_b = '{}00{}{}{}'.format(
 
-			cmd_b = '0{}{}{}{}'.format(
-
-				has16BitImmediate,
+				unusedHalf,
 				op,
 				rX,
 				rY
 			)
 
 			binCmdList.append( cmd_b )
-
-			# immediate
-			binCmdList.extend(
-
-				decodeConstant( cmd[ 'immediate' ], 1, line )
-			)
 
 
 		# Unknown

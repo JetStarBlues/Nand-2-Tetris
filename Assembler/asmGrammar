@@ -1,24 +1,20 @@
 -- Hack ASM Grammar ----------------------------------------------------------------
 
-statement                       -> basicStatement | immediateAddressStatementV1 | immediateAddressStatementV2 | registerPairAddressStatementV1 | registerPairAddressStatementV2 | labelStatement | standaloneStatement
-
-basicStatement                  -> opVanilla rX rY immediate?
-
-immediateAddressStatementV1     -> opExtMemoryAccess rX address
-
-immediateAddressStatementV2     -> opJump|SWI address
-
-registerPairAddressStatementV1  -> opExtMemoryAccess rX registerPair
-
-registerPairAddressStatementV2  -> opJump|LXH registerPair
+statement                       -> labelStatement | basicStatement | immediateStatementV1 | immediateStatementV2 | singleRegisterStatement | standaloneStatement
 
 labelStatement                  -> '::' label
 
+basicStatement                  -> opVanilla rX rY
+
+immediateStatementV1            -> opVanilla rX immediate
+
+immediateStatementV2            -> opJump|SWI immediate
+
+singleRegisterStatement         -> LXH rX
+
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opExtMemoryAccess|opJump|MOV|ADD|ADC|SUB|SBB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
-
-opExtMemoryAccess               -> STO|LD|LPM
+opVanilla                       -> opJump|STO|LD|LPM|MOV|ADD|ADC|SUB|SBB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
 
 opJump                          -> JMP|JEQ|JNE|JGT|JGE|JLT|JLE|JSR
 
@@ -26,26 +22,21 @@ opStandalone                    -> RTS|RTI|HLT|NOP
 
 rX, rY                          -> r[0..15] | 'rStatus'
 
-registerPair                    -> r[0..15]r[0..15]
-                                 Together form a 32bit value { rHigh, rLow }
-
-immediate                       -> label | 16bit_integerConstant
-
-address                         -> label | 32bit_integerConstant
+immediate                       -> label | 32bit_integerConstant
 
 label                           -> sequence of letters, digits, and underscore not starting with a digit
 
 integerConstant                 -> decConstant | hexConstant | binConstant | charConstant
 
-decConstant                     -> ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 )+
+decConstant                     -> [0..9]+
 
-hexConstant                     -> ( '0x' | '0X' ) ( 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F )+
+hexConstant                     -> ( '0x' | '0X' ) ( [0..9] | [a..f] | [A..F] )+
 
 binConstant                     -> ( '0b' | '0B' ) ( 0 | 1 )+
 
-charConstant                    -> single Ascii character wrapped in single quotes
+charConstant                    -> single ASCII character wrapped in single quotes
 
-stringLiteral                   -> sequence of Ascii characters wrapped in double quotes
+stringASCII                     -> sequence of ASCII characters wrapped in double quotes
 
 startOfComment                  -> '//'
 
@@ -54,9 +45,10 @@ startOfComment                  -> '//'
 
 EQU_directive                   -> 'EQU' alias realValue
 
-DWORD_directive                 -> 'DWORD'   16bit_integerConstant | stringLiteral ( ',' 16bit_integerConstant | stringLiteral )*
-DDOUBLE_directive               -> 'DDOUBLE' 32bit_integerConstant                 ( ',' 32bit_integerConstant )*
-DQUAD_directive                 -> 'DQUAD'   64bit_integerConstant                 ( ',' 64bit_integerConstant )*
+DBYTE_directive                 -> 'DBYTE'    8bit_integerConstant | stringASCII ( ','  8bit_integerConstant | stringASCII )*
+DHALF_directive                 -> 'DHALF'   16bit_integerConstant               ( ',' 16bit_integerConstant )*
+DWORD_directive                 -> 'DWORD'   32bit_integerConstant               ( ',' 32bit_integerConstant )*
+DDOUBLE_directive               -> 'DDOUBLE' 64bit_integerConstant               ( ',' 64bit_integerConstant )*
 
 MACRO_directive                 -> 'MACRO' label '(' MACROParameters ')' MACROBody 'ENDMACRO'
 
