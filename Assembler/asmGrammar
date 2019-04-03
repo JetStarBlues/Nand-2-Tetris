@@ -10,11 +10,11 @@ immediateStatementV1            -> opVanilla rX immediate
 
 immediateStatementV2            -> opJump|SWI immediate
 
-singleRegisterStatement         -> LXH rX
+singleRegisterStatement         -> opJump|LXH rX
 
 standaloneStatement             -> opStandalone
 
-opVanilla                       -> opJump|STO|LD|LPM|MOV|ADD|ADC|SUB|SBB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
+opVanilla                       -> STO|LD|LPM|MOV|ADD|ADC|SUB|SBB|AND|OR|XOR|LSR|LSL|MUL|DIV|NOT|NEG|CMP|IORD|IOWR|IODR
 
 opJump                          -> JMP|JEQ|JNE|JGT|JGE|JLT|JLE|JSR
 

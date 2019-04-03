@@ -451,7 +451,7 @@ cmdPattern = '''
 	".+"     |    # string
 	\'.\'    |    # character
 	\d+\.\d+ |    # float
-	\w+           # word or digit sequence
+	[\w|\.]+      # word - letter, digit, underscore, period sequence
 '''
 cmdPattern = re.compile( cmdPattern, re.X | re.ASCII )
 
@@ -800,7 +800,7 @@ def tokenize( cmdList ):
 			if rX in LT[ 'registers' ]:
 
 				# Check validity
-				if op != 'LXH':
+				if op not in LT[ 'opJump' ] and ( op != 'LXH' ):
 
 					raiseError( line )
 

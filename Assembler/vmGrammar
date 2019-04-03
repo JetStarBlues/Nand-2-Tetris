@@ -1,0 +1,69 @@
+-- Hack VM Grammar -----------------------------------------------------------------
+
+push_b segment index
+push_h
+push_w
+push_d
+
+pop_b
+pop_h
+pop_w
+pop_d
+
+segment -> 'temp' | 'static' | 'local' | 'arg' | 'this' | 'that' | 'pointer' | 'constant'
+
+index -> 32bit_integerConstant
+
+call
+call_p
+
+neg
+not
+add
+sub
+mul
+div
+and
+or
+xor
+lsl
+lsr
+
+fadd
+fsub
+fmul
+fdiv
+
+eq
+ne
+gt
+gte
+lt
+lte
+
+feq
+fne
+fgt
+fgte
+flt
+flte
+
+
+goto -> 'goto' name
+if-goto -> 'if-goto' name
+
+label -> 'label' name
+
+function -> 'function' name sizeSpec
+
+call -> 'call' name sizeSpec
+
+sizeSpec -> '0' | ( '[' nBytes (, nBytes)* ']' )
+
+nBytes -> '1'|'2'|'3'|'4'
+
+return -> 'return'
+
+
+
+
