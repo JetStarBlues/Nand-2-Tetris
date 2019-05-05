@@ -34,6 +34,9 @@
 '''
 
 
+# TODO - add stepping, GUI debugger (registers etc)
+
+
 # Imports --------------------------
 
 # Built ins
